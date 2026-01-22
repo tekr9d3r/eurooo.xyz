@@ -5,15 +5,11 @@ import { base } from 'wagmi/chains';
 import {
   EURC_ADDRESSES,
   YO_VAULT_ADDRESSES,
-  YO_GATEWAY_ADDRESSES,
   ERC20_ABI,
-  YO_GATEWAY_ABI,
+  ERC4626_VAULT_ABI,
 } from '@/lib/contracts';
 
 export type YoDepositStep = 'idle' | 'checking' | 'approving' | 'waitingApproval' | 'depositing' | 'waitingDeposit' | 'success' | 'error';
-
-// Partner ID for YO attribution (0 = no partner)
-const YO_PARTNER_ID = 0n;
 
 export function useYoDeposit() {
   const { address } = useAccount();
@@ -24,29 +20,17 @@ export function useYoDeposit() {
 
   const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
   const vaultAddress = YO_VAULT_ADDRESSES[chainId as keyof typeof YO_VAULT_ADDRESSES];
-  const gatewayAddress = YO_GATEWAY_ADDRESSES[chainId as keyof typeof YO_GATEWAY_ADDRESSES];
 
   const { writeContractAsync } = useWriteContract();
 
-  // Check current allowance for gateway
+  // Check current allowance for vault (deposit directly to vault, not gateway)
   const { data: currentAllowance, refetch: refetchAllowance } = useReadContract({
     address: eurcAddress,
     abi: ERC20_ABI,
     functionName: 'allowance',
-    args: address && gatewayAddress ? [address, gatewayAddress] : undefined,
+    args: address && vaultAddress ? [address, vaultAddress] : undefined,
     query: {
-      enabled: !!address && !!eurcAddress && !!gatewayAddress,
-    },
-  });
-
-  // Quote for preview
-  const { data: quotedShares } = useReadContract({
-    address: gatewayAddress,
-    abi: YO_GATEWAY_ABI,
-    functionName: 'quotePreviewDeposit',
-    args: vaultAddress ? [vaultAddress, parseUnits('1', 6)] : undefined,
-    query: {
-      enabled: !!vaultAddress && !!gatewayAddress,
+      enabled: !!address && !!eurcAddress && !!vaultAddress,
     },
   });
 
@@ -57,7 +41,7 @@ export function useYoDeposit() {
   }, []);
 
   const deposit = useCallback(async (amount: number) => {
-    if (!address || !eurcAddress || !vaultAddress || !gatewayAddress) {
+    if (!address || !eurcAddress || !vaultAddress) {
       setError('Wallet not connected or chain not supported');
       setStep('error');
       return;
@@ -69,18 +53,18 @@ export function useYoDeposit() {
 
       const amountInUnits = parseUnits(amount.toString(), 6);
 
-      // Check if we need approval for gateway
+      // Check if we need approval for vault
       await refetchAllowance();
       const needsApproval = !currentAllowance || currentAllowance < amountInUnits;
 
       if (needsApproval) {
         setStep('approving');
         
-        const approveTx = await writeContractAsync({
+        await writeContractAsync({
           address: eurcAddress,
           abi: ERC20_ABI,
           functionName: 'approve',
-          args: [gatewayAddress, amountInUnits],
+          args: [vaultAddress, amountInUnits],
           account: address,
           chain: base,
         });
@@ -109,19 +93,14 @@ export function useYoDeposit() {
         });
       }
 
-      // Deposit via YO Gateway
+      // Deposit directly to ERC-4626 vault
       setStep('depositing');
 
-      // Calculate min shares with 1% slippage tolerance
-      const minSharesOut = quotedShares 
-        ? (quotedShares * amountInUnits * 99n) / (parseUnits('1', 6) * 100n)
-        : 0n;
-
       const depositTx = await writeContractAsync({
-        address: gatewayAddress,
-        abi: YO_GATEWAY_ABI,
+        address: vaultAddress,
+        abi: ERC4626_VAULT_ABI,
         functionName: 'deposit',
-        args: [vaultAddress, amountInUnits, minSharesOut, address, YO_PARTNER_ID],
+        args: [amountInUnits, address],
         account: address,
         chain: base,
       });
@@ -144,7 +123,7 @@ export function useYoDeposit() {
       }
       setStep('error');
     }
-  }, [address, eurcAddress, vaultAddress, gatewayAddress, currentAllowance, quotedShares, writeContractAsync, refetchAllowance]);
+  }, [address, eurcAddress, vaultAddress, currentAllowance, writeContractAsync, refetchAllowance]);
 
   return {
     deposit,
@@ -152,6 +131,6 @@ export function useYoDeposit() {
     error,
     reset,
     txHash,
-    isSupported: !!vaultAddress && !!gatewayAddress,
+    isSupported: !!vaultAddress,
   };
 }
