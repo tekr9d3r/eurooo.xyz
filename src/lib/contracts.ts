@@ -27,7 +27,7 @@ export const AAVE_AEURC_ADDRESSES = {
   8453: '0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB' as const,
 } as const;
 
-// ERC20 ABI (minimal for balanceOf and decimals)
+// ERC20 ABI (includes approve for deposits)
 export const ERC20_ABI = [
   {
     inputs: [{ name: 'account', type: 'address' }],
@@ -48,6 +48,53 @@ export const ERC20_ABI = [
     name: 'totalSupply',
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'spender', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    name: 'approve',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' },
+    ],
+    name: 'allowance',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+// Aave V3 Pool ABI (for supply)
+export const AAVE_V3_POOL_ABI = [
+  {
+    inputs: [
+      { name: 'asset', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'onBehalfOf', type: 'address' },
+      { name: 'referralCode', type: 'uint16' },
+    ],
+    name: 'supply',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'asset', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'to', type: 'address' },
+    ],
+    name: 'withdraw',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
 ] as const;
