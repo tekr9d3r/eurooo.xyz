@@ -1,8 +1,5 @@
 import { Header } from '@/components/Header';
 import { Dashboard } from '@/components/Dashboard';
-import { useAccount } from 'wagmi';
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 const AppPage = () => {
   return (
