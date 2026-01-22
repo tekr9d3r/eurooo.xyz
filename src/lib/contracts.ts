@@ -24,7 +24,8 @@ export const AAVE_V3_POOL_DATA_PROVIDER = {
 // aEURC token addresses (receipt tokens for Aave deposits)
 export const AAVE_AEURC_ADDRESSES = {
   1: '0x8437d7C167dFB82ED4Cb79CD44B7a32A1e8C2e88' as const,
-  8453: '0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB' as const,
+  // aBasEURC on Base - verified from Aave app
+  8453: '0x90da57e0a6c0d166bf15764e03b83745dc90025b' as const,
 } as const;
 
 // ERC20 ABI (includes approve for deposits)
