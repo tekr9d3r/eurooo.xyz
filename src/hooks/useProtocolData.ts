@@ -25,7 +25,7 @@ function formatTVL(tvl: number): string {
 }
 
 export function useProtocolData() {
-  const { balance: eurcBalance, isLoading: isLoadingEurc } = useEURCBalance();
+  const { balance: eurcBalance, isLoading: isLoadingEurc, refetch: refetchEurc } = useEURCBalance();
   const aaveData = useAaveData();
 
   // Real data from Aave
@@ -78,11 +78,17 @@ export function useProtocolData() {
     ? protocols.reduce((sum, p) => sum + (p.apy * p.userDeposit), 0) / totalDeposits
     : protocols.find(p => p.apy > 0)?.apy || 0;
 
+  const refetch = () => {
+    refetchEurc();
+    aaveData.refetch();
+  };
+
   return {
     protocols,
     eurcBalance,
     totalDeposits,
     averageApy: weightedApy,
     isLoading: isLoadingEurc || protocols.some(p => p.isLoading),
+    refetch,
   };
 }

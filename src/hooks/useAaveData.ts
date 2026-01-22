@@ -18,7 +18,7 @@ export function useAaveData() {
   const aEurcAddress = AAVE_AEURC_ADDRESSES[chainId as keyof typeof AAVE_AEURC_ADDRESSES];
 
   // Get reserve data (includes liquidity rate for APY)
-  const { data: reserveData, isLoading: isLoadingReserve } = useReadContract({
+  const { data: reserveData, isLoading: isLoadingReserve, refetch: refetchReserve } = useReadContract({
     address: poolDataProvider,
     abi: AAVE_POOL_DATA_PROVIDER_ABI,
     functionName: 'getReserveData',
@@ -30,7 +30,7 @@ export function useAaveData() {
   });
 
   // Get user's aEURC balance (represents their deposit in Aave)
-  const { data: userATokenBalance, isLoading: isLoadingUserBalance } = useReadContract({
+  const { data: userATokenBalance, isLoading: isLoadingUserBalance, refetch: refetchBalance } = useReadContract({
     address: aEurcAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -42,7 +42,7 @@ export function useAaveData() {
   });
 
   // Get total aEURC supply (TVL proxy)
-  const { data: totalATokenSupply, isLoading: isLoadingTVL } = useReadContract({
+  const { data: totalATokenSupply, isLoading: isLoadingTVL, refetch: refetchTVL } = useReadContract({
     address: aEurcAddress,
     abi: ERC20_ABI,
     functionName: 'totalSupply',
@@ -63,10 +63,17 @@ export function useAaveData() {
   // Format TVL
   const tvl = totalATokenSupply ? Number(formatUnits(totalATokenSupply, 6)) : 0;
 
+  const refetch = () => {
+    refetchReserve();
+    refetchBalance();
+    refetchTVL();
+  };
+
   return {
     apy,
     userDeposit,
     tvl,
     isLoading: isLoadingReserve || isLoadingUserBalance || isLoadingTVL,
+    refetch,
   };
 }

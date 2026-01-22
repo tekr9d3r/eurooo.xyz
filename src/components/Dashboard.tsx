@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { ProtocolCard } from './ProtocolCard';
 import { YieldCounter } from './YieldCounter';
 import { ChainSelector } from './ChainSelector';
 import { DepositModal } from './DepositModal';
+import { WithdrawModal } from './WithdrawModal';
+import { TransactionHistory } from './TransactionHistory';
 import { useToast } from '@/hooks/use-toast';
 import { useProtocolData, ProtocolData } from '@/hooks/useProtocolData';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,9 +15,10 @@ export function Dashboard() {
   const { toast } = useToast();
   const [selectedChain, setSelectedChain] = useState<string>('all');
   const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [selectedProtocol, setSelectedProtocol] = useState<ProtocolData | null>(null);
   
-  const { protocols, totalDeposits, averageApy, eurcBalance, isLoading } = useProtocolData();
+  const { protocols, totalDeposits, averageApy, eurcBalance, isLoading, refetch } = useProtocolData();
 
   const filteredProtocols = selectedChain === 'all'
     ? protocols
@@ -29,21 +32,25 @@ export function Dashboard() {
   };
 
   const handleWithdraw = (protocol: ProtocolData) => {
-    toast({
-      title: 'Withdraw initiated',
-      description: `Withdrawing from ${protocol.name}...`,
-    });
+    setSelectedProtocol(protocol);
+    setWithdrawModalOpen(true);
   };
 
-  const handleDepositConfirm = (amount: number) => {
-    if (selectedProtocol) {
-      toast({
-        title: 'Deposit transaction',
-        description: `Please confirm the transaction in your wallet to deposit €${amount} into ${selectedProtocol.name}`,
-      });
-    }
-    setDepositModalOpen(false);
-  };
+  const handleDepositConfirm = useCallback(() => {
+    toast({
+      title: 'Deposit successful',
+      description: 'Your deposit has been confirmed.',
+    });
+    refetch();
+  }, [toast, refetch]);
+
+  const handleWithdrawComplete = useCallback(() => {
+    toast({
+      title: 'Withdrawal successful',
+      description: 'Your withdrawal has been confirmed.',
+    });
+    refetch();
+  }, [toast, refetch]);
 
   if (!isConnected) {
     return null;
@@ -101,6 +108,11 @@ export function Dashboard() {
                 />
               ))}
             </div>
+
+            {/* Transaction History */}
+            <div className="mt-6">
+              <TransactionHistory />
+            </div>
           </div>
         </div>
       </div>
@@ -111,6 +123,13 @@ export function Dashboard() {
         protocol={selectedProtocol}
         onConfirm={handleDepositConfirm}
         maxAmount={eurcBalance}
+      />
+
+      <WithdrawModal
+        open={withdrawModalOpen}
+        onOpenChange={setWithdrawModalOpen}
+        protocol={selectedProtocol}
+        onComplete={handleWithdrawComplete}
       />
     </section>
   );
