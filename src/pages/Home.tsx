@@ -1,17 +1,25 @@
 import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
-import { Dashboard } from '@/components/Dashboard';
 import { useAccount } from 'wagmi';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
-const Index = () => {
+const Home = () => {
   const { isConnected } = useAccount();
+  const navigate = useNavigate();
+
+  // Redirect to app when wallet is connected
+  useEffect(() => {
+    if (isConnected) {
+      navigate('/app');
+    }
+  }, [isConnected, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main>
-        {!isConnected && <Hero />}
-        <Dashboard />
+        <Hero />
       </main>
       
       {/* Footer */}
@@ -34,4 +42,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Home;
