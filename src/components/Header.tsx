@@ -1,6 +1,7 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Link, useLocation } from 'react-router-dom';
 import { useAccount } from 'wagmi';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Header() {
   const location = useLocation();
@@ -18,16 +19,19 @@ export function Header() {
           <span className="text-xl font-semibold tracking-tight">EURC Yield Hub</span>
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           {/* Navigation */}
           {isConnected && !isAppPage && (
             <Link 
               to="/app" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-2"
             >
               Open App
             </Link>
           )}
+          
+          {/* Theme Toggle */}
+          <ThemeToggle />
           
           {/* RainbowKit Connect Button */}
           <ConnectButton showBalance={false} />
