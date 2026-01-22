@@ -14,7 +14,7 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to={isConnected ? '/app' : '/'} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <img src={euroooLogo} alt="eurooo.xyz" className="h-9 w-9 rounded-lg object-cover" />
+          <img src={euroooLogo} alt="eurooo.xyz" className="h-14 w-14 rounded-lg object-cover" />
           <span className="text-xl font-semibold tracking-tight">eurooo.xyz</span>
         </Link>
 
