@@ -7,6 +7,7 @@ export const EURC_ADDRESSES = {
   8453: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42' as const,
 } as const;
 
+// ============= AAVE V3 =============
 export const AAVE_V3_POOL_ADDRESSES = {
   // Ethereum Mainnet
   1: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2' as const,
@@ -26,6 +27,26 @@ export const AAVE_AEURC_ADDRESSES = {
   1: '0x8437d7C167dFB82ED4Cb79CD44B7a32A1e8C2e88' as const,
   // aBasEURC on Base - verified from Aave app
   8453: '0x90da57e0a6c0d166bf15764e03b83745dc90025b' as const,
+} as const;
+
+// ============= SUMMER.FI (Lazy Summer Protocol) =============
+// ERC-4626 vault for EURC on Base
+export const SUMMER_VAULT_ADDRESSES = {
+  // Only available on Base
+  8453: '0x64db8f51f1bf7064bb5a361a7265f602d348e0f0' as const,
+} as const;
+
+// ============= YO PROTOCOL =============
+// yoEUR vault for EURC (ERC-4626 compatible)
+export const YO_VAULT_ADDRESSES = {
+  // yoEUR on Base
+  8453: '0x50c749ae210d3977adc824ae11f3c7fd10c871e9' as const,
+} as const;
+
+// yoGateway - single entry point for all YO vaults
+export const YO_GATEWAY_ADDRESSES = {
+  1: '0xF1EeE0957267b1A474323Ff9CfF7719E964969FA' as const,
+  8453: '0xF1EeE0957267b1A474323Ff9CfF7719E964969FA' as const,
 } as const;
 
 // ERC20 ABI (includes approve for deposits)
@@ -120,6 +141,125 @@ export const AAVE_POOL_DATA_PROVIDER_ABI = [
       { name: 'lastUpdateTimestamp', type: 'uint40' },
     ],
     stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+// ERC-4626 Vault ABI (used by Summer.fi and YO Protocol)
+export const ERC4626_VAULT_ABI = [
+  // Read functions
+  {
+    inputs: [],
+    name: 'asset',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'totalAssets',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'assets', type: 'uint256' }],
+    name: 'convertToShares',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'shares', type: 'uint256' }],
+    name: 'convertToAssets',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'assets', type: 'uint256' }],
+    name: 'previewDeposit',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'shares', type: 'uint256' }],
+    name: 'previewRedeem',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  // Write functions
+  {
+    inputs: [
+      { name: 'assets', type: 'uint256' },
+      { name: 'receiver', type: 'address' },
+    ],
+    name: 'deposit',
+    outputs: [{ name: 'shares', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'shares', type: 'uint256' },
+      { name: 'receiver', type: 'address' },
+      { name: 'owner', type: 'address' },
+    ],
+    name: 'redeem',
+    outputs: [{ name: 'assets', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;
+
+// YO Gateway ABI (for deposits/withdrawals via gateway)
+export const YO_GATEWAY_ABI = [
+  {
+    inputs: [
+      { name: 'yoVault', type: 'address' },
+      { name: 'assets', type: 'uint256' },
+    ],
+    name: 'quotePreviewDeposit',
+    outputs: [{ name: 'shares', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'yoVault', type: 'address' },
+      { name: 'shares', type: 'uint256' },
+    ],
+    name: 'quotePreviewWithdraw',
+    outputs: [{ name: 'assets', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'yoVault', type: 'address' },
+      { name: 'assets', type: 'uint256' },
+      { name: 'minSharesOut', type: 'uint256' },
+      { name: 'receiver', type: 'address' },
+      { name: 'partnerId', type: 'uint256' },
+    ],
+    name: 'deposit',
+    outputs: [{ name: 'shares', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'yoVault', type: 'address' },
+      { name: 'shares', type: 'uint256' },
+      { name: 'minAssetsOut', type: 'uint256' },
+      { name: 'receiver', type: 'address' },
+      { name: 'partnerId', type: 'uint256' },
+    ],
+    name: 'redeem',
+    outputs: [{ name: 'assets', type: 'uint256' }],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
 ] as const;

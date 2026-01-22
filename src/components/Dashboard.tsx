@@ -42,8 +42,6 @@ export function Dashboard() {
     });
     refetch();
   }, [toast, refetch]);
-
-  const handleWithdrawComplete = useCallback(() => {
     toast({
       title: 'Withdrawal successful',
       description: 'Your withdrawal has been confirmed.',

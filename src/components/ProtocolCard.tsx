@@ -27,6 +27,7 @@ const dotClasses = {
 export function ProtocolCard({ protocol, onDeposit, onWithdraw }: ProtocolCardProps) {
   const hasDeposit = protocol.userDeposit && protocol.userDeposit > 0;
   const hasData = protocol.apy > 0 || protocol.tvl > 0;
+  const isAvailable = protocol.isSupported && hasData;
 
   return (
     <Card className="card-hover border-border/50 bg-card">
@@ -104,9 +105,9 @@ export function ProtocolCard({ protocol, onDeposit, onWithdraw }: ProtocolCardPr
         <Button 
           className="flex-1 bg-primary hover:bg-primary/90"
           onClick={() => onDeposit(protocol)}
-          disabled={!hasData}
+          disabled={!isAvailable}
         >
-          {hasData ? 'Deposit' : 'Coming Soon'}
+          {!protocol.isSupported ? 'Switch to Base' : isAvailable ? 'Deposit' : 'Coming Soon'}
         </Button>
         {hasDeposit && (
           <Button 

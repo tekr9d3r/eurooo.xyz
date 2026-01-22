@@ -12,7 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useChainId } from 'wagmi';
 import { ProtocolData } from '@/hooks/useProtocolData';
-import { useAaveDeposit, DepositStep } from '@/hooks/useAaveDeposit';
+import { useAaveDeposit, DepositStep as AaveDepositStep } from '@/hooks/useAaveDeposit';
+import { useSummerDeposit, SummerDepositStep } from '@/hooks/useSummerDeposit';
+import { useYoDeposit, YoDepositStep } from '@/hooks/useYoDeposit';
 import { AlertCircle, TrendingUp, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
 const BLOCK_EXPLORERS: Record<number, string> = {
@@ -24,17 +26,51 @@ interface DepositModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   protocol: ProtocolData | null;
-  onConfirm: (amount: number) => void;
+  onConfirm: () => void;
   maxAmount?: number;
 }
 
-const stepMessages: Record<DepositStep, string> = {
+type UnifiedStep = 'idle' | 'checking' | 'approving' | 'waitingApproval' | 'depositing' | 'waitingDeposit' | 'success' | 'error';
+
+function mapAaveStep(step: AaveDepositStep): UnifiedStep {
+  const map: Record<AaveDepositStep, UnifiedStep> = {
+    idle: 'idle',
+    checking: 'checking',
+    approving: 'approving',
+    waitingApproval: 'waitingApproval',
+    supplying: 'depositing',
+    waitingSupply: 'waitingDeposit',
+    success: 'success',
+    error: 'error',
+  };
+  return map[step];
+}
+
+function mapSummerStep(step: SummerDepositStep): UnifiedStep {
+  const map: Record<SummerDepositStep, UnifiedStep> = {
+    idle: 'idle',
+    checking: 'checking',
+    approving: 'approving',
+    waitingApproval: 'waitingApproval',
+    depositing: 'depositing',
+    waitingDeposit: 'waitingDeposit',
+    success: 'success',
+    error: 'error',
+  };
+  return map[step];
+}
+
+function mapYoStep(step: YoDepositStep): UnifiedStep {
+  return mapSummerStep(step as SummerDepositStep);
+}
+
+const stepMessages: Record<UnifiedStep, string> = {
   idle: '',
   checking: 'Checking allowance...',
   approving: 'Please approve EURC spending in your wallet...',
   waitingApproval: 'Waiting for approval confirmation...',
-  supplying: 'Please confirm the deposit in your wallet...',
-  waitingSupply: 'Waiting for deposit confirmation...',
+  depositing: 'Please confirm the deposit in your wallet...',
+  waitingDeposit: 'Waiting for deposit confirmation...',
   success: 'Deposit successful!',
   error: 'Transaction failed',
 };
@@ -44,21 +80,38 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const [uiStep, setUiStep] = useState<'input' | 'confirm' | 'processing'>('input');
   const chainId = useChainId();
   
-  const { deposit, step: txStep, error: txError, reset: resetTx, supplyTxHash } = useAaveDeposit();
+  const aaveDeposit = useAaveDeposit();
+  const summerDeposit = useSummerDeposit();
+  const yoDeposit = useYoDeposit();
   
   const blockExplorer = BLOCK_EXPLORERS[chainId] || 'https://etherscan.io';
+
+  // Get the active deposit hook based on protocol
+  const getActiveDeposit = () => {
+    if (!protocol) return null;
+    switch (protocol.id) {
+      case 'aave': return { ...aaveDeposit, step: mapAaveStep(aaveDeposit.step), txHash: aaveDeposit.supplyTxHash };
+      case 'summer': return { ...summerDeposit, step: mapSummerStep(summerDeposit.step) };
+      case 'yo': return { ...yoDeposit, step: mapYoStep(yoDeposit.step) };
+      default: return null;
+    }
+  };
+
+  const activeDeposit = getActiveDeposit();
+  const txStep = activeDeposit?.step || 'idle';
+  const txError = activeDeposit?.error;
+  const txHash = activeDeposit?.txHash;
 
   // Handle transaction completion
   useEffect(() => {
     if (txStep === 'success') {
-      // Delay before closing to show success message
       const timer = setTimeout(() => {
-        onConfirm(parseFloat(amount) || 0);
+        onConfirm();
         handleClose(false);
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [txStep, amount, onConfirm]);
+  }, [txStep, onConfirm]);
 
   if (!protocol) return null;
 
@@ -74,14 +127,21 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     if (uiStep === 'input') {
       setUiStep('confirm');
     } else if (uiStep === 'confirm') {
-      // Only Aave is supported for now
-      if (protocol.id === 'aave') {
-        setUiStep('processing');
-        await deposit(numericAmount);
-      } else {
-        // For other protocols, just call the callback (mock)
-        onConfirm(numericAmount);
-        handleClose(false);
+      setUiStep('processing');
+      
+      switch (protocol.id) {
+        case 'aave':
+          await aaveDeposit.deposit(numericAmount);
+          break;
+        case 'summer':
+          await summerDeposit.deposit(numericAmount);
+          break;
+        case 'yo':
+          await yoDeposit.deposit(numericAmount);
+          break;
+        default:
+          onConfirm();
+          handleClose(false);
       }
     }
   };
@@ -90,13 +150,17 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     if (!isOpen) {
       setAmount('');
       setUiStep('input');
-      resetTx();
+      aaveDeposit.reset();
+      summerDeposit.reset();
+      yoDeposit.reset();
     }
     onOpenChange(isOpen);
   };
 
   const handleRetry = () => {
-    resetTx();
+    aaveDeposit.reset();
+    summerDeposit.reset();
+    yoDeposit.reset();
     setUiStep('confirm');
   };
 
@@ -197,9 +261,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
             <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm">
               <AlertCircle className="h-4 w-4 text-accent-foreground mt-0.5" />
               <p className="text-muted-foreground">
-                {protocol.id === 'aave' 
-                  ? 'This will require 1-2 transactions: approval (if needed) and deposit. Gas fees apply.'
-                  : 'This will require a transaction approval in your wallet. Gas fees apply.'}
+                This will require 1-2 transactions: approval (if needed) and deposit. Gas fees apply.
               </p>
             </div>
           </div>
@@ -221,9 +283,9 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
                 <p className="text-sm text-muted-foreground">
                   €{numericAmount.toLocaleString()} deposited to {protocol.name}
                 </p>
-                {supplyTxHash && (
+                {txHash && (
                   <a 
-                    href={`${blockExplorer}/tx/${supplyTxHash}`}
+                    href={`${blockExplorer}/tx/${txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-primary hover:underline"
@@ -250,10 +312,10 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
           {uiStep === 'input' && (
             <Button 
               onClick={handleConfirm}
-              disabled={numericAmount <= 0 || (maxAmount > 0 && numericAmount > maxAmount)}
+              disabled={numericAmount <= 0 || (maxAmount > 0 && numericAmount > maxAmount) || !protocol.isSupported}
               className="bg-primary hover:bg-primary/90"
             >
-              Continue
+              {protocol.isSupported ? 'Continue' : 'Not available on this chain'}
             </Button>
           )}
           
