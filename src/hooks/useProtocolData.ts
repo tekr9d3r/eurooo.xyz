@@ -1,4 +1,6 @@
 import { useAaveData } from './useAaveData';
+import { useSummerData } from './useSummerData';
+import { useYoData } from './useYoData';
 import { useEURCBalance } from './useEURCBalance';
 
 export interface ProtocolData {
@@ -12,6 +14,7 @@ export interface ProtocolData {
   color: 'aave' | 'summer' | 'yo';
   userDeposit: number;
   isLoading: boolean;
+  isSupported: boolean;
 }
 
 function formatTVL(tvl: number): string {
@@ -27,8 +30,10 @@ function formatTVL(tvl: number): string {
 export function useProtocolData() {
   const { balance: eurcBalance, isLoading: isLoadingEurc, refetch: refetchEurc } = useEURCBalance();
   const aaveData = useAaveData();
+  const summerData = useSummerData();
+  const yoData = useYoData();
 
-  // Real data from Aave
+  // Real data from all protocols
   const protocols: ProtocolData[] = [
     {
       id: 'aave',
@@ -41,33 +46,33 @@ export function useProtocolData() {
       color: 'aave',
       userDeposit: aaveData.userDeposit,
       isLoading: aaveData.isLoading,
+      isSupported: true, // Aave supports both chains
     },
     {
       id: 'summer',
       name: 'Summer.fi',
-      description: 'DeFi management platform',
-      // Summer.fi doesn't have direct on-chain APY reads easily available
-      // In production, you'd fetch from their API or smart contracts
-      apy: 0, // Will show as "Loading..." or use fallback
-      tvl: 0,
-      tvlFormatted: '—',
-      chains: ['Ethereum'],
+      description: 'Lazy yield vault',
+      apy: summerData.apy,
+      tvl: summerData.tvl,
+      tvlFormatted: summerData.tvl > 0 ? formatTVL(summerData.tvl) : '—',
+      chains: ['Base'],
       color: 'summer',
-      userDeposit: 0,
-      isLoading: false,
+      userDeposit: summerData.userDeposit,
+      isLoading: summerData.isLoading,
+      isSupported: summerData.isSupported,
     },
     {
       id: 'yo',
-      name: 'Yo.xyz',
-      description: 'Yield optimizer for staking',
-      // Yo.xyz would need their specific contract integration
-      apy: 0,
-      tvl: 0,
-      tvlFormatted: '—',
-      chains: ['Ethereum', 'Base'],
+      name: 'YO Protocol',
+      description: 'Multi-chain yield optimizer',
+      apy: yoData.apy,
+      tvl: yoData.tvl,
+      tvlFormatted: yoData.tvl > 0 ? formatTVL(yoData.tvl) : '—',
+      chains: ['Base'],
       color: 'yo',
-      userDeposit: 0,
-      isLoading: false,
+      userDeposit: yoData.userDeposit,
+      isLoading: yoData.isLoading,
+      isSupported: yoData.isSupported,
     },
   ];
 
@@ -81,6 +86,8 @@ export function useProtocolData() {
   const refetch = () => {
     refetchEurc();
     aaveData.refetch();
+    summerData.refetch();
+    yoData.refetch();
   };
 
   return {
