@@ -5,20 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 const AppPage = () => {
-  const { isConnected } = useAccount();
-  const navigate = useNavigate();
-
-  // Redirect to home if wallet is disconnected
-  useEffect(() => {
-    if (!isConnected) {
-      navigate('/');
-    }
-  }, [isConnected, navigate]);
-
-  if (!isConnected) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
