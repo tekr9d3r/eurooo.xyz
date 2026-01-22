@@ -15,6 +15,7 @@ export interface ProtocolData {
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
+  logo?: string;
 }
 
 function formatTVL(tvl: number): string {
