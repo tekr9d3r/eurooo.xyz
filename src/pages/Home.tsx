@@ -27,10 +27,12 @@ const Home = () => {
         <div className="container">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-                <span className="text-sm font-bold text-primary-foreground">€</span>
-              </div>
-              <span className="text-sm font-medium">EURC Yield Hub</span>
+              <img 
+                src="https://ifeyhwfcvgxkiwatorje.supabase.co/storage/v1/object/public/images/logo%20random.png" 
+                alt="eurooo.xyz" 
+                className="h-7 w-7 rounded-md object-cover" 
+              />
+              <span className="text-sm font-medium">eurooo.xyz</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Built for Europeans. Your keys, your coins.
