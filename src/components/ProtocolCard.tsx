@@ -1,24 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowUpRight, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-export interface Protocol {
-  id: string;
-  name: string;
-  description: string;
-  apy: number;
-  tvl: string;
-  chains: string[];
-  color: 'aave' | 'summer' | 'yo';
-  userDeposit?: number;
-}
+import { ProtocolData } from '@/hooks/useProtocolData';
 
 interface ProtocolCardProps {
-  protocol: Protocol;
-  onDeposit: (protocol: Protocol) => void;
-  onWithdraw: (protocol: Protocol) => void;
+  protocol: ProtocolData;
+  onDeposit: (protocol: ProtocolData) => void;
+  onWithdraw: (protocol: ProtocolData) => void;
 }
 
 const colorClasses = {
@@ -35,6 +26,7 @@ const dotClasses = {
 
 export function ProtocolCard({ protocol, onDeposit, onWithdraw }: ProtocolCardProps) {
   const hasDeposit = protocol.userDeposit && protocol.userDeposit > 0;
+  const hasData = protocol.apy > 0 || protocol.tvl > 0;
 
   return (
     <Card className="card-hover border-border/50 bg-card">
@@ -64,14 +56,24 @@ export function ProtocolCard({ protocol, onDeposit, onWithdraw }: ProtocolCardPr
         <div className="flex items-center justify-between rounded-lg bg-secondary/50 p-4">
           <div>
             <p className="text-sm text-muted-foreground">Current APY</p>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-success">{protocol.apy.toFixed(2)}%</span>
-              <TrendingUp className="h-4 w-4 text-success" />
-            </div>
+            {protocol.isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : hasData ? (
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-success">{protocol.apy.toFixed(2)}%</span>
+                <TrendingUp className="h-4 w-4 text-success" />
+              </div>
+            ) : (
+              <span className="text-lg text-muted-foreground">Coming soon</span>
+            )}
           </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Total Deposited</p>
-            <span className="text-lg font-semibold">{protocol.tvl}</span>
+            {protocol.isLoading ? (
+              <Skeleton className="h-6 w-16" />
+            ) : (
+              <span className="text-lg font-semibold">{protocol.tvlFormatted}</span>
+            )}
           </div>
         </div>
 
@@ -79,7 +81,9 @@ export function ProtocolCard({ protocol, onDeposit, onWithdraw }: ProtocolCardPr
         {hasDeposit && (
           <div className="rounded-lg border border-success/20 bg-success/5 p-4">
             <p className="text-sm text-muted-foreground">Your deposit</p>
-            <span className="text-xl font-bold">€{protocol.userDeposit?.toLocaleString()}</span>
+            <span className="text-xl font-bold">
+              €{protocol.userDeposit.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+            </span>
           </div>
         )}
 
@@ -100,8 +104,9 @@ export function ProtocolCard({ protocol, onDeposit, onWithdraw }: ProtocolCardPr
         <Button 
           className="flex-1 bg-primary hover:bg-primary/90"
           onClick={() => onDeposit(protocol)}
+          disabled={!hasData}
         >
-          Deposit
+          {hasData ? 'Deposit' : 'Coming Soon'}
         </Button>
         {hasDeposit && (
           <Button 
@@ -116,3 +121,6 @@ export function ProtocolCard({ protocol, onDeposit, onWithdraw }: ProtocolCardPr
     </Card>
   );
 }
+
+// Re-export type for backward compatibility
+export type Protocol = ProtocolData;

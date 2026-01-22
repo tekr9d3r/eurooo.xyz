@@ -10,17 +10,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Protocol } from './ProtocolCard';
+import { ProtocolData } from '@/hooks/useProtocolData';
 import { AlertCircle, TrendingUp } from 'lucide-react';
 
 interface DepositModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  protocol: Protocol | null;
+  protocol: ProtocolData | null;
   onConfirm: (amount: number) => void;
+  maxAmount?: number;
 }
 
-export function DepositModal({ open, onOpenChange, protocol, onConfirm }: DepositModalProps) {
+export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmount = 0 }: DepositModalProps) {
   const [amount, setAmount] = useState('');
   const [step, setStep] = useState<'input' | 'confirm'>('input');
 
@@ -29,6 +30,10 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm }: Deposi
   const numericAmount = parseFloat(amount) || 0;
   const dailyYield = (numericAmount * (protocol.apy / 100)) / 365;
   const monthlyYield = dailyYield * 30;
+
+  const handleMax = () => {
+    setAmount(maxAmount.toString());
+  };
 
   const handleConfirm = () => {
     if (step === 'input') {
@@ -65,7 +70,18 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm }: Deposi
         {step === 'input' ? (
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount (EURC)</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="amount">Amount (EURC)</Label>
+                {maxAmount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMax}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Max: €{maxAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
                 <Input
@@ -75,8 +91,12 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm }: Deposi
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="pl-7"
+                  max={maxAmount}
                 />
               </div>
+              {numericAmount > maxAmount && maxAmount > 0 && (
+                <p className="text-xs text-destructive">Amount exceeds your balance</p>
+              )}
             </div>
 
             {numericAmount > 0 && (
@@ -137,7 +157,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm }: Deposi
           )}
           <Button 
             onClick={handleConfirm}
-            disabled={numericAmount <= 0}
+            disabled={numericAmount <= 0 || (maxAmount > 0 && numericAmount > maxAmount)}
             className="bg-primary hover:bg-primary/90"
           >
             {step === 'input' ? 'Continue' : 'Confirm Deposit'}
