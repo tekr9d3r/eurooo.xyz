@@ -30,7 +30,7 @@ export function Header() {
           )}
           
           {/* RainbowKit Connect Button */}
-          <ConnectButton />
+          <ConnectButton showBalance={false} />
         </div>
       </div>
     </header>
