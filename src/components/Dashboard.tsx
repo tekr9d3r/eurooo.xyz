@@ -1,13 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import { ProtocolCard } from './ProtocolCard';
-import { YieldCounter } from './YieldCounter';
+import { PortfolioHeader } from './PortfolioHeader';
+import { ProtocolTable } from './ProtocolTable';
 import { ChainSelector } from './ChainSelector';
 import { DepositModal } from './DepositModal';
 import { WithdrawModal } from './WithdrawModal';
 import { useToast } from '@/hooks/use-toast';
 import { useProtocolData, ProtocolData } from '@/hooks/useProtocolData';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export function Dashboard() {
   const { isConnected } = useAccount();
@@ -51,60 +50,29 @@ export function Dashboard() {
     refetch();
   }, [toast, refetch]);
 
-
   return (
     <section className="py-12">
       <div className="container">
-        {/* Wallet Balance Banner */}
-        <div className="mb-8 rounded-xl border border-border/50 bg-card p-4">
+        {/* Portfolio Summary Header */}
+        <PortfolioHeader
+          eurcBalance={eurcBalance}
+          totalDeposits={totalDeposits}
+          averageApy={averageApy}
+          isLoading={isLoading}
+        />
+
+        {/* Protocol Table Section */}
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Your EURC Wallet Balance</p>
-              {isLoading ? (
-                <Skeleton className="h-8 w-32" />
-              ) : (
-                <span className="text-2xl font-bold">
-                  €{eurcBalance.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-              )}
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Available to deposit</p>
-              {isLoading ? (
-                <Skeleton className="h-6 w-24" />
-              ) : (
-                <span className="text-lg font-semibold text-success">
-                  €{eurcBalance.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Yield Counter - Sidebar */}
-          <div className="lg:col-span-1">
-            <YieldCounter totalDeposit={totalDeposits} averageApy={averageApy} isLoading={isLoading} />
+            <h2 className="text-2xl font-bold">Yield Opportunities</h2>
+            <ChainSelector value={selectedChain} onChange={setSelectedChain} />
           </div>
 
-          {/* Protocol Cards */}
-          <div className="lg:col-span-2">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Yield Opportunities</h2>
-              <ChainSelector value={selectedChain} onChange={setSelectedChain} />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-              {filteredProtocols.map((protocol) => (
-                <ProtocolCard
-                  key={protocol.id}
-                  protocol={protocol}
-                  onDeposit={handleDeposit}
-                  onWithdraw={handleWithdraw}
-                />
-              ))}
-            </div>
-          </div>
+          <ProtocolTable
+            protocols={filteredProtocols}
+            onDeposit={handleDeposit}
+            onWithdraw={handleWithdraw}
+          />
         </div>
       </div>
 
