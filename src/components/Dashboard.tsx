@@ -5,7 +5,6 @@ import { YieldCounter } from './YieldCounter';
 import { ChainSelector } from './ChainSelector';
 import { DepositModal } from './DepositModal';
 import { WithdrawModal } from './WithdrawModal';
-import { TransactionHistory } from './TransactionHistory';
 import { useToast } from '@/hooks/use-toast';
 import { useProtocolData, ProtocolData } from '@/hooks/useProtocolData';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -107,11 +106,6 @@ export function Dashboard() {
                   onWithdraw={handleWithdraw}
                 />
               ))}
-            </div>
-
-            {/* Transaction History */}
-            <div className="mt-6">
-              <TransactionHistory />
             </div>
           </div>
         </div>
