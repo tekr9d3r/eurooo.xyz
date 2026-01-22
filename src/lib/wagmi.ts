@@ -1,20 +1,13 @@
-import { http, createConfig } from 'wagmi';
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { mainnet, base } from 'wagmi/chains';
-import { injected, walletConnect } from 'wagmi/connectors';
 
 // WalletConnect project ID - users should replace with their own
 const projectId = 'YOUR_WALLETCONNECT_PROJECT_ID';
 
-export const config = createConfig({
+export const config = getDefaultConfig({
+  appName: 'EURC Yield Hub',
+  projectId,
   chains: [mainnet, base],
-  connectors: [
-    injected(),
-    walletConnect({ projectId }),
-  ],
-  transports: {
-    [mainnet.id]: http(),
-    [base.id]: http(),
-  },
 });
 
 declare module 'wagmi' {
