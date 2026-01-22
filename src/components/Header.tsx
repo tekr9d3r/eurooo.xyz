@@ -2,7 +2,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Link, useLocation } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import { ThemeToggle } from './ThemeToggle';
-import euroooLogo from '@/assets/eurooo-logo.png';
+const euroooLogo = "https://ifeyhwfcvgxkiwatorje.supabase.co/storage/v1/object/public/images/logo%20random.png";
 
 export function Header() {
   const location = useLocation();
