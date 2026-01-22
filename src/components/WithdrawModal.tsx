@@ -12,59 +12,53 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useChainId } from 'wagmi';
 import { ProtocolData } from '@/hooks/useProtocolData';
-import { useAaveDeposit, DepositStep } from '@/hooks/useAaveDeposit';
-import { AlertCircle, TrendingUp, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { useAaveWithdraw, WithdrawStep } from '@/hooks/useAaveWithdraw';
+import { AlertCircle, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+
+interface WithdrawModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  protocol: ProtocolData | null;
+  onComplete: () => void;
+}
+
+const stepMessages: Record<WithdrawStep, string> = {
+  idle: '',
+  withdrawing: 'Please confirm the withdrawal in your wallet...',
+  waitingWithdraw: 'Waiting for withdrawal confirmation...',
+  success: 'Withdrawal successful!',
+  error: 'Transaction failed',
+};
 
 const BLOCK_EXPLORERS: Record<number, string> = {
   1: 'https://etherscan.io',
   8453: 'https://basescan.org',
 };
 
-interface DepositModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  protocol: ProtocolData | null;
-  onConfirm: (amount: number) => void;
-  maxAmount?: number;
-}
-
-const stepMessages: Record<DepositStep, string> = {
-  idle: '',
-  checking: 'Checking allowance...',
-  approving: 'Please approve EURC spending in your wallet...',
-  waitingApproval: 'Waiting for approval confirmation...',
-  supplying: 'Please confirm the deposit in your wallet...',
-  waitingSupply: 'Waiting for deposit confirmation...',
-  success: 'Deposit successful!',
-  error: 'Transaction failed',
-};
-
-export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmount = 0 }: DepositModalProps) {
+export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: WithdrawModalProps) {
   const [amount, setAmount] = useState('');
   const [uiStep, setUiStep] = useState<'input' | 'confirm' | 'processing'>('input');
   const chainId = useChainId();
   
-  const { deposit, step: txStep, error: txError, reset: resetTx, supplyTxHash } = useAaveDeposit();
-  
+  const { withdraw, step: txStep, error: txError, reset: resetTx, withdrawTxHash } = useAaveWithdraw();
+
   const blockExplorer = BLOCK_EXPLORERS[chainId] || 'https://etherscan.io';
 
   // Handle transaction completion
   useEffect(() => {
     if (txStep === 'success') {
-      // Delay before closing to show success message
       const timer = setTimeout(() => {
-        onConfirm(parseFloat(amount) || 0);
+        onComplete();
         handleClose(false);
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [txStep, amount, onConfirm]);
+  }, [txStep, onComplete]);
 
   if (!protocol) return null;
 
   const numericAmount = parseFloat(amount) || 0;
-  const dailyYield = (numericAmount * (protocol.apy / 100)) / 365;
-  const monthlyYield = dailyYield * 30;
+  const maxAmount = protocol.userDeposit || 0;
 
   const handleMax = () => {
     setAmount(maxAmount.toString());
@@ -74,13 +68,12 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     if (uiStep === 'input') {
       setUiStep('confirm');
     } else if (uiStep === 'confirm') {
-      // Only Aave is supported for now
       if (protocol.id === 'aave') {
         setUiStep('processing');
-        await deposit(numericAmount);
+        const isWithdrawAll = numericAmount >= maxAmount * 0.999; // Account for rounding
+        await withdraw(numericAmount, isWithdrawAll);
       } else {
-        // For other protocols, just call the callback (mock)
-        onConfirm(numericAmount);
+        onComplete();
         handleClose(false);
       }
     }
@@ -109,13 +102,13 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {uiStep === 'input' && `Deposit to ${protocol.name}`}
-            {uiStep === 'confirm' && 'Confirm Deposit'}
+            {uiStep === 'input' && `Withdraw from ${protocol.name}`}
+            {uiStep === 'confirm' && 'Confirm Withdrawal'}
             {uiStep === 'processing' && (isSuccess ? 'Success!' : isError ? 'Error' : 'Processing...')}
           </DialogTitle>
           <DialogDescription>
-            {uiStep === 'input' && 'Enter the amount of EURC you want to deposit'}
-            {uiStep === 'confirm' && 'Please review your deposit details'}
+            {uiStep === 'input' && 'Enter the amount you want to withdraw'}
+            {uiStep === 'confirm' && 'Please review your withdrawal details'}
             {uiStep === 'processing' && stepMessages[txStep]}
           </DialogDescription>
         </DialogHeader>
@@ -124,7 +117,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="amount">Amount (EURC)</Label>
+                <Label htmlFor="withdraw-amount">Amount (EURC)</Label>
                 {maxAmount > 0 && (
                   <button
                     type="button"
@@ -138,7 +131,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
                 <Input
-                  id="amount"
+                  id="withdraw-amount"
                   type="number"
                   placeholder="0.00"
                   value={amount}
@@ -148,28 +141,16 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
                 />
               </div>
               {numericAmount > maxAmount && maxAmount > 0 && (
-                <p className="text-xs text-destructive">Amount exceeds your balance</p>
+                <p className="text-xs text-destructive">Amount exceeds your deposit</p>
               )}
             </div>
 
-            {numericAmount > 0 && (
-              <div className="rounded-lg bg-secondary/50 p-4 space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <TrendingUp className="h-4 w-4 text-success" />
-                  <span className="text-muted-foreground">Estimated earnings</span>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Per day</p>
-                    <p className="font-semibold text-success">+€{dailyYield.toFixed(4)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Per month</p>
-                    <p className="font-semibold text-success">+€{monthlyYield.toFixed(2)}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            <div className="rounded-lg bg-secondary/50 p-4">
+              <p className="text-sm text-muted-foreground">Your current deposit</p>
+              <p className="text-lg font-semibold">
+                €{maxAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
           </div>
         )}
 
@@ -181,25 +162,21 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
                 <span className="font-medium">{protocol.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Amount</span>
-                <span className="font-medium">€{numericAmount.toLocaleString()}</span>
+                <span className="text-muted-foreground">Withdraw amount</span>
+                <span className="font-medium">€{numericAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Current APY</span>
-                <span className="font-medium text-success">{protocol.apy.toFixed(2)}%</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Est. monthly yield</span>
-                <span className="font-medium text-success">+€{monthlyYield.toFixed(2)}</span>
+                <span className="text-muted-foreground">Remaining deposit</span>
+                <span className="font-medium">
+                  €{Math.max(0, maxAmount - numericAmount).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                </span>
               </div>
             </div>
 
             <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm">
               <AlertCircle className="h-4 w-4 text-accent-foreground mt-0.5" />
               <p className="text-muted-foreground">
-                {protocol.id === 'aave' 
-                  ? 'This will require 1-2 transactions: approval (if needed) and deposit. Gas fees apply.'
-                  : 'This will require a transaction approval in your wallet. Gas fees apply.'}
+                This will require a transaction in your wallet. Gas fees apply.
               </p>
             </div>
           </div>
@@ -217,13 +194,13 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
             {isSuccess && (
               <>
                 <CheckCircle2 className="h-12 w-12 text-success" />
-                <p className="text-center font-medium">Deposit successful!</p>
+                <p className="text-center font-medium">Withdrawal successful!</p>
                 <p className="text-sm text-muted-foreground">
-                  €{numericAmount.toLocaleString()} deposited to {protocol.name}
+                  €{numericAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })} withdrawn from {protocol.name}
                 </p>
-                {supplyTxHash && (
+                {withdrawTxHash && (
                   <a 
-                    href={`${blockExplorer}/tx/${supplyTxHash}`}
+                    href={`${blockExplorer}/tx/${withdrawTxHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-primary hover:underline"
@@ -266,7 +243,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
                 onClick={handleConfirm}
                 className="bg-primary hover:bg-primary/90"
               >
-                Confirm Deposit
+                Confirm Withdrawal
               </Button>
             </>
           )}
