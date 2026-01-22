@@ -13,8 +13,8 @@ export function useYoData() {
   const vaultAddress = YO_VAULT_ADDRESSES[chainId as keyof typeof YO_VAULT_ADDRESSES];
   const isSupported = !!vaultAddress;
 
-  // Get total assets (TVL)
-  const { data: totalAssets, isLoading: isLoadingTVL, refetch: refetchTVL } = useReadContract({
+  // Get total assets (TVL) - this is the total EURC in the vault
+  const { data: totalAssets, isLoading: isLoadingTVL, refetch: refetchTVL, error: tvlError } = useReadContract({
     address: vaultAddress,
     abi: ERC4626_VAULT_ABI,
     functionName: 'totalAssets',
@@ -49,8 +49,19 @@ export function useYoData() {
   });
 
   // YO Protocol shows ~7% APY on their homepage for yoEUR
-  // In production, fetch from their API or calculate from on-chain data
   const estimatedApy = 5.2;
+
+  // Debug logging
+  console.log('[YO Data]', {
+    chainId,
+    vaultAddress,
+    isSupported,
+    totalAssets: totalAssets?.toString(),
+    tvlError: tvlError?.message,
+    userShares: userShares?.toString(),
+    userAssets: userAssets?.toString(),
+    isLoadingTVL,
+  });
 
   // Format values (EURC has 6 decimals)
   const tvl = totalAssets ? Number(formatUnits(totalAssets, 6)) : 0;
@@ -63,7 +74,7 @@ export function useYoData() {
   };
 
   return {
-    apy: estimatedApy,
+    apy: isSupported ? estimatedApy : 0, // Only show APY if on supported chain
     tvl,
     userDeposit,
     userShares: userShares || 0n,
