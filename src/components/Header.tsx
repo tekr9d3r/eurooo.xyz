@@ -2,6 +2,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Link, useLocation } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import { ThemeToggle } from './ThemeToggle';
+import euroooLogo from '@/assets/eurooo-logo.png';
 
 export function Header() {
   const location = useLocation();
@@ -13,10 +14,8 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to={isConnected ? '/app' : '/'} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">€</span>
-          </div>
-          <span className="text-xl font-semibold tracking-tight">EURC Yield Hub</span>
+          <img src={euroooLogo} alt="eurooo.xyz" className="h-9 w-9 rounded-lg object-cover" />
+          <span className="text-xl font-semibold tracking-tight">eurooo.xyz</span>
         </Link>
 
         <div className="flex items-center gap-2">

@@ -38,7 +38,7 @@ export function Hero() {
 
           {/* Subheadline */}
           <p className="mb-8 text-lg text-muted-foreground sm:text-xl">
-            Compare and deposit your EURC stablecoins across trusted protocols. 
+            Compare and deposit your EURC stablecoins across trusted protocols with eurooo.xyz. 
             Simple, transparent, and built for Europeans.
           </p>
 
