@@ -51,9 +51,6 @@ export function Dashboard() {
     refetch();
   }, [toast, refetch]);
 
-  if (!isConnected) {
-    return null;
-  }
 
   return (
     <section className="py-12">
