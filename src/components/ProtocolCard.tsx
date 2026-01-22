@@ -6,16 +6,6 @@ import { ArrowUpRight, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProtocolData } from '@/hooks/useProtocolData';
 
-import aaveLogo from '@/assets/aave.png';
-import summerLogo from '@/assets/summer.png';
-import yoLogo from '@/assets/yo.png';
-
-const protocolLogos: Record<string, string> = {
-  aave: aaveLogo,
-  summer: summerLogo,
-  yo: yoLogo,
-};
-
 interface ProtocolCardProps {
   protocol: ProtocolData;
   onDeposit: (protocol: ProtocolData) => void;
@@ -44,8 +34,8 @@ export function ProtocolCard({ protocol, onDeposit, onWithdraw }: ProtocolCardPr
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden', colorClasses[protocol.color])}>
-              <img src={protocolLogos[protocol.color]} alt={protocol.name} className="h-10 w-10 object-cover" />
+            <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg border', colorClasses[protocol.color])}>
+              <span className="text-lg font-bold">{protocol.name.charAt(0)}</span>
             </div>
             <div>
               <h3 className="font-semibold">{protocol.name}</h3>
