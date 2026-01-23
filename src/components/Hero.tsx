@@ -1,4 +1,4 @@
-import { useAccount, useConnect } from 'wagmi';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, TrendingUp, Zap } from 'lucide-react';
 import aaveLogo from '@/assets/aave-logo.png';
@@ -6,15 +6,62 @@ import summerLogo from '@/assets/summer-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
 
-export function Hero() {
-  const { isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
+// Animated EU-style gold stars component
+function AnimatedStars() {
+  const stars = Array.from({ length: 12 }, (_, i) => i);
+  
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] sm:w-[600px] sm:h-[600px]">
+        {stars.map((i) => {
+          const angle = (i * 30) * (Math.PI / 180);
+          const radius = 42; // percentage from center
+          const x = 50 + radius * Math.cos(angle - Math.PI / 2);
+          const y = 50 + radius * Math.sin(angle - Math.PI / 2);
+          
+          return (
+            <div
+              key={i}
+              className="absolute w-3 h-3 sm:w-4 sm:h-4"
+              style={{
+                left: `${x}%`,
+                top: `${y}%`,
+                transform: 'translate(-50%, -50%)',
+                animation: `orbit 20s linear infinite`,
+                animationDelay: `${i * -1.67}s`,
+              }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="hsl(var(--accent))"
+                className="w-full h-full drop-shadow-[0_0_6px_hsl(var(--accent)/0.6)]"
+              >
+                <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6.3-4.6-6.3 4.6 2.3-7-6-4.6h7.6z" />
+              </svg>
+            </div>
+          );
+        })}
+      </div>
+      
+      <style>{`
+        @keyframes orbit {
+          from {
+            transform: translate(-50%, -50%) rotate(0deg) translateX(0) rotate(0deg);
+          }
+          to {
+            transform: translate(-50%, -50%) rotate(360deg) translateX(0) rotate(-360deg);
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
 
-  const handleConnect = () => {
-    const injected = connectors.find((c) => c.id === 'injected');
-    if (injected) {
-      connect({ connector: injected });
-    }
+export function Hero() {
+  const navigate = useNavigate();
+
+  const handleStartEarning = () => {
+    navigate('/app');
   };
 
   const protocols = [
@@ -42,11 +89,14 @@ export function Hero() {
             <span className="font-semibold text-success">8.5%</span>
           </div>
 
-          {/* Headline */}
-          <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl opacity-0 animate-fade-in-up animation-delay-100">
-            Grow Your Euros{' '}
-            <span className="text-primary">in DeFi</span>
-          </h1>
+          {/* Headline with animated stars */}
+          <div className="relative mb-6">
+            <AnimatedStars />
+            <h1 className="relative z-10 text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl opacity-0 animate-fade-in-up animation-delay-100">
+              Grow Your Euros{' '}
+              <span className="text-primary">in DeFi</span>
+            </h1>
+          </div>
 
           {/* Subheadline */}
           <p className="mb-10 text-lg text-muted-foreground sm:text-xl lg:text-2xl opacity-0 animate-fade-in-up animation-delay-200">
@@ -55,23 +105,21 @@ export function Hero() {
           </p>
 
           {/* CTA */}
-          {!isConnected && (
-            <div className="opacity-0 animate-fade-in animation-delay-300">
-              <Button
-                size="lg"
-                onClick={handleConnect}
-                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
-              >
-                Start Earning
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          <div className="opacity-0 animate-fade-in animation-delay-300">
+            <Button
+              size="lg"
+              onClick={handleStartEarning}
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
+            >
+              Start Earning
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
 
           {/* Protocol logos section */}
           <div className="mt-20 opacity-0 animate-fade-in animation-delay-400">
             <p className="text-xs uppercase tracking-widest text-muted-foreground mb-6">
-              Powered by leading protocols
+              Supported protocols
             </p>
             <div className="flex items-center justify-center gap-8 sm:gap-12">
               {protocols.map((protocol) => (
