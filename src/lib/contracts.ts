@@ -49,6 +49,19 @@ export const YO_GATEWAY_ADDRESSES = {
   8453: '0xF1EeE0957267b1A474323Ff9CfF7719E964969FA' as const,
 } as const;
 
+// ============= MORPHO =============
+// Morpho ERC-4626 vaults for EURC on Ethereum
+export const MORPHO_VAULT_ADDRESSES = {
+  // Gauntlet EURC Core vault
+  'morpho-gauntlet': {
+    1: '0x2ed10624315b74a78f11FAbedAa1A228c198aEfB' as const,
+  },
+  // EURCV Prime vault (MEV Capital)
+  'morpho-prime': {
+    1: '0x34eCe536d2ae03192B06c0A67030D1Faf4c0Ba43' as const,
+  },
+} as const;
+
 // ERC20 ABI (includes approve for deposits)
 export const ERC20_ABI = [
   {

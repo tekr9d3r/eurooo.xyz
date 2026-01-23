@@ -1,6 +1,7 @@
 import { useAaveData } from './useAaveData';
 import { useSummerData } from './useSummerData';
 import { useYoData } from './useYoData';
+import { useMorphoData } from './useMorphoData';
 import { useEURCBalance } from './useEURCBalance';
 
 export interface ProtocolData {
@@ -11,7 +12,7 @@ export interface ProtocolData {
   tvl: number;
   tvlFormatted: string;
   chains: string[];
-  color: 'aave' | 'summer' | 'yo';
+  color: 'aave' | 'summer' | 'yo' | 'morpho';
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
@@ -33,6 +34,8 @@ export function useProtocolData() {
   const aaveData = useAaveData();
   const summerData = useSummerData();
   const yoData = useYoData();
+  const morphoGauntletData = useMorphoData('morpho-gauntlet');
+  const morphoPrimeData = useMorphoData('morpho-prime');
 
   // Real data from all protocols
   const protocols: ProtocolData[] = [
@@ -75,6 +78,32 @@ export function useProtocolData() {
       isLoading: yoData.isLoading,
       isSupported: yoData.isSupported,
     },
+    {
+      id: 'morpho-gauntlet',
+      name: 'Gauntlet EURC Core',
+      description: 'Morpho vault by Gauntlet',
+      apy: morphoGauntletData.apy,
+      tvl: morphoGauntletData.tvl,
+      tvlFormatted: morphoGauntletData.tvl > 0 ? formatTVL(morphoGauntletData.tvl) : '—',
+      chains: ['Ethereum'],
+      color: 'morpho',
+      userDeposit: morphoGauntletData.userDeposit,
+      isLoading: morphoGauntletData.isLoading,
+      isSupported: morphoGauntletData.isSupported,
+    },
+    {
+      id: 'morpho-prime',
+      name: 'EURCV Prime',
+      description: 'Morpho vault by MEV Capital',
+      apy: morphoPrimeData.apy,
+      tvl: morphoPrimeData.tvl,
+      tvlFormatted: morphoPrimeData.tvl > 0 ? formatTVL(morphoPrimeData.tvl) : '—',
+      chains: ['Ethereum'],
+      color: 'morpho',
+      userDeposit: morphoPrimeData.userDeposit,
+      isLoading: morphoPrimeData.isLoading,
+      isSupported: morphoPrimeData.isSupported,
+    },
   ];
 
   const totalDeposits = protocols.reduce((sum, p) => sum + p.userDeposit, 0);
@@ -89,6 +118,8 @@ export function useProtocolData() {
     aaveData.refetch();
     summerData.refetch();
     yoData.refetch();
+    morphoGauntletData.refetch();
+    morphoPrimeData.refetch();
   };
 
   return {

@@ -11,8 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useChainId } from 'wagmi';
+import { parseUnits } from 'viem';
 import { ProtocolData } from '@/hooks/useProtocolData';
-import { useAaveWithdraw, WithdrawStep } from '@/hooks/useAaveWithdraw';
+import { useAaveWithdraw, WithdrawStep as AaveWithdrawStep } from '@/hooks/useAaveWithdraw';
+import { useSummerWithdraw, SummerWithdrawStep } from '@/hooks/useSummerWithdraw';
+import { useYoWithdraw, YoWithdrawStep } from '@/hooks/useYoWithdraw';
+import { useMorphoWithdraw, MorphoWithdrawStep } from '@/hooks/useMorphoWithdraw';
 import { AlertCircle, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
 interface WithdrawModalProps {
@@ -22,7 +26,9 @@ interface WithdrawModalProps {
   onComplete: () => void;
 }
 
-const stepMessages: Record<WithdrawStep, string> = {
+type UnifiedStep = 'idle' | 'withdrawing' | 'waitingWithdraw' | 'success' | 'error';
+
+const stepMessages: Record<UnifiedStep, string> = {
   idle: '',
   withdrawing: 'Please confirm the withdrawal in your wallet...',
   waitingWithdraw: 'Waiting for withdrawal confirmation...',
@@ -40,9 +46,52 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
   const [uiStep, setUiStep] = useState<'input' | 'confirm' | 'processing'>('input');
   const chainId = useChainId();
   
-  const { withdraw, step: txStep, error: txError, reset: resetTx, withdrawTxHash } = useAaveWithdraw();
+  const aaveWithdraw = useAaveWithdraw();
+  const summerWithdraw = useSummerWithdraw();
+  const yoWithdraw = useYoWithdraw();
+  const morphoGauntletWithdraw = useMorphoWithdraw('morpho-gauntlet');
+  const morphoPrimeWithdraw = useMorphoWithdraw('morpho-prime');
 
   const blockExplorer = BLOCK_EXPLORERS[chainId] || 'https://etherscan.io';
+
+  // Get the active withdraw hook based on protocol
+  const getActiveWithdraw = () => {
+    if (!protocol) return null;
+    switch (protocol.id) {
+      case 'aave': 
+        return { 
+          ...aaveWithdraw, 
+          step: aaveWithdraw.step as UnifiedStep, 
+          txHash: aaveWithdraw.withdrawTxHash 
+        };
+      case 'summer': 
+        return { 
+          ...summerWithdraw, 
+          step: summerWithdraw.step as UnifiedStep 
+        };
+      case 'yo': 
+        return { 
+          ...yoWithdraw, 
+          step: yoWithdraw.step as UnifiedStep 
+        };
+      case 'morpho-gauntlet': 
+        return { 
+          ...morphoGauntletWithdraw, 
+          step: morphoGauntletWithdraw.step as UnifiedStep 
+        };
+      case 'morpho-prime': 
+        return { 
+          ...morphoPrimeWithdraw, 
+          step: morphoPrimeWithdraw.step as UnifiedStep 
+        };
+      default: return null;
+    }
+  };
+
+  const activeWithdraw = getActiveWithdraw();
+  const txStep = activeWithdraw?.step || 'idle';
+  const txError = activeWithdraw?.error;
+  const txHash = activeWithdraw?.txHash;
 
   // Handle transaction completion
   useEffect(() => {
@@ -68,13 +117,31 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     if (uiStep === 'input') {
       setUiStep('confirm');
     } else if (uiStep === 'confirm') {
-      if (protocol.id === 'aave') {
-        setUiStep('processing');
-        const isWithdrawAll = numericAmount >= maxAmount * 0.999; // Account for rounding
-        await withdraw(numericAmount, isWithdrawAll);
-      } else {
-        onComplete();
-        handleClose(false);
+      setUiStep('processing');
+      const isWithdrawAll = numericAmount >= maxAmount * 0.999; // Account for rounding
+      
+      // Convert amount to shares (simplified - assumes 1:1 for now)
+      const amountInUnits = parseUnits(numericAmount.toString(), 6);
+      
+      switch (protocol.id) {
+        case 'aave':
+          await aaveWithdraw.withdraw(numericAmount, isWithdrawAll);
+          break;
+        case 'summer':
+          await summerWithdraw.withdraw(amountInUnits, isWithdrawAll);
+          break;
+        case 'yo':
+          await yoWithdraw.withdraw(amountInUnits);
+          break;
+        case 'morpho-gauntlet':
+          await morphoGauntletWithdraw.withdraw(amountInUnits);
+          break;
+        case 'morpho-prime':
+          await morphoPrimeWithdraw.withdraw(amountInUnits);
+          break;
+        default:
+          onComplete();
+          handleClose(false);
       }
     }
   };
@@ -83,13 +150,21 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     if (!isOpen) {
       setAmount('');
       setUiStep('input');
-      resetTx();
+      aaveWithdraw.reset();
+      summerWithdraw.reset();
+      yoWithdraw.reset();
+      morphoGauntletWithdraw.reset();
+      morphoPrimeWithdraw.reset();
     }
     onOpenChange(isOpen);
   };
 
   const handleRetry = () => {
-    resetTx();
+    aaveWithdraw.reset();
+    summerWithdraw.reset();
+    yoWithdraw.reset();
+    morphoGauntletWithdraw.reset();
+    morphoPrimeWithdraw.reset();
     setUiStep('confirm');
   };
 
@@ -198,9 +273,9 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
                 <p className="text-sm text-muted-foreground">
                   €{numericAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })} withdrawn from {protocol.name}
                 </p>
-                {withdrawTxHash && (
+                {txHash && (
                   <a 
-                    href={`${blockExplorer}/tx/${withdrawTxHash}`}
+                    href={`${blockExplorer}/tx/${txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-primary hover:underline"
