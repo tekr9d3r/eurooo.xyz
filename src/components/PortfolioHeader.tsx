@@ -57,38 +57,31 @@ export function PortfolioHeader({
           <p className="text-sm text-muted-foreground">Total Balance</p>
         </div>
 
-        {/* Secondary: Yield Projections */}
+        {/* Secondary: Yield Projections & APY - Inline */}
         {hasDeposits && !isLoading && (
-          <div className="flex items-center justify-center gap-8 pt-4">
-            <div className="text-center">
-              <div className="flex items-center gap-2 justify-center">
-                <TrendingUp className="h-4 w-4 text-success" />
-                <span className="text-xl font-semibold text-success">
-                  +€{dailyYield.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Per Day</p>
+          <div className="flex items-center justify-center gap-6 pt-2">
+            <div className="flex items-center gap-1.5">
+              <TrendingUp className="h-4 w-4 text-success" />
+              <span className="text-sm font-medium text-success">
+                +€{dailyYield.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+              </span>
+              <span className="text-xs text-muted-foreground">/day</span>
             </div>
             
-            <div className="h-8 w-px bg-border" />
+            <div className="h-4 w-px bg-border" />
             
-            <div className="text-center">
-              <div className="flex items-center gap-2 justify-center">
-                <TrendingUp className="h-4 w-4 text-success" />
-                <span className="text-xl font-semibold text-success">
-                  +€{yearlyYield.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Per Year</p>
+            <div className="flex items-center gap-1.5">
+              <TrendingUp className="h-4 w-4 text-success" />
+              <span className="text-sm font-medium text-success">
+                +€{yearlyYield.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-xs text-muted-foreground">/year</span>
             </div>
-          </div>
-        )}
-
-        {/* Tertiary: APY Badge */}
-        {hasDeposits && !isLoading && averageApy > 0 && (
-          <div className="pt-2">
-            <Badge variant="secondary" className="text-sm px-3 py-1">
-              📊 {averageApy.toFixed(2)}% APY
+            
+            <div className="h-4 w-px bg-border" />
+            
+            <Badge variant="secondary" className="text-xs px-2 py-0.5">
+              {averageApy.toFixed(2)}% APY
             </Badge>
           </div>
         )}
