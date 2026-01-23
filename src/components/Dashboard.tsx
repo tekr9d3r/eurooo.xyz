@@ -55,7 +55,6 @@ export function Dashboard() {
       <div className="container">
         {/* Portfolio Summary Header */}
         <PortfolioHeader
-          eurcBalance={eurcBalance}
           totalDeposits={totalDeposits}
           averageApy={averageApy}
           isLoading={isLoading}
