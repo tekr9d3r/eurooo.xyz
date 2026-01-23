@@ -169,7 +169,10 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
               <ArrowUpRight className="h-3 w-3" />
             </a>
           </div>
-          <div className="flex gap-1 mt-1">
+          <div className="flex gap-1 mt-1 flex-wrap">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
+              {protocol.stablecoin}
+            </Badge>
             {protocol.chains.map((chain) => (
               <Badge key={chain} variant="secondary" className="text-[10px] px-1.5 py-0">
                 {chain}

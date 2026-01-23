@@ -16,6 +16,7 @@ export interface ProtocolData {
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
+  stablecoin: 'EURC' | 'EURCV';
   logo?: string;
 }
 
@@ -51,6 +52,7 @@ export function useProtocolData() {
       userDeposit: aaveData.userDeposit,
       isLoading: aaveData.isLoading,
       isSupported: true, // Aave supports both chains
+      stablecoin: 'EURC',
     },
     {
       id: 'summer',
@@ -64,6 +66,7 @@ export function useProtocolData() {
       userDeposit: summerData.userDeposit,
       isLoading: summerData.isLoading,
       isSupported: summerData.isSupported,
+      stablecoin: 'EURC',
     },
     {
       id: 'yo',
@@ -77,6 +80,7 @@ export function useProtocolData() {
       userDeposit: yoData.userDeposit,
       isLoading: yoData.isLoading,
       isSupported: yoData.isSupported,
+      stablecoin: 'EURC',
     },
     {
       id: 'morpho-gauntlet',
@@ -90,6 +94,7 @@ export function useProtocolData() {
       userDeposit: morphoGauntletData.userDeposit,
       isLoading: morphoGauntletData.isLoading,
       isSupported: morphoGauntletData.isSupported,
+      stablecoin: 'EURC',
     },
     {
       id: 'morpho-prime',
@@ -103,6 +108,7 @@ export function useProtocolData() {
       userDeposit: morphoPrimeData.userDeposit,
       isLoading: morphoPrimeData.isLoading,
       isSupported: morphoPrimeData.isSupported,
+      stablecoin: 'EURCV',
     },
   ];
 
