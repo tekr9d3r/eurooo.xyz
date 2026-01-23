@@ -16,7 +16,7 @@ export interface ProtocolData {
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
-  stablecoin: 'EURC' | 'EURCV';
+  stablecoin: 'EURC';
   logo?: string;
 }
 
@@ -36,7 +36,6 @@ export function useProtocolData() {
   const summerData = useSummerData();
   const yoData = useYoData();
   const morphoGauntletData = useMorphoData('morpho-gauntlet');
-  const morphoPrimeData = useMorphoData('morpho-prime');
 
   // Real data from all protocols
   const protocols: ProtocolData[] = [
@@ -96,20 +95,6 @@ export function useProtocolData() {
       isSupported: morphoGauntletData.isSupported,
       stablecoin: 'EURC',
     },
-    {
-      id: 'morpho-prime',
-      name: 'EURCV Prime',
-      description: 'Morpho vault by MEV Capital',
-      apy: morphoPrimeData.apy,
-      tvl: morphoPrimeData.tvl,
-      tvlFormatted: morphoPrimeData.tvl > 0 ? formatTVL(morphoPrimeData.tvl) : '—',
-      chains: ['Ethereum'],
-      color: 'morpho',
-      userDeposit: morphoPrimeData.userDeposit,
-      isLoading: morphoPrimeData.isLoading,
-      isSupported: morphoPrimeData.isSupported,
-      stablecoin: 'EURCV',
-    },
   ];
 
   const totalDeposits = protocols.reduce((sum, p) => sum + p.userDeposit, 0);
@@ -125,7 +110,6 @@ export function useProtocolData() {
     summerData.refetch();
     yoData.refetch();
     morphoGauntletData.refetch();
-    morphoPrimeData.refetch();
   };
 
   return {
