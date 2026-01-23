@@ -9,6 +9,7 @@ import { ProtocolData } from '@/hooks/useProtocolData';
 import aaveLogo from '@/assets/aave-logo.png';
 import summerLogo from '@/assets/summer-logo.png';
 import yoLogo from '@/assets/yo-logo.png';
+import morphoLogo from '@/assets/morpho-logo.png';
 
 interface ProtocolTableProps {
   protocols: ProtocolData[];
@@ -23,12 +24,15 @@ const protocolLogos: Record<string, string> = {
   aave: aaveLogo,
   summer: summerLogo,
   yo: yoLogo,
+  'morpho-gauntlet': morphoLogo,
+  'morpho-prime': morphoLogo,
 };
 
 const colorClasses = {
   aave: 'bg-aave/10 border-aave/30',
   summer: 'bg-summer/10 border-summer/30',
   yo: 'bg-yo/10 border-yo/30',
+  morpho: 'bg-blue-500/10 border-blue-500/30',
 };
 
 export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTableProps) {

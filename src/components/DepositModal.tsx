@@ -15,6 +15,8 @@ import { ProtocolData } from '@/hooks/useProtocolData';
 import { useAaveDeposit, DepositStep as AaveDepositStep } from '@/hooks/useAaveDeposit';
 import { useSummerDeposit, SummerDepositStep } from '@/hooks/useSummerDeposit';
 import { useYoDeposit, YoDepositStep } from '@/hooks/useYoDeposit';
+import { useMorphoDeposit, MorphoDepositStep } from '@/hooks/useMorphoDeposit';
+import { MorphoVaultId } from '@/hooks/useMorphoData';
 import { AlertCircle, TrendingUp, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
 const BLOCK_EXPLORERS: Record<number, string> = {
@@ -64,6 +66,10 @@ function mapYoStep(step: YoDepositStep): UnifiedStep {
   return mapSummerStep(step as SummerDepositStep);
 }
 
+function mapMorphoStep(step: MorphoDepositStep): UnifiedStep {
+  return mapSummerStep(step as SummerDepositStep);
+}
+
 const stepMessages: Record<UnifiedStep, string> = {
   idle: '',
   checking: 'Checking allowance...',
@@ -83,6 +89,8 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const aaveDeposit = useAaveDeposit();
   const summerDeposit = useSummerDeposit();
   const yoDeposit = useYoDeposit();
+  const morphoGauntletDeposit = useMorphoDeposit('morpho-gauntlet');
+  const morphoPrimeDeposit = useMorphoDeposit('morpho-prime');
   
   const blockExplorer = BLOCK_EXPLORERS[chainId] || 'https://etherscan.io';
 
@@ -93,6 +101,8 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       case 'aave': return { ...aaveDeposit, step: mapAaveStep(aaveDeposit.step), txHash: aaveDeposit.supplyTxHash };
       case 'summer': return { ...summerDeposit, step: mapSummerStep(summerDeposit.step) };
       case 'yo': return { ...yoDeposit, step: mapYoStep(yoDeposit.step) };
+      case 'morpho-gauntlet': return { ...morphoGauntletDeposit, step: mapMorphoStep(morphoGauntletDeposit.step) };
+      case 'morpho-prime': return { ...morphoPrimeDeposit, step: mapMorphoStep(morphoPrimeDeposit.step) };
       default: return null;
     }
   };
@@ -139,6 +149,12 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
         case 'yo':
           await yoDeposit.deposit(numericAmount);
           break;
+        case 'morpho-gauntlet':
+          await morphoGauntletDeposit.deposit(numericAmount);
+          break;
+        case 'morpho-prime':
+          await morphoPrimeDeposit.deposit(numericAmount);
+          break;
         default:
           onConfirm();
           handleClose(false);
@@ -153,6 +169,8 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       aaveDeposit.reset();
       summerDeposit.reset();
       yoDeposit.reset();
+      morphoGauntletDeposit.reset();
+      morphoPrimeDeposit.reset();
     }
     onOpenChange(isOpen);
   };
@@ -161,6 +179,8 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     aaveDeposit.reset();
     summerDeposit.reset();
     yoDeposit.reset();
+    morphoGauntletDeposit.reset();
+    morphoPrimeDeposit.reset();
     setUiStep('confirm');
   };
 
