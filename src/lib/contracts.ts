@@ -225,6 +225,17 @@ export const ERC4626_VAULT_ABI = [
     stateMutability: 'nonpayable',
     type: 'function',
   },
+  {
+    inputs: [
+      { name: 'assets', type: 'uint256' },
+      { name: 'receiver', type: 'address' },
+      { name: 'owner', type: 'address' },
+    ],
+    name: 'withdraw',
+    outputs: [{ name: 'shares', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 ] as const;
 
 // YO Gateway ABI (for deposits/withdrawals via gateway)

@@ -131,7 +131,8 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
           await summerWithdraw.withdraw(amountInUnits, isWithdrawAll);
           break;
         case 'yo':
-          await yoWithdraw.withdraw(amountInUnits, isWithdrawAll);
+          // For YO we withdraw by assets; if withdrawing all, use the exact max to avoid rounding reverts.
+          await yoWithdraw.withdraw(isWithdrawAll ? parseUnits(maxAmount.toString(), 6) : amountInUnits);
           break;
         case 'morpho-gauntlet':
           await morphoGauntletWithdraw.withdraw(amountInUnits);
