@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { useAccount, useChainId, useWriteContract } from 'wagmi';
-import { maxUint256 } from 'viem';
 import { base } from 'wagmi/chains';
 import {
   YO_VAULT_ADDRESSES,
@@ -26,7 +25,9 @@ export function useYoWithdraw() {
     setTxHash(undefined);
   }, []);
 
-  const withdraw = useCallback(async (shares: bigint, withdrawAll = false) => {
+  // NOTE: UI inputs are in EURC (assets). For YO, use ERC-4626 withdraw(assets)
+  // instead of redeem(shares) to avoid asset/share mismatch reverts.
+  const withdraw = useCallback(async (assets: bigint) => {
     if (!address || !vaultAddress) {
       setError('Wallet not connected or chain not supported');
       setStep('error');
@@ -37,20 +38,17 @@ export function useYoWithdraw() {
       setError(null);
       setStep('withdrawing');
 
-      // Use maxUint256 for full withdrawal to avoid share/asset conversion issues
-      const sharesToRedeem = withdrawAll ? maxUint256 : shares;
-
-      // ERC-4626 redeem: shares -> assets, no approval needed for own shares
-      const redeemTx = await writeContractAsync({
+      // ERC-4626 withdraw: assets -> shares, no approval needed for own shares
+      const withdrawTx = await writeContractAsync({
         address: vaultAddress,
         abi: ERC4626_VAULT_ABI,
-        functionName: 'redeem',
-        args: [sharesToRedeem, address, address],
+        functionName: 'withdraw',
+        args: [assets, address, address],
         account: address,
         chain: base,
       });
 
-      setTxHash(redeemTx);
+      setTxHash(withdrawTx);
       setStep('waitingWithdraw');
 
       await new Promise(resolve => setTimeout(resolve, 5000));
