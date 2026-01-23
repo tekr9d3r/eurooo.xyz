@@ -25,9 +25,13 @@ function AnimatedStars() {
   
   return (
     <div className="absolute inset-0 pointer-events-none">
+      {/* Rotating container for the stars */}
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] sm:w-[600px] sm:h-[600px] transition-transform duration-100"
-        style={{ transform: `translate(-50%, calc(-50% + ${parallaxOffset}px))` }}
+        className="absolute top-1/2 left-1/2 w-[500px] h-[500px] sm:w-[600px] sm:h-[600px]"
+        style={{ 
+          transform: `translate(-50%, calc(-50% + ${parallaxOffset}px))`,
+          animation: 'spin-circle 30s linear infinite',
+        }}
       >
         {stars.map((i) => {
           const angle = (i * 30) * (Math.PI / 180);
@@ -43,8 +47,8 @@ function AnimatedStars() {
                 left: `${x}%`,
                 top: `${y}%`,
                 transform: 'translate(-50%, -50%)',
-                animation: `orbit 20s linear infinite, twinkle ${2 + (i % 3)}s ease-in-out infinite`,
-                animationDelay: `${i * -1.67}s, ${i * 0.3}s`,
+                animation: `counter-spin 30s linear infinite, twinkle ${2 + (i % 3)}s ease-in-out infinite`,
+                animationDelay: `0s, ${i * 0.3}s`,
               }}
             >
               <svg
@@ -60,12 +64,20 @@ function AnimatedStars() {
       </div>
       
       <style>{`
-        @keyframes orbit {
+        @keyframes spin-circle {
           from {
-            transform: translate(-50%, -50%) rotate(0deg) translateX(0) rotate(0deg);
+            transform: translate(-50%, calc(-50%)) rotate(0deg);
           }
           to {
-            transform: translate(-50%, -50%) rotate(360deg) translateX(0) rotate(-360deg);
+            transform: translate(-50%, calc(-50%)) rotate(360deg);
+          }
+        }
+        @keyframes counter-spin {
+          from {
+            transform: translate(-50%, -50%) rotate(0deg);
+          }
+          to {
+            transform: translate(-50%, -50%) rotate(-360deg);
           }
         }
         @keyframes twinkle {
