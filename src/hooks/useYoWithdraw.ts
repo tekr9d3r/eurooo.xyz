@@ -39,14 +39,12 @@ export function useYoWithdraw() {
       setError(null);
       setStep('withdrawing');
 
-      const shares = await publicClient.readContract({
+      const shares = (await publicClient.readContract({
         address: vaultAddress,
         abi: ERC4626_VAULT_ABI,
         functionName: 'convertToShares',
         args: [assets],
-        // Required by current viem typings (EIP-7702 authorization list)
-        authorizationList: [] as any,
-      });
+      } as any)) as bigint;
 
       // ERC-4626 redeem: shares -> assets
       const redeemTx = await writeContractAsync({
