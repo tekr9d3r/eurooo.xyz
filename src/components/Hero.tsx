@@ -1,6 +1,10 @@
 import { useAccount, useConnect } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, TrendingUp, Zap } from 'lucide-react';
+import aaveLogo from '@/assets/aave-logo.png';
+import summerLogo from '@/assets/summer-logo.png';
+import morphoLogo from '@/assets/morpho-logo.svg';
+import yoLogo from '@/assets/yo-logo.png';
 
 export function Hero() {
   const { isConnected } = useAccount();
@@ -13,70 +17,104 @@ export function Hero() {
     }
   };
 
+  const protocols = [
+    { name: 'Aave', logo: aaveLogo },
+    { name: 'Summer.fi', logo: summerLogo },
+    { name: 'Morpho', logo: morphoLogo },
+    { name: 'YO Protocol', logo: yoLogo },
+  ];
+
   return (
-    <section className="relative overflow-hidden py-20 lg:py-32">
-      {/* Subtle EU-inspired background pattern */}
+    <section className="relative overflow-hidden py-24 lg:py-40">
+      {/* Animated background */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/3 via-transparent to-transparent" />
+        <div className="absolute top-20 left-1/4 w-72 h-72 rounded-full bg-primary/5 blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-1/4 w-96 h-96 rounded-full bg-accent/5 blur-3xl animate-float animation-delay-300" />
       </div>
 
       <div className="container">
         <div className="mx-auto max-w-3xl text-center">
           {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-sm">
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-2 text-sm opacity-0 animate-fade-in">
             <span className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
             <span className="text-muted-foreground">Live APY up to</span>
             <span className="font-semibold text-success">8.5%</span>
           </div>
 
           {/* Headline */}
-          <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl opacity-0 animate-fade-in-up animation-delay-100">
             Grow Your Euros{' '}
             <span className="text-primary">in DeFi</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="mb-8 text-lg text-muted-foreground sm:text-xl">
-            Compare and deposit your EURC stablecoins across trusted protocols with eurooo.xyz. 
+          <p className="mb-10 text-lg text-muted-foreground sm:text-xl lg:text-2xl opacity-0 animate-fade-in-up animation-delay-200">
+            Compare and deposit your EURC stablecoins across trusted protocols. 
             Simple, transparent, and built for Europeans.
           </p>
 
           {/* CTA */}
           {!isConnected && (
-            <Button
-              size="lg"
-              onClick={handleConnect}
-              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25"
-            >
-              Start Earning
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <div className="opacity-0 animate-fade-in animation-delay-300">
+              <Button
+                size="lg"
+                onClick={handleConnect}
+                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
+              >
+                Start Earning
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           )}
 
+          {/* Protocol logos section */}
+          <div className="mt-20 opacity-0 animate-fade-in animation-delay-400">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-6">
+              Powered by leading protocols
+            </p>
+            <div className="flex items-center justify-center gap-8 sm:gap-12">
+              {protocols.map((protocol) => (
+                <div
+                  key={protocol.name}
+                  className="group relative"
+                >
+                  <img
+                    src={protocol.logo}
+                    alt={protocol.name}
+                    className="h-8 w-8 sm:h-10 sm:w-10 object-contain protocol-logo"
+                  />
+                  <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {protocol.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Trust indicators */}
-          <div className="mt-16 grid gap-8 sm:grid-cols-3">
-            <div className="flex flex-col items-center gap-2 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Shield className="h-6 w-6 text-primary" />
+          <div className="mt-24 grid gap-6 sm:grid-cols-3 opacity-0 animate-fade-in-up animation-delay-500">
+            <div className="group flex flex-col items-center gap-3 text-center p-6 rounded-2xl transition-all duration-300 hover:bg-secondary/50 hover:shadow-lg">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 transition-transform duration-300 group-hover:scale-110">
+                <Shield className="h-7 w-7 text-primary" />
               </div>
               <h3 className="font-semibold">Trusted Protocols</h3>
               <p className="text-sm text-muted-foreground">
-                Aave, Summer.fi, and Yo — battle-tested DeFi platforms
+                Aave, Summer.fi, Morpho & YO — battle-tested DeFi platforms
               </p>
             </div>
-            <div className="flex flex-col items-center gap-2 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
-                <TrendingUp className="h-6 w-6 text-success" />
+            <div className="group flex flex-col items-center gap-3 text-center p-6 rounded-2xl transition-all duration-300 hover:bg-secondary/50 hover:shadow-lg">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-success/10 transition-transform duration-300 group-hover:scale-110">
+                <TrendingUp className="h-7 w-7 text-success" />
               </div>
               <h3 className="font-semibold">Real-time Yields</h3>
               <p className="text-sm text-muted-foreground">
                 Watch your euros grow with live APY tracking
               </p>
             </div>
-            <div className="flex flex-col items-center gap-2 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20">
-                <Zap className="h-6 w-6 text-accent-foreground" />
+            <div className="group flex flex-col items-center gap-3 text-center p-6 rounded-2xl transition-all duration-300 hover:bg-secondary/50 hover:shadow-lg">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/20 transition-transform duration-300 group-hover:scale-110">
+                <Zap className="h-7 w-7 text-accent-foreground" />
               </div>
               <h3 className="font-semibold">Multi-chain</h3>
               <p className="text-sm text-muted-foreground">
