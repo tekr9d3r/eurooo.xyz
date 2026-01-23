@@ -126,7 +126,7 @@ export function Hero() {
 
           {/* Subheadline */}
           <p className="mb-10 text-lg text-muted-foreground sm:text-xl lg:text-2xl opacity-0 animate-fade-in-up animation-delay-200">
-            Compare and deposit your EUR stablecoins across trusted protocols. Simple, transparent, and built to help bring DeFi to EUR.
+            Compare and deposit your EUR stablecoins across trusted protocols. Accelerating EUR adoption across DeFi.       
           </p>
 
           {/* CTA */}
