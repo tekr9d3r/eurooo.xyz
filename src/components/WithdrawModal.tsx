@@ -50,7 +50,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
   const summerWithdraw = useSummerWithdraw();
   const yoWithdraw = useYoWithdraw();
   const morphoGauntletWithdraw = useMorphoWithdraw('morpho-gauntlet');
-  const morphoPrimeWithdraw = useMorphoWithdraw('morpho-prime');
 
   const blockExplorer = BLOCK_EXPLORERS[chainId] || 'https://etherscan.io';
 
@@ -78,11 +77,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         return { 
           ...morphoGauntletWithdraw, 
           step: morphoGauntletWithdraw.step as UnifiedStep 
-        };
-      case 'morpho-prime': 
-        return { 
-          ...morphoPrimeWithdraw, 
-          step: morphoPrimeWithdraw.step as UnifiedStep 
         };
       default: return null;
     }
@@ -137,9 +131,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         case 'morpho-gauntlet':
           await morphoGauntletWithdraw.withdraw(amountInUnits);
           break;
-        case 'morpho-prime':
-          await morphoPrimeWithdraw.withdraw(amountInUnits);
-          break;
         default:
           onComplete();
           handleClose(false);
@@ -155,7 +146,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
       summerWithdraw.reset();
       yoWithdraw.reset();
       morphoGauntletWithdraw.reset();
-      morphoPrimeWithdraw.reset();
     }
     onOpenChange(isOpen);
   };
@@ -165,7 +155,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     summerWithdraw.reset();
     yoWithdraw.reset();
     morphoGauntletWithdraw.reset();
-    morphoPrimeWithdraw.reset();
     setUiStep('confirm');
   };
 

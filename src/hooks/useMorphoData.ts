@@ -6,7 +6,7 @@ import {
   ERC20_ABI,
 } from '@/lib/contracts';
 
-export type MorphoVaultId = 'morpho-gauntlet' | 'morpho-prime';
+export type MorphoVaultId = 'morpho-gauntlet';
 
 export function useMorphoData(vaultId: MorphoVaultId) {
   const chainId = useChainId();
@@ -62,13 +62,12 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     },
   });
 
-  // APY estimates based on current rates from Morpho app
+  // APY estimate based on current rates from Morpho app
   // Gauntlet EURC Core: ~4.38% APY
-  // EURCV Prime: ~5.71% APY
-  const estimatedApy = vaultId === 'morpho-gauntlet' ? 4.38 : 5.71;
+  const estimatedApy = 4.38;
   
-  // EURC has 6 decimals, EURCV has 18 decimals
-  const decimals = vaultId === 'morpho-gauntlet' ? 6 : 18;
+  // EURC has 6 decimals
+  const decimals = 6;
 
   // Format values
   const tvl = totalAssets ? Number(formatUnits(totalAssets, decimals)) : 0;

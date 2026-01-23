@@ -90,7 +90,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const summerDeposit = useSummerDeposit();
   const yoDeposit = useYoDeposit();
   const morphoGauntletDeposit = useMorphoDeposit('morpho-gauntlet');
-  const morphoPrimeDeposit = useMorphoDeposit('morpho-prime');
   
   const blockExplorer = BLOCK_EXPLORERS[chainId] || 'https://etherscan.io';
 
@@ -102,7 +101,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       case 'summer': return { ...summerDeposit, step: mapSummerStep(summerDeposit.step) };
       case 'yo': return { ...yoDeposit, step: mapYoStep(yoDeposit.step) };
       case 'morpho-gauntlet': return { ...morphoGauntletDeposit, step: mapMorphoStep(morphoGauntletDeposit.step) };
-      case 'morpho-prime': return { ...morphoPrimeDeposit, step: mapMorphoStep(morphoPrimeDeposit.step) };
       default: return null;
     }
   };
@@ -152,9 +150,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
         case 'morpho-gauntlet':
           await morphoGauntletDeposit.deposit(numericAmount);
           break;
-        case 'morpho-prime':
-          await morphoPrimeDeposit.deposit(numericAmount);
-          break;
         default:
           onConfirm();
           handleClose(false);
@@ -170,7 +165,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       summerDeposit.reset();
       yoDeposit.reset();
       morphoGauntletDeposit.reset();
-      morphoPrimeDeposit.reset();
     }
     onOpenChange(isOpen);
   };
@@ -180,7 +174,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     summerDeposit.reset();
     yoDeposit.reset();
     morphoGauntletDeposit.reset();
-    morphoPrimeDeposit.reset();
     setUiStep('confirm');
   };
 
