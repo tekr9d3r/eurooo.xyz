@@ -38,23 +38,23 @@ export function PortfolioHeader({
   const hasDeposits = totalDeposits > 0;
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card p-8 mb-8">
-      <div className="text-center space-y-6">
+    <div className="rounded-xl border border-border/50 bg-card p-6 mb-6">
+      <div className="text-center space-y-3">
         {/* Title */}
-        <p className="text-sm text-muted-foreground uppercase tracking-wide">Your Portfolio</p>
+        <p className="text-xs text-muted-foreground uppercase tracking-wide">Your Portfolio</p>
         
         {/* Primary: Total Balance with Counter */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           {isLoading ? (
-            <Skeleton className="h-14 w-64 mx-auto" />
+            <Skeleton className="h-10 w-56 mx-auto" />
           ) : hasDeposits ? (
-            <div className="text-5xl font-bold yield-glow text-success tracking-tight">
+            <div className="text-4xl font-bold yield-glow text-success tracking-tight">
               €{displayValue.toLocaleString('de-DE', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
             </div>
           ) : (
-            <div className="text-5xl font-bold text-muted-foreground">€0.00</div>
+            <div className="text-4xl font-bold text-muted-foreground">€0.00</div>
           )}
-          <p className="text-sm text-muted-foreground">Total Balance</p>
+          <p className="text-xs text-muted-foreground">Total Balance</p>
         </div>
 
         {/* Secondary: Yield Projections & APY - Inline */}
