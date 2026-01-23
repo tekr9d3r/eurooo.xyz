@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, TrendingUp, Zap } from 'lucide-react';
 import aaveLogo from '@/assets/aave-logo.png';
@@ -6,13 +7,28 @@ import summerLogo from '@/assets/summer-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
 
-// Animated EU-style gold stars component
+// Animated EU-style gold stars component with parallax
 function AnimatedStars() {
   const stars = Array.from({ length: 12 }, (_, i) => i);
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Parallax offset - stars move slower than scroll
+  const parallaxOffset = scrollY * 0.15;
   
   return (
     <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] sm:w-[600px] sm:h-[600px]">
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] sm:w-[600px] sm:h-[600px] transition-transform duration-100"
+        style={{ transform: `translate(-50%, calc(-50% + ${parallaxOffset}px))` }}
+      >
         {stars.map((i) => {
           const angle = (i * 30) * (Math.PI / 180);
           const radius = 42; // percentage from center
@@ -27,14 +43,14 @@ function AnimatedStars() {
                 left: `${x}%`,
                 top: `${y}%`,
                 transform: 'translate(-50%, -50%)',
-                animation: `orbit 20s linear infinite`,
-                animationDelay: `${i * -1.67}s`,
+                animation: `orbit 20s linear infinite, twinkle ${2 + (i % 3)}s ease-in-out infinite`,
+                animationDelay: `${i * -1.67}s, ${i * 0.3}s`,
               }}
             >
               <svg
                 viewBox="0 0 24 24"
                 fill="hsl(var(--accent))"
-                className="w-full h-full drop-shadow-[0_0_6px_hsl(var(--accent)/0.6)]"
+                className="w-full h-full drop-shadow-[0_0_8px_hsl(var(--accent)/0.5)]"
               >
                 <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6.3-4.6-6.3 4.6 2.3-7-6-4.6h7.6z" />
               </svg>
@@ -50,6 +66,16 @@ function AnimatedStars() {
           }
           to {
             transform: translate(-50%, -50%) rotate(360deg) translateX(0) rotate(-360deg);
+          }
+        }
+        @keyframes twinkle {
+          0%, 100% {
+            opacity: 0.6;
+            filter: drop-shadow(0 0 4px hsl(var(--accent) / 0.3));
+          }
+          50% {
+            opacity: 1;
+            filter: drop-shadow(0 0 12px hsl(var(--accent) / 0.8));
           }
         }
       `}</style>
