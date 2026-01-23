@@ -9,7 +9,7 @@ import { ProtocolData } from '@/hooks/useProtocolData';
 import aaveLogo from '@/assets/aave-logo.png';
 import summerLogo from '@/assets/summer-logo.png';
 import yoLogo from '@/assets/yo-logo.png';
-import morphoLogo from '@/assets/morpho-logo.png';
+import morphoLogo from '@/assets/morpho-logo.svg';
 
 interface ProtocolTableProps {
   protocols: ProtocolData[];
