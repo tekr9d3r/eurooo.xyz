@@ -206,7 +206,7 @@ export function Hero() {
                 </div>
 
                 <a
-                  href="https://t.me/+gNjjFQ2oXlc3OTZk"
+                  href="https://t.me/+wxIKk-lsEy5kMGQ0"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full bg-[#0088cc] px-6 py-3 text-white font-medium transition-all duration-300 hover:bg-[#0077b5] hover:shadow-lg hover:shadow-[#0088cc]/25 hover:-translate-y-0.5"
