@@ -20,7 +20,7 @@ const chains = [
 export function ChainSelector({ value, onChange }: ChainSelectorProps) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[160px]">
+      <SelectTrigger className="w-full md:w-[160px]">
         <SelectValue placeholder="Select chain" />
       </SelectTrigger>
       <SelectContent>

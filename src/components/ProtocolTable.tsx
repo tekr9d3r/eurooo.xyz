@@ -73,8 +73,8 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
 
   return (
     <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
-      {/* Table Header */}
-      <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-secondary/30 border-b border-border/50 text-sm font-medium text-muted-foreground">
+      {/* Desktop Table Header - Hidden on mobile */}
+      <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-secondary/30 border-b border-border/50 text-sm font-medium text-muted-foreground">
         <div className="col-span-3">Protocol</div>
         <button 
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
@@ -109,9 +109,9 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
         ))}
       </div>
 
-      {/* Table Footer - Summary */}
+      {/* Desktop Table Footer - Summary (Hidden on mobile) */}
       {totalDeposits > 0 && (
-        <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-success/5 border-t border-success/20 text-sm font-medium">
+        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-success/5 border-t border-success/20 text-sm font-medium">
           <div className="col-span-3 text-muted-foreground">Total Portfolio</div>
           <div className="col-span-2 text-success">{weightedApy.toFixed(2)}% avg</div>
           <div className="col-span-2">—</div>
@@ -140,109 +140,212 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
   const dailyYield = (protocol.userDeposit * (protocol.apy / 100)) / 365;
 
   return (
-    <div 
-      className={cn(
-        "grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-secondary/20",
-        hasDeposit && "bg-success/5 border-l-2 border-l-success"
-      )}
-    >
-      {/* Protocol Info */}
-      <div className="col-span-3 flex items-center gap-3">
-        <div className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden",
-          colorClasses[protocol.color]
-        )}>
-          <img 
-            src={protocolLogos[protocol.id]} 
-            alt={`${protocol.name} logo`}
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">{protocol.name}</span>
-            <a
-              href="#"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              title="Learn more"
-            >
-              <ArrowUpRight className="h-3 w-3" />
-            </a>
-          </div>
-          <div className="flex gap-1 mt-1 flex-wrap">
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
-              {protocol.stablecoin}
-            </Badge>
-            {protocol.chains.map((chain) => (
-              <Badge key={chain} variant="secondary" className="text-[10px] px-1.5 py-0">
-                {chain}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* APY */}
-      <div className="col-span-2">
-        {protocol.isLoading ? (
-          <Skeleton className="h-6 w-16" />
-        ) : hasData ? (
-          <div className="flex items-center gap-1">
-            <span className="text-lg font-bold text-success">{protocol.apy.toFixed(2)}%</span>
-            <TrendingUp className="h-4 w-4 text-success" />
-          </div>
-        ) : (
-          <span className="text-muted-foreground">—</span>
+    <>
+      {/* Mobile Card Layout */}
+      <div 
+        className={cn(
+          "md:hidden p-4 space-y-3",
+          hasDeposit && "bg-success/5 border-l-2 border-l-success"
         )}
-      </div>
-
-      {/* TVL */}
-      <div className="col-span-2">
-        {protocol.isLoading ? (
-          <Skeleton className="h-6 w-16" />
-        ) : (
-          <span className="font-medium">{protocol.tvlFormatted}</span>
-        )}
-      </div>
-
-      {/* User Deposit */}
-      <div className="col-span-2">
-        {protocol.isLoading ? (
-          <Skeleton className="h-6 w-20" />
-        ) : hasDeposit ? (
-          <div>
-            <div className="font-bold">
-              €{protocol.userDeposit.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+      >
+        {/* Row 1: Protocol Info + APY */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden flex-shrink-0",
+              colorClasses[protocol.color]
+            )}>
+              <img 
+                src={protocolLogos[protocol.id]} 
+                alt={`${protocol.name} logo`}
+                className="h-full w-full object-cover"
+              />
             </div>
-            <div className="text-xs text-success">
-              +€{dailyYield.toFixed(4)}/day
+            <div>
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-sm">{protocol.name}</span>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title="Learn more"
+                >
+                  <ArrowUpRight className="h-3 w-3" />
+                </a>
+              </div>
+              <div className="flex gap-1 mt-0.5">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
+                  {protocol.stablecoin}
+                </Badge>
+                {protocol.chains.map((chain) => (
+                  <Badge key={chain} variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {chain}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </div>
+          
+          {/* APY on right side */}
+          <div className="text-right">
+            {protocol.isLoading ? (
+              <Skeleton className="h-6 w-16" />
+            ) : hasData ? (
+              <div className="flex items-center gap-1 justify-end">
+                <span className="text-xl font-bold text-success">{protocol.apy.toFixed(2)}%</span>
+                <TrendingUp className="h-4 w-4 text-success" />
+              </div>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </div>
+        </div>
 
-      {/* Actions */}
-      <div className="col-span-3 flex justify-end gap-2">
-        <Button 
-          size="sm"
-          className="bg-primary hover:bg-primary/90"
-          onClick={() => onDeposit(protocol)}
-          disabled={!isAvailable}
-        >
-          {!protocol.isSupported ? 'Switch Network' : isAvailable ? 'Deposit' : 'Coming Soon'}
-        </Button>
-        {hasDeposit && (
+        {/* Row 2: User Deposit Info (if deposited) */}
+        {hasDeposit && !protocol.isLoading && (
+          <div className="flex items-center justify-between bg-success/10 rounded-lg px-3 py-2">
+            <div>
+              <span className="text-xs text-muted-foreground">Your Deposit</span>
+              <div className="font-bold">
+                €{protocol.userDeposit.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-xs text-muted-foreground">Daily Yield</span>
+              <div className="text-success font-medium">
+                +€{dailyYield.toFixed(4)}/day
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Row 3: Action Buttons */}
+        <div className="flex gap-2">
           <Button 
             size="sm"
-            variant="outline"
-            onClick={() => onWithdraw(protocol)}
+            className="flex-1 bg-primary hover:bg-primary/90"
+            onClick={() => onDeposit(protocol)}
+            disabled={!isAvailable}
           >
-            Withdraw
+            {!protocol.isSupported ? 'Switch Network' : isAvailable ? 'Deposit' : 'Coming Soon'}
           </Button>
-        )}
+          {hasDeposit && (
+            <Button 
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              onClick={() => onWithdraw(protocol)}
+            >
+              Withdraw
+            </Button>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Desktop Table Row - Hidden on mobile */}
+      <div 
+        className={cn(
+          "hidden md:grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-secondary/20",
+          hasDeposit && "bg-success/5 border-l-2 border-l-success"
+        )}
+      >
+        {/* Protocol Info */}
+        <div className="col-span-3 flex items-center gap-3">
+          <div className={cn(
+            "flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden",
+            colorClasses[protocol.color]
+          )}>
+            <img 
+              src={protocolLogos[protocol.id]} 
+              alt={`${protocol.name} logo`}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">{protocol.name}</span>
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                title="Learn more"
+              >
+                <ArrowUpRight className="h-3 w-3" />
+              </a>
+            </div>
+            <div className="flex gap-1 mt-1 flex-wrap">
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
+                {protocol.stablecoin}
+              </Badge>
+              {protocol.chains.map((chain) => (
+                <Badge key={chain} variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {chain}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* APY */}
+        <div className="col-span-2">
+          {protocol.isLoading ? (
+            <Skeleton className="h-6 w-16" />
+          ) : hasData ? (
+            <div className="flex items-center gap-1">
+              <span className="text-lg font-bold text-success">{protocol.apy.toFixed(2)}%</span>
+              <TrendingUp className="h-4 w-4 text-success" />
+            </div>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
+
+        {/* TVL */}
+        <div className="col-span-2">
+          {protocol.isLoading ? (
+            <Skeleton className="h-6 w-16" />
+          ) : (
+            <span className="font-medium">{protocol.tvlFormatted}</span>
+          )}
+        </div>
+
+        {/* User Deposit */}
+        <div className="col-span-2">
+          {protocol.isLoading ? (
+            <Skeleton className="h-6 w-20" />
+          ) : hasDeposit ? (
+            <div>
+              <div className="font-bold">
+                €{protocol.userDeposit.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+              </div>
+              <div className="text-xs text-success">
+                +€{dailyYield.toFixed(4)}/day
+              </div>
+            </div>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="col-span-3 flex justify-end gap-2">
+          <Button 
+            size="sm"
+            className="bg-primary hover:bg-primary/90"
+            onClick={() => onDeposit(protocol)}
+            disabled={!isAvailable}
+          >
+            {!protocol.isSupported ? 'Switch Network' : isAvailable ? 'Deposit' : 'Coming Soon'}
+          </Button>
+          {hasDeposit && (
+            <Button 
+              size="sm"
+              variant="outline"
+              onClick={() => onWithdraw(protocol)}
+            >
+              Withdraw
+            </Button>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
