@@ -131,7 +131,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
           await summerWithdraw.withdraw(amountInUnits, isWithdrawAll);
           break;
         case 'yo':
-          await yoWithdraw.withdraw(amountInUnits);
+          await yoWithdraw.withdraw(amountInUnits, isWithdrawAll);
           break;
         case 'morpho-gauntlet':
           await morphoGauntletWithdraw.withdraw(amountInUnits);
