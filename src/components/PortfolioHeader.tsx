@@ -39,60 +39,63 @@ export function PortfolioHeader({
 
   return (
     <div className="rounded-xl border border-border/50 bg-card p-6 mb-6">
-      <div className="text-center space-y-3">
-        {/* Title */}
-        <p className="text-xs text-muted-foreground uppercase tracking-wide">Your Portfolio</p>
-        
-        {/* Primary: Total Balance with Counter */}
-        <div className="space-y-1">
-          {isLoading ? (
-            <Skeleton className="h-10 w-56 mx-auto" />
-          ) : hasDeposits ? (
-            <div className="text-4xl font-bold yield-glow text-success tracking-tight">
-              €{displayValue.toLocaleString('de-DE', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
-            </div>
-          ) : (
-            <div className="text-4xl font-bold text-muted-foreground">€0.00</div>
-          )}
-          <p className="text-xs text-muted-foreground">Total Balance</p>
+      {!hasDeposits && !isLoading ? (
+        <div className="text-center py-4">
+          <p className="text-muted-foreground">No deposits yet</p>
+          <p className="text-sm text-muted-foreground">Deposit EURC to start earning yield</p>
         </div>
-
-        {/* Secondary: Yield Projections & APY - Inline */}
-        {hasDeposits && !isLoading && (
-          <div className="flex items-center justify-center gap-6 pt-2">
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4 text-success" />
-              <span className="text-sm font-medium text-success">
-                +€{dailyYield.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
-              </span>
-              <span className="text-xs text-muted-foreground">/day</span>
-            </div>
-            
-            <div className="h-4 w-px bg-border" />
-            
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4 text-success" />
-              <span className="text-sm font-medium text-success">
-                +€{yearlyYield.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-              <span className="text-xs text-muted-foreground">/year</span>
-            </div>
-            
-            <div className="h-4 w-px bg-border" />
-            
-            <Badge variant="secondary" className="text-xs px-2 py-0.5">
-              {averageApy.toFixed(2)}% APY
-            </Badge>
+      ) : (
+        <div className="flex items-center justify-between">
+          {/* Left: Portfolio Balance */}
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Your Portfolio</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-48" />
+            ) : (
+              <div className="text-3xl font-bold yield-glow text-success tracking-tight">
+                €{displayValue.toLocaleString('de-DE', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
+              </div>
+            )}
           </div>
-        )}
 
-        {/* Empty State */}
-        {!hasDeposits && !isLoading && (
-          <p className="text-sm text-muted-foreground pt-4">
-            Deposit EURC to start earning yield
-          </p>
-        )}
-      </div>
+          {/* Center: Daily & Yearly Yield */}
+          {hasDeposits && !isLoading && (
+            <div className="flex items-center gap-6">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">Daily Yield</p>
+                <div className="flex items-center gap-1 justify-center">
+                  <TrendingUp className="h-4 w-4 text-success" />
+                  <span className="text-lg font-semibold text-success">
+                    +€{dailyYield.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="h-8 w-px bg-border" />
+              
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">Yearly Yield</p>
+                <div className="flex items-center gap-1 justify-center">
+                  <TrendingUp className="h-4 w-4 text-success" />
+                  <span className="text-lg font-semibold text-success">
+                    +€{yearlyYield.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Right: Average APY */}
+          {hasDeposits && !isLoading && (
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground mb-1">Average APY</p>
+              <Badge variant="secondary" className="text-base px-3 py-1">
+                {averageApy.toFixed(2)}%
+              </Badge>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
