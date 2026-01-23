@@ -112,7 +112,7 @@ export function Hero() {
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-2 text-sm opacity-0 animate-fade-in">
             <span className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
             <span className="text-muted-foreground">Live APY up to</span>
-            <span className="font-semibold text-success">8.5%</span>
+            <span className="font-semibold text-success">6.5%</span>
           </div>
 
           {/* Headline with animated stars */}
