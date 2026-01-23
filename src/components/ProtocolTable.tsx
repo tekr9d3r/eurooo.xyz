@@ -8,7 +8,7 @@ import { ProtocolData } from '@/hooks/useProtocolData';
 
 import aaveLogo from '@/assets/aave-logo.png';
 import summerLogo from '@/assets/summer-logo.png';
-import yoLogo from '@/assets/yo-logo.svg';
+import yoLogo from '@/assets/yo-logo.png';
 
 interface ProtocolTableProps {
   protocols: ProtocolData[];
