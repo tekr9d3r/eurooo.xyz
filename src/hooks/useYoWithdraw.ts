@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useAccount, useChainId, useWriteContract } from 'wagmi';
+import { useAccount, useChainId, usePublicClient, useWriteContract } from 'wagmi';
 import { base } from 'wagmi/chains';
 import {
   YO_VAULT_ADDRESSES,
@@ -17,6 +17,7 @@ export function useYoWithdraw() {
 
   const vaultAddress = YO_VAULT_ADDRESSES[chainId as keyof typeof YO_VAULT_ADDRESSES];
 
+  const publicClient = usePublicClient({ chainId: base.id });
   const { writeContractAsync } = useWriteContract();
 
   const reset = useCallback(() => {
@@ -25,8 +26,8 @@ export function useYoWithdraw() {
     setTxHash(undefined);
   }, []);
 
-  // NOTE: UI inputs are in EURC (assets). For YO, use ERC-4626 withdraw(assets)
-  // instead of redeem(shares) to avoid asset/share mismatch reverts.
+  // UI inputs are in EURC (assets). YO vault accounting is share-based, so we
+  // convert assets -> shares first, then redeem(shares).
   const withdraw = useCallback(async (assets: bigint) => {
     if (!address || !vaultAddress) {
       setError('Wallet not connected or chain not supported');
@@ -38,17 +39,26 @@ export function useYoWithdraw() {
       setError(null);
       setStep('withdrawing');
 
-      // ERC-4626 withdraw: assets -> shares, no approval needed for own shares
-      const withdrawTx = await writeContractAsync({
+      const shares = await publicClient.readContract({
         address: vaultAddress,
         abi: ERC4626_VAULT_ABI,
-        functionName: 'withdraw',
-        args: [assets, address, address],
+        functionName: 'convertToShares',
+        args: [assets],
+        // Required by current viem typings (EIP-7702 authorization list)
+        authorizationList: [] as any,
+      });
+
+      // ERC-4626 redeem: shares -> assets
+      const redeemTx = await writeContractAsync({
+        address: vaultAddress,
+        abi: ERC4626_VAULT_ABI,
+        functionName: 'redeem',
+        args: [shares, address, address],
         account: address,
         chain: base,
       });
 
-      setTxHash(withdrawTx);
+      setTxHash(redeemTx);
       setStep('waitingWithdraw');
 
       await new Promise(resolve => setTimeout(resolve, 5000));
@@ -64,7 +74,7 @@ export function useYoWithdraw() {
       }
       setStep('error');
     }
-  }, [address, vaultAddress, writeContractAsync]);
+  }, [address, vaultAddress, writeContractAsync, publicClient]);
 
   return {
     withdraw,
