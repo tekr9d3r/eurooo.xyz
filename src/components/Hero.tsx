@@ -132,7 +132,7 @@ export function Hero() {
           {/* CTA */}
           <div className="opacity-0 animate-fade-in animation-delay-300">
             <Button size="lg" onClick={handleStartEarning} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5">
-              Start Earning
+              Open App
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
