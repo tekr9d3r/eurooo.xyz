@@ -1,5 +1,7 @@
-import { useReadContract, useChainId, useAccount } from 'wagmi';
+import { useReadContract, useAccount, useChainId } from 'wagmi';
 import { formatUnits } from 'viem';
+import { useQuery } from '@tanstack/react-query';
+import { readContractMultichain } from '@/lib/viemClients';
 import {
   MORPHO_VAULT_ADDRESSES,
   ERC4626_VAULT_ABI,
@@ -8,85 +10,84 @@ import {
 
 export type MorphoVaultId = 'morpho-gauntlet';
 
+const MORPHO_CHAIN_ID = 1; // Ethereum only
+
+// Fetch TVL from Ethereum using public client (no wallet required)
+async function fetchMorphoTVL(vaultAddress: `0x${string}`) {
+  try {
+    const totalAssets = await readContractMultichain<bigint>(MORPHO_CHAIN_ID, {
+      address: vaultAddress,
+      abi: ERC4626_VAULT_ABI,
+      functionName: 'totalAssets',
+    });
+
+    return Number(formatUnits(totalAssets, 6));
+  } catch (error) {
+    console.error('[Morpho] Error fetching TVL:', error);
+    return 0;
+  }
+}
+
 export function useMorphoData(vaultId: MorphoVaultId) {
-  const chainId = useChainId();
+  const connectedChainId = useChainId();
   const { address } = useAccount();
   
   const vaultConfig = MORPHO_VAULT_ADDRESSES[vaultId];
-  const vaultAddress = chainId === 1 ? vaultConfig?.[1] : undefined;
-  const isSupported = chainId === 1 && !!vaultAddress;
+  const vaultAddress = vaultConfig?.[1]; // Chain 1 address
+  const isOnSupportedChain = connectedChainId === MORPHO_CHAIN_ID;
 
-  // Get total assets (TVL)
-  const { data: totalAssets, isLoading: isLoadingTVL, refetch: refetchTVL } = useReadContract({
-    address: vaultAddress,
-    abi: ERC4626_VAULT_ABI,
-    functionName: 'totalAssets',
-    query: {
-      enabled: isSupported,
-      refetchInterval: 60000,
-    },
+  // Fetch TVL regardless of connected chain
+  const { data: tvl, isLoading: isLoadingTVL, refetch: refetchTVL } = useQuery({
+    queryKey: ['morpho-tvl', vaultId],
+    queryFn: () => fetchMorphoTVL(vaultAddress!),
+    enabled: !!vaultAddress,
+    refetchInterval: 60000,
+    staleTime: 30000,
   });
 
-  // Get user's vault shares balance
+  // Get user's vault shares balance (only when on Ethereum)
   const { data: userShares, isLoading: isLoadingUserShares, refetch: refetchUserShares } = useReadContract({
     address: vaultAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     query: {
-      enabled: isSupported && !!address,
+      enabled: isOnSupportedChain && !!address && !!vaultAddress,
       refetchInterval: 30000,
     },
   });
 
-  // Convert user shares to assets
+  // Convert user shares to assets (only when on Ethereum)
   const { data: userAssets, isLoading: isLoadingUserAssets, refetch: refetchUserAssets } = useReadContract({
     address: vaultAddress,
     abi: ERC4626_VAULT_ABI,
     functionName: 'convertToAssets',
     args: userShares ? [userShares] : undefined,
     query: {
-      enabled: isSupported && !!userShares && userShares > 0n,
+      enabled: isOnSupportedChain && !!userShares && userShares > 0n,
       refetchInterval: 30000,
     },
   });
 
-  // Get total supply of vault shares (unused for now, kept for potential future use)
-  const { refetch: refetchTotalSupply } = useReadContract({
-    address: vaultAddress,
-    abi: ERC20_ABI,
-    functionName: 'totalSupply',
-    query: {
-      enabled: isSupported,
-      refetchInterval: 60000,
-    },
-  });
-
-  // APY estimate based on current rates from Morpho app
   // Gauntlet EURC Core: ~4.38% APY
   const estimatedApy = 4.38;
-  
-  // EURC has 6 decimals
-  const decimals = 6;
 
-  // Format values
-  const tvl = totalAssets ? Number(formatUnits(totalAssets, decimals)) : 0;
-  const userDeposit = userAssets ? Number(formatUnits(userAssets, decimals)) : 0;
+  // Format user deposit (EURC has 6 decimals)
+  const userDeposit = userAssets ? Number(formatUnits(userAssets, 6)) : 0;
 
   const refetch = () => {
     refetchTVL();
     refetchUserShares();
     refetchUserAssets();
-    refetchTotalSupply();
   };
 
   return {
     apy: estimatedApy,
-    tvl,
+    tvl: tvl || 0,
     userDeposit,
     userShares: userShares || 0n,
     vaultAddress,
-    isSupported,
+    isSupported: true, // Always supported now since we fetch from Ethereum directly
     isLoading: isLoadingTVL || isLoadingUserShares || isLoadingUserAssets,
     refetch,
   };
