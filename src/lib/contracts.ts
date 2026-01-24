@@ -24,10 +24,10 @@ export const AAVE_V3_POOL_DATA_PROVIDER = {
 
 // aEURC token addresses (receipt tokens for Aave deposits)
 export const AAVE_AEURC_ADDRESSES = {
-  // aEURC on Ethereum Mainnet (checksummed)
-  1: '0x8437d7c167dFB82ED4Cb79CD44B7a32A1e8C2e88' as const,
-  // aBasEURC on Base - verified from Aave app
-  8453: '0x90Da57E0a6C0D166BF15764E03B83745Dc90025B' as const,
+  // aEURC on Ethereum Mainnet
+  1: '0x8437d7c167dfb82ed4cb79cd44b7a32a1e8c2e88' as const,
+  // aBasEURC on Base
+  8453: '0x90da57e0a6c0d166bf15764e03b83745dc90025b' as const,
 } as const;
 
 // ============= SUMMER.FI (Lazy Summer Protocol) =============
