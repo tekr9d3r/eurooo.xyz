@@ -150,7 +150,6 @@ interface ProtocolRowProps {
 function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
   const hasDeposit = protocol.userDeposit > 0;
   const hasData = protocol.apy > 0 || protocol.tvl > 0;
-  const isAvailable = protocol.isSupported && hasData;
   const dailyYield = (protocol.userDeposit * (protocol.apy / 100)) / 365;
 
   const logoSrc = protocol.logo || protocolLogos[protocol.id];
@@ -240,9 +239,9 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
             size="sm"
             className="flex-1 bg-primary hover:bg-primary/90"
             onClick={() => onDeposit(protocol)}
-            disabled={!isAvailable}
+            disabled={!hasData}
           >
-            {protocol.isSupported ? 'Deposit' : 'Switch Network'}
+            Deposit
           </Button>
           {hasDeposit && (
             <Button 
@@ -347,9 +346,9 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
             size="sm"
             className="bg-primary hover:bg-primary/90"
             onClick={() => onDeposit(protocol)}
-            disabled={!isAvailable}
+            disabled={!hasData}
           >
-            {protocol.isSupported ? 'Deposit' : 'Switch Network'}
+            Deposit
           </Button>
           {hasDeposit && (
             <Button 

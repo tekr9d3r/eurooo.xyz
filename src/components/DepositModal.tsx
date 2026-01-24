@@ -10,18 +10,23 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useChainId } from 'wagmi';
+import { useChainId, useSwitchChain } from 'wagmi';
 import { ProtocolData } from '@/hooks/useProtocolData';
 import { useAaveDeposit, DepositStep as AaveDepositStep } from '@/hooks/useAaveDeposit';
 import { useSummerDeposit, SummerDepositStep } from '@/hooks/useSummerDeposit';
 import { useYoDeposit, YoDepositStep } from '@/hooks/useYoDeposit';
 import { useMorphoDeposit, MorphoDepositStep } from '@/hooks/useMorphoDeposit';
 import { MorphoVaultId } from '@/hooks/useMorphoData';
-import { AlertCircle, TrendingUp, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { AlertCircle, TrendingUp, Loader2, CheckCircle2, XCircle, ArrowRightLeft } from 'lucide-react';
 
 const BLOCK_EXPLORERS: Record<number, string> = {
   1: 'https://etherscan.io',
   8453: 'https://basescan.org',
+};
+
+const CHAIN_NAMES: Record<number, string> = {
+  1: 'Ethereum',
+  8453: 'Base',
 };
 
 interface DepositModalProps {
@@ -85,13 +90,18 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const [amount, setAmount] = useState('');
   const [uiStep, setUiStep] = useState<'input' | 'confirm' | 'processing'>('input');
   const chainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   
   const aaveDeposit = useAaveDeposit();
   const summerDeposit = useSummerDeposit();
   const yoDeposit = useYoDeposit();
   const morphoGauntletDeposit = useMorphoDeposit('morpho-gauntlet');
   
-  const blockExplorer = BLOCK_EXPLORERS[chainId] || 'https://etherscan.io';
+  const blockExplorer = protocol?.chainId ? (BLOCK_EXPLORERS[protocol.chainId] || 'https://etherscan.io') : 'https://etherscan.io';
+  
+  // Check if user is on the correct network for this protocol
+  const isOnCorrectNetwork = protocol ? chainId === protocol.chainId : false;
+  const requiredChainName = protocol?.chainId ? (CHAIN_NAMES[protocol.chainId] || 'Unknown') : 'Unknown';
 
   // Get the active deposit hook based on protocol
   const getActiveDeposit = () => {
@@ -133,7 +143,15 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     setAmount(maxAmount.toString());
   };
 
+  const handleSwitchNetwork = () => {
+    if (protocol?.chainId) {
+      switchChain({ chainId: protocol.chainId as 1 | 8453 });
+    }
+  };
+
   const handleConfirm = async () => {
+    if (!isOnCorrectNetwork) return;
+    
     if (uiStep === 'input') {
       setUiStep('confirm');
     } else if (uiStep === 'confirm') {
@@ -324,17 +342,57 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
-          {uiStep === 'input' && (
+          {uiStep === 'input' && !isOnCorrectNetwork && (
             <Button 
-              onClick={handleConfirm}
-              disabled={numericAmount <= 0 || (maxAmount > 0 && numericAmount > maxAmount) || !protocol.isSupported}
-              className="bg-primary hover:bg-primary/90"
+              onClick={handleSwitchNetwork}
+              disabled={isSwitching}
+              className="bg-primary hover:bg-primary/90 w-full"
             >
-              {protocol.isSupported ? 'Continue' : 'Not available on this chain'}
+              {isSwitching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Switching...
+                </>
+              ) : (
+                <>
+                  <ArrowRightLeft className="mr-2 h-4 w-4" />
+                  Switch to {requiredChainName}
+                </>
+              )}
             </Button>
           )}
           
-          {uiStep === 'confirm' && (
+          {uiStep === 'input' && isOnCorrectNetwork && (
+            <Button 
+              onClick={handleConfirm}
+              disabled={numericAmount <= 0 || (maxAmount > 0 && numericAmount > maxAmount)}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Continue
+            </Button>
+          )}
+          
+          {uiStep === 'confirm' && !isOnCorrectNetwork && (
+            <Button 
+              onClick={handleSwitchNetwork}
+              disabled={isSwitching}
+              className="bg-primary hover:bg-primary/90 w-full"
+            >
+              {isSwitching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Switching...
+                </>
+              ) : (
+                <>
+                  <ArrowRightLeft className="mr-2 h-4 w-4" />
+                  Switch to {requiredChainName}
+                </>
+              )}
+            </Button>
+          )}
+          
+          {uiStep === 'confirm' && isOnCorrectNetwork && (
             <>
               <Button variant="outline" onClick={() => setUiStep('input')}>
                 Back

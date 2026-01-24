@@ -1,4 +1,4 @@
-import { useReadContract, useAccount, useChainId } from 'wagmi';
+import { useReadContract, useAccount } from 'wagmi';
 import { formatUnits } from 'viem';
 import { useQuery } from '@tanstack/react-query';
 import { readContractMultichain } from '@/lib/viemClients';
@@ -28,10 +28,7 @@ async function fetchYoTVL() {
 }
 
 export function useYoData() {
-  const connectedChainId = useChainId();
   const { address } = useAccount();
-  
-  const isOnSupportedChain = connectedChainId === YO_CHAIN_ID;
 
   // Fetch TVL regardless of connected chain
   const { data: tvl, isLoading: isLoadingTVL, refetch: refetchTVL } = useQuery({
@@ -41,26 +38,28 @@ export function useYoData() {
     staleTime: 30000,
   });
 
-  // Get user's vault shares balance (only when on Base)
+  // Get user's vault shares balance (always fetch from Base regardless of connected chain)
   const { data: userShares, isLoading: isLoadingUserShares, refetch: refetchUserShares } = useReadContract({
     address: vaultAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+    chainId: YO_CHAIN_ID,
     query: {
-      enabled: isOnSupportedChain && !!address,
+      enabled: !!address,
       refetchInterval: 30000,
     },
   });
 
-  // Convert user shares to assets (only when on Base)
+  // Convert user shares to assets (always fetch from Base regardless of connected chain)
   const { data: userAssets, isLoading: isLoadingUserAssets, refetch: refetchUserAssets } = useReadContract({
     address: vaultAddress,
     abi: ERC4626_VAULT_ABI,
     functionName: 'convertToAssets',
     args: userShares ? [userShares] : undefined,
+    chainId: YO_CHAIN_ID,
     query: {
-      enabled: isOnSupportedChain && !!userShares && userShares > 0n,
+      enabled: !!userShares && userShares > 0n,
       refetchInterval: 30000,
     },
   });

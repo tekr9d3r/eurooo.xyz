@@ -1,4 +1,4 @@
-import { useReadContract, useAccount, useChainId } from 'wagmi';
+import { useReadContract, useAccount } from 'wagmi';
 import { formatUnits } from 'viem';
 import { useQuery } from '@tanstack/react-query';
 import { readContractMultichain } from '@/lib/viemClients';
@@ -29,12 +29,10 @@ async function fetchMorphoTVL(vaultAddress: `0x${string}`) {
 }
 
 export function useMorphoData(vaultId: MorphoVaultId) {
-  const connectedChainId = useChainId();
   const { address } = useAccount();
   
   const vaultConfig = MORPHO_VAULT_ADDRESSES[vaultId];
   const vaultAddress = vaultConfig?.[1]; // Chain 1 address
-  const isOnSupportedChain = connectedChainId === MORPHO_CHAIN_ID;
 
   // Fetch TVL regardless of connected chain
   const { data: tvl, isLoading: isLoadingTVL, refetch: refetchTVL } = useQuery({
@@ -45,26 +43,28 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     staleTime: 30000,
   });
 
-  // Get user's vault shares balance (only when on Ethereum)
+  // Get user's vault shares balance (always fetch from Ethereum regardless of connected chain)
   const { data: userShares, isLoading: isLoadingUserShares, refetch: refetchUserShares } = useReadContract({
     address: vaultAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+    chainId: MORPHO_CHAIN_ID,
     query: {
-      enabled: isOnSupportedChain && !!address && !!vaultAddress,
+      enabled: !!address && !!vaultAddress,
       refetchInterval: 30000,
     },
   });
 
-  // Convert user shares to assets (only when on Ethereum)
+  // Convert user shares to assets (always fetch from Ethereum regardless of connected chain)
   const { data: userAssets, isLoading: isLoadingUserAssets, refetch: refetchUserAssets } = useReadContract({
     address: vaultAddress,
     abi: ERC4626_VAULT_ABI,
     functionName: 'convertToAssets',
     args: userShares ? [userShares] : undefined,
+    chainId: MORPHO_CHAIN_ID,
     query: {
-      enabled: isOnSupportedChain && !!userShares && userShares > 0n,
+      enabled: !!userShares && userShares > 0n,
       refetchInterval: 30000,
     },
   });
