@@ -179,13 +179,17 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
             <div>
               <div className="flex items-center gap-1">
                 <span className="font-semibold text-sm">{protocol.name}</span>
-                <a
-                  href="#"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  title="Learn more"
-                >
-                  <ArrowUpRight className="h-3 w-3" />
-                </a>
+                {protocol.learnMoreUrl && (
+                  <a
+                    href={protocol.learnMoreUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    title="Learn more"
+                  >
+                    <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                )}
               </div>
               <div className="flex gap-1 mt-0.5">
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
@@ -278,13 +282,17 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold">{protocol.name}</span>
-              <a
-                href="#"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                title="Learn more"
-              >
-                <ArrowUpRight className="h-3 w-3" />
-              </a>
+              {protocol.learnMoreUrl && (
+                <a
+                  href={protocol.learnMoreUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title="Learn more"
+                >
+                  <ArrowUpRight className="h-3 w-3" />
+                </a>
+              )}
             </div>
             <div className="flex gap-1 mt-1 flex-wrap">
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
