@@ -5,18 +5,20 @@ import { mainnet, base } from 'wagmi/chains';
 export const ethereumClient = createPublicClient({
   chain: mainnet,
   transport: fallback([
-    http('https://eth.merkle.io'),
-    http('https://cloudflare-eth.com'),
+    http('https://eth.llamarpc.com'),
+    http('https://ethereum-rpc.publicnode.com'),
     http('https://rpc.ankr.com/eth'),
+    http('https://cloudflare-eth.com'),
   ]),
 });
 
 export const baseClient = createPublicClient({
   chain: base,
   transport: fallback([
-    http('https://mainnet.base.org'),
-    http('https://base.publicnode.com'),
+    http('https://base.llamarpc.com'),
+    http('https://base-rpc.publicnode.com'),
     http('https://rpc.ankr.com/base'),
+    http('https://base.meowrpc.com'),
   ]),
 });
 

@@ -25,7 +25,7 @@ export const AAVE_V3_POOL_DATA_PROVIDER = {
 // aEURC token addresses (receipt tokens for Aave deposits)
 export const AAVE_AEURC_ADDRESSES = {
   // aEURC on Ethereum Mainnet
-  1: '0x8437d7c167dfb82ed4cb79cd44b7a32a1e8c2e88' as const,
+  1: '0xAA6e91C82942aeAE040303Bf96c15a6dBcB82CA0' as const,
   // aBasEURC on Base
   8453: '0x90da57e0a6c0d166bf15764e03b83745dc90025b' as const,
 } as const;
