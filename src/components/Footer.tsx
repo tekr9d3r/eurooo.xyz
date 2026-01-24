@@ -12,6 +12,13 @@ const TelegramIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// Farcaster icon component
+const FarcasterIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d="M18.24 2.4H5.76a3.36 3.36 0 0 0-3.36 3.36v12.48a3.36 3.36 0 0 0 3.36 3.36h12.48a3.36 3.36 0 0 0 3.36-3.36V5.76a3.36 3.36 0 0 0-3.36-3.36zm-1.92 15.12h-1.44v-6.24h-5.76v6.24H7.68V6.48h1.44v4.32h5.76V6.48h1.44v11.04z" />
+  </svg>
+);
+
 export function Footer() {
   return (
     <footer className="border-t border-border py-8 mt-16">
@@ -35,13 +42,22 @@ export function Footer() {
           {/* Right: Social links */}
           <div className="flex items-center gap-4">
             <a
-              href="https://x.com/eurooo_xyz"
+              href="https://x.com/tekr0x"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-all duration-300 hover:bg-foreground hover:text-background hover:scale-110"
-              aria-label="Follow us on X"
+              aria-label="Follow on X"
             >
               <XIcon className="h-4 w-4" />
+            </a>
+            <a
+              href="https://warpcast.com/tekrox.eth"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-all duration-300 hover:bg-[#8A63D2] hover:text-white hover:scale-110"
+              aria-label="Follow on Farcaster"
+            >
+              <FarcasterIcon className="h-5 w-5" />
             </a>
             <a
               href="https://t.me/+wxIKk-lsEy5kMGQ0"
