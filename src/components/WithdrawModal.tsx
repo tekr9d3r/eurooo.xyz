@@ -10,14 +10,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useChainId } from 'wagmi';
+import { useChainId, useSwitchChain } from 'wagmi';
 import { parseUnits } from 'viem';
 import { ProtocolData } from '@/hooks/useProtocolData';
 import { useAaveWithdraw, WithdrawStep as AaveWithdrawStep } from '@/hooks/useAaveWithdraw';
 import { useSummerWithdraw, SummerWithdrawStep } from '@/hooks/useSummerWithdraw';
 import { useYoWithdraw, YoWithdrawStep } from '@/hooks/useYoWithdraw';
 import { useMorphoWithdraw, MorphoWithdrawStep } from '@/hooks/useMorphoWithdraw';
-import { AlertCircle, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { AlertCircle, Loader2, CheckCircle2, XCircle, ArrowRightLeft } from 'lucide-react';
 
 interface WithdrawModalProps {
   open: boolean;
@@ -41,17 +41,27 @@ const BLOCK_EXPLORERS: Record<number, string> = {
   8453: 'https://basescan.org',
 };
 
+const CHAIN_NAMES: Record<number, string> = {
+  1: 'Ethereum',
+  8453: 'Base',
+};
+
 export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: WithdrawModalProps) {
   const [amount, setAmount] = useState('');
   const [uiStep, setUiStep] = useState<'input' | 'confirm' | 'processing'>('input');
   const chainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   
   const aaveWithdraw = useAaveWithdraw();
   const summerWithdraw = useSummerWithdraw();
   const yoWithdraw = useYoWithdraw();
   const morphoGauntletWithdraw = useMorphoWithdraw('morpho-gauntlet');
 
-  const blockExplorer = BLOCK_EXPLORERS[chainId] || 'https://etherscan.io';
+  const blockExplorer = protocol?.chainId ? (BLOCK_EXPLORERS[protocol.chainId] || 'https://etherscan.io') : 'https://etherscan.io';
+  
+  // Check if user is on the correct network for this protocol
+  const isOnCorrectNetwork = protocol ? chainId === protocol.chainId : false;
+  const requiredChainName = protocol?.chainId ? (CHAIN_NAMES[protocol.chainId] || 'Unknown') : 'Unknown';
 
   // Get the active withdraw hook based on protocol
   const getActiveWithdraw = () => {
@@ -108,7 +118,15 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     setAmount(maxAmount.toString());
   };
 
+  const handleSwitchNetwork = () => {
+    if (protocol?.chainId) {
+      switchChain({ chainId: protocol.chainId as 1 | 8453 });
+    }
+  };
+
   const handleConfirm = async () => {
+    if (!isOnCorrectNetwork) return;
+    
     if (uiStep === 'input') {
       setUiStep('confirm');
     } else if (uiStep === 'confirm') {
@@ -122,6 +140,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         case 'aave-ethereum':
         case 'aave-base':
           await aaveWithdraw.withdraw(numericAmount, isWithdrawAll);
+          break;
         case 'summer':
           await summerWithdraw.withdraw(amountInUnits, isWithdrawAll);
           break;
@@ -290,7 +309,27 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
-          {uiStep === 'input' && (
+          {uiStep === 'input' && !isOnCorrectNetwork && (
+            <Button 
+              onClick={handleSwitchNetwork}
+              disabled={isSwitching}
+              className="bg-primary hover:bg-primary/90 w-full"
+            >
+              {isSwitching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Switching...
+                </>
+              ) : (
+                <>
+                  <ArrowRightLeft className="mr-2 h-4 w-4" />
+                  Switch to {requiredChainName}
+                </>
+              )}
+            </Button>
+          )}
+          
+          {uiStep === 'input' && isOnCorrectNetwork && (
             <Button 
               onClick={handleConfirm}
               disabled={numericAmount <= 0 || (maxAmount > 0 && numericAmount > maxAmount)}
@@ -300,7 +339,27 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
             </Button>
           )}
           
-          {uiStep === 'confirm' && (
+          {uiStep === 'confirm' && !isOnCorrectNetwork && (
+            <Button 
+              onClick={handleSwitchNetwork}
+              disabled={isSwitching}
+              className="bg-primary hover:bg-primary/90 w-full"
+            >
+              {isSwitching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Switching...
+                </>
+              ) : (
+                <>
+                  <ArrowRightLeft className="mr-2 h-4 w-4" />
+                  Switch to {requiredChainName}
+                </>
+              )}
+            </Button>
+          )}
+          
+          {uiStep === 'confirm' && isOnCorrectNetwork && (
             <>
               <Button variant="outline" onClick={() => setUiStep('input')}>
                 Back

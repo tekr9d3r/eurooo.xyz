@@ -14,7 +14,7 @@ export interface ProtocolData {
   tvlFormatted: string;
   chains: string[];
   color: 'aave' | 'summer' | 'yo' | 'morpho';
-  chainId?: number; // Chain ID for protocol-specific actions
+  chainId: number; // Required chain ID for protocol-specific actions
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
@@ -81,6 +81,7 @@ export function useProtocolData() {
       tvl: summerData.tvl,
       tvlFormatted: summerData.tvl > 0 ? formatTVL(summerData.tvl) : '—',
       chains: ['Base'],
+      chainId: 8453,
       color: 'summer',
       userDeposit: summerData.userDeposit,
       isLoading: summerData.isLoading,
@@ -95,6 +96,7 @@ export function useProtocolData() {
       tvl: yoData.tvl,
       tvlFormatted: yoData.tvl > 0 ? formatTVL(yoData.tvl) : '—',
       chains: ['Base'],
+      chainId: 8453,
       color: 'yo',
       userDeposit: yoData.userDeposit,
       isLoading: yoData.isLoading,
@@ -109,6 +111,7 @@ export function useProtocolData() {
       tvl: morphoGauntletData.tvl,
       tvlFormatted: morphoGauntletData.tvl > 0 ? formatTVL(morphoGauntletData.tvl) : '—',
       chains: ['Ethereum'],
+      chainId: 1,
       color: 'morpho',
       userDeposit: morphoGauntletData.userDeposit,
       isLoading: morphoGauntletData.isLoading,
