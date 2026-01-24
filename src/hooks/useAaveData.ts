@@ -1,5 +1,7 @@
-import { useReadContract, useChainId, useAccount } from 'wagmi';
+import { useReadContract, useAccount, useChainId } from 'wagmi';
 import { formatUnits } from 'viem';
+import { useQuery } from '@tanstack/react-query';
+import { readContractMultichain } from '@/lib/viemClients';
 import {
   EURC_ADDRESSES,
   AAVE_V3_POOL_DATA_PROVIDER,
@@ -9,27 +11,61 @@ import {
   liquidityRateToAPY,
 } from '@/lib/contracts';
 
-export function useAaveData() {
-  const chainId = useChainId();
-  const { address } = useAccount();
-  
-  const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
-  const poolDataProvider = AAVE_V3_POOL_DATA_PROVIDER[chainId as keyof typeof AAVE_V3_POOL_DATA_PROVIDER];
-  const aEurcAddress = AAVE_AEURC_ADDRESSES[chainId as keyof typeof AAVE_AEURC_ADDRESSES];
+// Fetch APY and TVL from a specific chain using public client
+async function fetchAaveChainData(chainId: 1 | 8453) {
+  const eurcAddress = EURC_ADDRESSES[chainId];
+  const poolDataProvider = AAVE_V3_POOL_DATA_PROVIDER[chainId];
+  const aEurcAddress = AAVE_AEURC_ADDRESSES[chainId];
 
-  // Get reserve data (includes liquidity rate for APY)
-  const { data: reserveData, isLoading: isLoadingReserve, refetch: refetchReserve } = useReadContract({
-    address: poolDataProvider,
-    abi: AAVE_POOL_DATA_PROVIDER_ABI,
-    functionName: 'getReserveData',
-    args: eurcAddress ? [eurcAddress] : undefined,
-    query: {
-      enabled: !!eurcAddress && !!poolDataProvider,
-      refetchInterval: 60000, // Refetch every minute
-    },
+  try {
+    // Fetch reserve data for APY
+    const reserveData = await readContractMultichain<readonly bigint[]>(chainId, {
+      address: poolDataProvider,
+      abi: AAVE_POOL_DATA_PROVIDER_ABI,
+      functionName: 'getReserveData',
+      args: [eurcAddress],
+    });
+
+    // Fetch total aToken supply for TVL
+    const totalSupply = await readContractMultichain<bigint>(chainId, {
+      address: aEurcAddress,
+      abi: ERC20_ABI,
+      functionName: 'totalSupply',
+    });
+
+    const liquidityRate = reserveData[5]; // Index 5 is liquidityRate
+    const apy = liquidityRateToAPY(liquidityRate);
+    const tvl = Number(formatUnits(totalSupply, 6));
+
+    return { apy, tvl };
+  } catch (error) {
+    console.error(`[Aave] Error fetching data for chain ${chainId}:`, error);
+    return { apy: 0, tvl: 0 };
+  }
+}
+
+export function useAaveData() {
+  const connectedChainId = useChainId();
+  const { address } = useAccount();
+
+  // Fetch data from both chains simultaneously
+  const { data: ethereumData, isLoading: isLoadingEthereum, refetch: refetchEthereum } = useQuery({
+    queryKey: ['aave-data', 1],
+    queryFn: () => fetchAaveChainData(1),
+    refetchInterval: 60000,
+    staleTime: 30000,
   });
 
-  // Get user's aEURC balance (represents their deposit in Aave)
+  const { data: baseData, isLoading: isLoadingBase, refetch: refetchBase } = useQuery({
+    queryKey: ['aave-data', 8453],
+    queryFn: () => fetchAaveChainData(8453),
+    refetchInterval: 60000,
+    staleTime: 30000,
+  });
+
+  // Get user's aEURC balance on the connected chain (wallet-dependent)
+  const aEurcAddress = AAVE_AEURC_ADDRESSES[connectedChainId as keyof typeof AAVE_AEURC_ADDRESSES];
+  
   const { data: userATokenBalance, isLoading: isLoadingUserBalance, refetch: refetchBalance } = useReadContract({
     address: aEurcAddress,
     abi: ERC20_ABI,
@@ -41,39 +77,36 @@ export function useAaveData() {
     },
   });
 
-  // Get total aEURC supply (TVL proxy)
-  const { data: totalATokenSupply, isLoading: isLoadingTVL, refetch: refetchTVL } = useReadContract({
-    address: aEurcAddress,
-    abi: ERC20_ABI,
-    functionName: 'totalSupply',
-    args: [],
-    query: {
-      enabled: !!aEurcAddress,
-      refetchInterval: 60000,
-    },
-  });
+  // Combine APY - use weighted average if both chains have data
+  const ethApy = ethereumData?.apy || 0;
+  const baseApy = baseData?.apy || 0;
+  const ethTvl = ethereumData?.tvl || 0;
+  const baseTvl = baseData?.tvl || 0;
 
-  // Calculate APY from liquidity rate
-  const liquidityRate = reserveData?.[5]; // Index 5 is liquidityRate
-  const apy = liquidityRate ? liquidityRateToAPY(liquidityRate) : 0;
+  // Combined TVL from both chains
+  const totalTvl = ethTvl + baseTvl;
+
+  // Weighted average APY based on TVL
+  const combinedApy = totalTvl > 0
+    ? (ethApy * ethTvl + baseApy * baseTvl) / totalTvl
+    : (ethApy + baseApy) / 2;
 
   // Format user deposit (6 decimals for EURC)
   const userDeposit = userATokenBalance ? Number(formatUnits(userATokenBalance, 6)) : 0;
 
-  // Format TVL
-  const tvl = totalATokenSupply ? Number(formatUnits(totalATokenSupply, 6)) : 0;
-
   const refetch = () => {
-    refetchReserve();
+    refetchEthereum();
+    refetchBase();
     refetchBalance();
-    refetchTVL();
   };
 
   return {
-    apy,
+    apy: combinedApy,
+    tvl: totalTvl,
     userDeposit,
-    tvl,
-    isLoading: isLoadingReserve || isLoadingUserBalance || isLoadingTVL,
+    ethereumData: { apy: ethApy, tvl: ethTvl },
+    baseData: { apy: baseApy, tvl: baseTvl },
+    isLoading: isLoadingEthereum || isLoadingBase || isLoadingUserBalance,
     refetch,
   };
 }

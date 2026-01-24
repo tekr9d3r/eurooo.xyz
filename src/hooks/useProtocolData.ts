@@ -50,7 +50,7 @@ export function useProtocolData() {
       color: 'aave',
       userDeposit: aaveData.userDeposit,
       isLoading: aaveData.isLoading,
-      isSupported: true, // Aave supports both chains
+      isSupported: true, // Always supported - data fetched from both chains
       stablecoin: 'EURC',
     },
     {
@@ -64,7 +64,7 @@ export function useProtocolData() {
       color: 'summer',
       userDeposit: summerData.userDeposit,
       isLoading: summerData.isLoading,
-      isSupported: summerData.isSupported,
+      isSupported: true, // Always supported - data fetched from Base
       stablecoin: 'EURC',
     },
     {
@@ -78,7 +78,7 @@ export function useProtocolData() {
       color: 'yo',
       userDeposit: yoData.userDeposit,
       isLoading: yoData.isLoading,
-      isSupported: yoData.isSupported,
+      isSupported: true, // Always supported - data fetched from Base
       stablecoin: 'EURC',
     },
     {
@@ -92,7 +92,7 @@ export function useProtocolData() {
       color: 'morpho',
       userDeposit: morphoGauntletData.userDeposit,
       isLoading: morphoGauntletData.isLoading,
-      isSupported: morphoGauntletData.isSupported,
+      isSupported: true, // Always supported - data fetched from Ethereum
       stablecoin: 'EURC',
     },
   ];
