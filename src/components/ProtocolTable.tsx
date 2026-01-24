@@ -36,8 +36,11 @@ const colorClasses = {
 };
 
 export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTableProps) {
-  const [sortKey, setSortKey] = useState<SortKey>('apy');
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Check if user has any deposits
+  const hasAnyDeposits = protocols.some(p => p.userDeposit > 0);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -49,10 +52,20 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
   };
 
   const sortedProtocols = [...protocols].sort((a, b) => {
-    const aValue = a[sortKey];
-    const bValue = b[sortKey];
-    const multiplier = sortDirection === 'desc' ? -1 : 1;
-    return (aValue - bValue) * multiplier;
+    // If user has manually selected a sort, use that
+    if (sortKey !== null) {
+      const aValue = a[sortKey];
+      const bValue = b[sortKey];
+      const multiplier = sortDirection === 'desc' ? -1 : 1;
+      return (aValue - bValue) * multiplier;
+    }
+    
+    // Default sorting: if deposits exist, sort by deposit (highest first)
+    // Otherwise, sort by TVL (highest first)
+    if (hasAnyDeposits) {
+      return b.userDeposit - a.userDeposit;
+    }
+    return b.tvl - a.tvl;
   });
 
   const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
