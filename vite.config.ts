@@ -18,4 +18,34 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Optimize chunk splitting for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate heavy vendor chunks
+          'vendor-wagmi': ['wagmi', 'viem'],
+          'vendor-rainbowkit': ['@rainbow-me/rainbowkit'],
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-radix': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tooltip',
+          ],
+        },
+      },
+    },
+    // Reduce chunk size warnings threshold
+    chunkSizeWarningLimit: 600,
+    // Enable minification optimizations
+    minify: 'esbuild',
+    // Target modern browsers for smaller bundle
+    target: 'es2020',
+  },
+  // Optimize dependency pre-bundling
+  optimizeDeps: {
+    include: ['wagmi', 'viem', '@rainbow-me/rainbowkit'],
+  },
 }));
