@@ -1,5 +1,3 @@
-import farcasterLogo from '@/assets/farcaster-logo.png';
-
 // X (Twitter) icon component
 const XIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -44,15 +42,6 @@ export function Footer() {
               aria-label="Follow on X"
             >
               <XIcon className="h-4 w-4" />
-            </a>
-            <a
-              href="https://farcaster.xyz/tekrox.eth"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-all duration-300 hover:scale-110 overflow-hidden"
-              aria-label="Follow on Farcaster"
-            >
-              <img src={farcasterLogo} alt="Farcaster" className="h-full w-full object-cover grayscale hover:grayscale-0 transition-all" />
             </a>
             <a
               href="https://t.me/+wxIKk-lsEy5kMGQ0"
