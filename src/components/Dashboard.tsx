@@ -7,6 +7,7 @@ import { DepositModal } from './DepositModal';
 import { WithdrawModal } from './WithdrawModal';
 import { useToast } from '@/hooks/use-toast';
 import { useProtocolData, ProtocolData } from '@/hooks/useProtocolData';
+import { MessageCircle } from 'lucide-react';
 
 export function Dashboard() {
   const { isConnected } = useAccount();
@@ -72,6 +73,22 @@ export function Dashboard() {
             onDeposit={handleDeposit}
             onWithdraw={handleWithdraw}
           />
+
+          {/* Telegram CTA */}
+          <div className="flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-secondary/30 p-4 text-center">
+            <MessageCircle className="h-5 w-5 text-primary flex-shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              Need help or have questions about protocols?{' '}
+              <a
+                href="https://t.me/+wxIKk-lsEy5kMGQ0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                Join our Telegram community
+              </a>
+            </p>
+          </div>
         </div>
       </div>
 
