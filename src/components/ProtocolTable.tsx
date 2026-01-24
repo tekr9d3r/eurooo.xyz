@@ -153,6 +153,8 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
   const isAvailable = protocol.isSupported && hasData;
   const dailyYield = (protocol.userDeposit * (protocol.apy / 100)) / 365;
 
+  const logoSrc = protocol.logo || protocolLogos[protocol.id];
+
   return (
     <>
       {/* Mobile Card Layout */}
@@ -170,7 +172,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
               colorClasses[protocol.color]
             )}>
               <img 
-                src={protocolLogos[protocol.id]} 
+                src={logoSrc} 
                 alt={`${protocol.name} logo`}
                 className="h-full w-full object-cover"
               />
@@ -240,7 +242,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
             onClick={() => onDeposit(protocol)}
             disabled={!isAvailable}
           >
-            {!protocol.isSupported ? 'Switch Network' : isAvailable ? 'Deposit' : 'Coming Soon'}
+            {protocol.isSupported ? 'Deposit' : 'Switch Network'}
           </Button>
           {hasDeposit && (
             <Button 
@@ -269,7 +271,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
             colorClasses[protocol.color]
           )}>
             <img 
-              src={protocolLogos[protocol.id]} 
+              src={logoSrc} 
               alt={`${protocol.name} logo`}
               className="h-full w-full object-cover"
             />
@@ -347,7 +349,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
             onClick={() => onDeposit(protocol)}
             disabled={!isAvailable}
           >
-            {!protocol.isSupported ? 'Switch Network' : isAvailable ? 'Deposit' : 'Coming Soon'}
+            {protocol.isSupported ? 'Deposit' : 'Switch Network'}
           </Button>
           {hasDeposit && (
             <Button 
