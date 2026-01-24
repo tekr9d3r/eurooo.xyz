@@ -126,13 +126,13 @@ export function Hero() {
 
           {/* Subheadline */}
           <p className="mb-10 text-lg text-muted-foreground sm:text-xl lg:text-2xl opacity-0 animate-fade-in-up animation-delay-200">
-            Compare and deposit your EUR stablecoins across trusted protocols. DeFi is built for the $, but your life is in €.       
+            DeFi is built for the $, but your life is in €. Compare and deposit your EUR stablecoins across trusted protocols.                                                                    
           </p>
 
           {/* CTA */}
           <div className="opacity-0 animate-fade-in animation-delay-300">
             <Button size="lg" onClick={handleStartEarning} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5">
-              Open App
+              Start Earning
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
