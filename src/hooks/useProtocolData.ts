@@ -3,6 +3,7 @@ import { useSummerData } from './useSummerData';
 import { useYoData } from './useYoData';
 import { useMorphoData } from './useMorphoData';
 import { useEURCBalance } from './useEURCBalance';
+import aaveLogo from '@/assets/aave-logo.png';
 
 export interface ProtocolData {
   id: string;
@@ -54,6 +55,7 @@ export function useProtocolData() {
       isLoading: aaveData.isLoading,
       isSupported: true,
       stablecoin: 'EURC',
+      logo: aaveLogo,
     },
     {
       id: 'aave-base',
@@ -69,6 +71,7 @@ export function useProtocolData() {
       isLoading: aaveData.isLoading,
       isSupported: true,
       stablecoin: 'EURC',
+      logo: aaveLogo,
     },
     {
       id: 'summer',
