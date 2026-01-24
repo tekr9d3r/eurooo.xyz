@@ -5,13 +5,12 @@ import { ProtocolTable } from './ProtocolTable';
 import { ChainSelector } from './ChainSelector';
 import { DepositModal } from './DepositModal';
 import { WithdrawModal } from './WithdrawModal';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useProtocolData, ProtocolData } from '@/hooks/useProtocolData';
 import { MessageCircle } from 'lucide-react';
 
 export function Dashboard() {
   const { isConnected } = useAccount();
-  const { toast } = useToast();
   const [selectedChain, setSelectedChain] = useState<string>('all');
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
@@ -36,20 +35,14 @@ export function Dashboard() {
   };
 
   const handleDepositConfirm = useCallback(() => {
-    toast({
-      title: 'Deposit successful',
-      description: 'Your deposit has been confirmed.',
-    });
+    toast.success('Deposit successful');
     refetch();
-  }, [toast, refetch]);
+  }, [refetch]);
 
   const handleWithdrawComplete = useCallback(() => {
-    toast({
-      title: 'Withdrawal successful',
-      description: 'Your withdrawal has been confirmed.',
-    });
+    toast.success('Withdrawal successful');
     refetch();
-  }, [toast, refetch]);
+  }, [refetch]);
 
   return (
     <section className="py-12">
