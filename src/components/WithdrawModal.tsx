@@ -57,7 +57,8 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
   const getActiveWithdraw = () => {
     if (!protocol) return null;
     switch (protocol.id) {
-      case 'aave': 
+      case 'aave-ethereum':
+      case 'aave-base': 
         return { 
           ...aaveWithdraw, 
           step: aaveWithdraw.step as UnifiedStep, 
@@ -118,9 +119,9 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
       const amountInUnits = parseUnits(numericAmount.toString(), 6);
       
       switch (protocol.id) {
-        case 'aave':
+        case 'aave-ethereum':
+        case 'aave-base':
           await aaveWithdraw.withdraw(numericAmount, isWithdrawAll);
-          break;
         case 'summer':
           await summerWithdraw.withdraw(amountInUnits, isWithdrawAll);
           break;
