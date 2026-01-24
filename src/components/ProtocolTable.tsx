@@ -21,7 +21,8 @@ type SortKey = 'apy' | 'tvl' | 'userDeposit';
 type SortDirection = 'asc' | 'desc';
 
 const protocolLogos: Record<string, string> = {
-  aave: aaveLogo,
+  'aave-ethereum': aaveLogo,
+  'aave-base': aaveLogo,
   summer: summerLogo,
   yo: yoLogo,
   'morpho-gauntlet': morphoLogo,
