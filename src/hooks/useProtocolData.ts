@@ -13,6 +13,7 @@ export interface ProtocolData {
   tvlFormatted: string;
   chains: string[];
   color: 'aave' | 'summer' | 'yo' | 'morpho';
+  chainId?: number; // Chain ID for protocol-specific actions
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
@@ -40,17 +41,33 @@ export function useProtocolData() {
   // Real data from all protocols
   const protocols: ProtocolData[] = [
     {
-      id: 'aave',
+      id: 'aave-ethereum',
       name: 'Aave',
       description: 'Leading lending protocol',
-      apy: aaveData.apy,
-      tvl: aaveData.tvl,
-      tvlFormatted: formatTVL(aaveData.tvl),
-      chains: ['Ethereum', 'Base'],
+      apy: aaveData.ethereumData.apy,
+      tvl: aaveData.ethereumData.tvl,
+      tvlFormatted: formatTVL(aaveData.ethereumData.tvl),
+      chains: ['Ethereum'],
+      chainId: 1,
       color: 'aave',
-      userDeposit: aaveData.userDeposit,
+      userDeposit: aaveData.ethereumUserDeposit,
       isLoading: aaveData.isLoading,
-      isSupported: true, // Always supported - data fetched from both chains
+      isSupported: true,
+      stablecoin: 'EURC',
+    },
+    {
+      id: 'aave-base',
+      name: 'Aave',
+      description: 'Leading lending protocol',
+      apy: aaveData.baseData.apy,
+      tvl: aaveData.baseData.tvl,
+      tvlFormatted: formatTVL(aaveData.baseData.tvl),
+      chains: ['Base'],
+      chainId: 8453,
+      color: 'aave',
+      userDeposit: aaveData.baseUserDeposit,
+      isLoading: aaveData.isLoading,
+      isSupported: true,
       stablecoin: 'EURC',
     },
     {

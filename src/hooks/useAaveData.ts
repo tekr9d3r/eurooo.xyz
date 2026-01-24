@@ -45,7 +45,6 @@ async function fetchAaveChainData(chainId: 1 | 8453) {
 }
 
 export function useAaveData() {
-  const connectedChainId = useChainId();
   const { address } = useAccount();
 
   // Fetch data from both chains simultaneously
@@ -63,50 +62,56 @@ export function useAaveData() {
     staleTime: 30000,
   });
 
-  // Get user's aEURC balance on the connected chain (wallet-dependent)
-  const aEurcAddress = AAVE_AEURC_ADDRESSES[connectedChainId as keyof typeof AAVE_AEURC_ADDRESSES];
-  
-  const { data: userATokenBalance, isLoading: isLoadingUserBalance, refetch: refetchBalance } = useReadContract({
-    address: aEurcAddress,
+  // Get user's aEURC balance on Ethereum
+  const ethereumAEurcAddress = AAVE_AEURC_ADDRESSES[1];
+  const { data: ethereumUserBalance, refetch: refetchEthereumBalance } = useReadContract({
+    address: ethereumAEurcAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+    chainId: 1,
     query: {
-      enabled: !!address && !!aEurcAddress,
+      enabled: !!address,
       refetchInterval: 30000,
     },
   });
 
-  // Combine APY - use weighted average if both chains have data
+  // Get user's aEURC balance on Base
+  const baseAEurcAddress = AAVE_AEURC_ADDRESSES[8453];
+  const { data: baseUserBalance, refetch: refetchBaseBalance } = useReadContract({
+    address: baseAEurcAddress,
+    abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    chainId: 8453,
+    query: {
+      enabled: !!address,
+      refetchInterval: 30000,
+    },
+  });
+
   const ethApy = ethereumData?.apy || 0;
   const baseApy = baseData?.apy || 0;
   const ethTvl = ethereumData?.tvl || 0;
   const baseTvl = baseData?.tvl || 0;
 
-  // Combined TVL from both chains
-  const totalTvl = ethTvl + baseTvl;
-
-  // Weighted average APY based on TVL
-  const combinedApy = totalTvl > 0
-    ? (ethApy * ethTvl + baseApy * baseTvl) / totalTvl
-    : (ethApy + baseApy) / 2;
-
-  // Format user deposit (6 decimals for EURC)
-  const userDeposit = userATokenBalance ? Number(formatUnits(userATokenBalance, 6)) : 0;
+  // Format user deposits (6 decimals for EURC)
+  const ethereumUserDeposit = ethereumUserBalance ? Number(formatUnits(ethereumUserBalance, 6)) : 0;
+  const baseUserDeposit = baseUserBalance ? Number(formatUnits(baseUserBalance, 6)) : 0;
 
   const refetch = () => {
     refetchEthereum();
     refetchBase();
-    refetchBalance();
+    refetchEthereumBalance();
+    refetchBaseBalance();
   };
 
   return {
-    apy: combinedApy,
-    tvl: totalTvl,
-    userDeposit,
     ethereumData: { apy: ethApy, tvl: ethTvl },
     baseData: { apy: baseApy, tvl: baseTvl },
-    isLoading: isLoadingEthereum || isLoadingBase || isLoadingUserBalance,
+    ethereumUserDeposit,
+    baseUserDeposit,
+    isLoading: isLoadingEthereum || isLoadingBase,
     refetch,
   };
 }

@@ -97,7 +97,9 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const getActiveDeposit = () => {
     if (!protocol) return null;
     switch (protocol.id) {
-      case 'aave': return { ...aaveDeposit, step: mapAaveStep(aaveDeposit.step), txHash: aaveDeposit.supplyTxHash };
+      case 'aave-ethereum':
+      case 'aave-base':
+        return { ...aaveDeposit, step: mapAaveStep(aaveDeposit.step), txHash: aaveDeposit.supplyTxHash };
       case 'summer': return { ...summerDeposit, step: mapSummerStep(summerDeposit.step) };
       case 'yo': return { ...yoDeposit, step: mapYoStep(yoDeposit.step) };
       case 'morpho-gauntlet': return { ...morphoGauntletDeposit, step: mapMorphoStep(morphoGauntletDeposit.step) };
@@ -138,9 +140,9 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       setUiStep('processing');
       
       switch (protocol.id) {
-        case 'aave':
+        case 'aave-ethereum':
+        case 'aave-base':
           await aaveDeposit.deposit(numericAmount);
-          break;
         case 'summer':
           await summerDeposit.deposit(numericAmount);
           break;
