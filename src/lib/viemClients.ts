@@ -1,15 +1,23 @@
-import { createPublicClient, http } from 'viem';
+import { createPublicClient, http, fallback } from 'viem';
 import { mainnet, base } from 'wagmi/chains';
 
 // Public clients for fetching protocol data (APY, TVL) regardless of wallet connection
 export const ethereumClient = createPublicClient({
   chain: mainnet,
-  transport: http(),
+  transport: fallback([
+    http('https://eth.merkle.io'),
+    http('https://cloudflare-eth.com'),
+    http('https://rpc.ankr.com/eth'),
+  ]),
 });
 
 export const baseClient = createPublicClient({
   chain: base,
-  transport: http(),
+  transport: fallback([
+    http('https://mainnet.base.org'),
+    http('https://base.publicnode.com'),
+    http('https://rpc.ankr.com/base'),
+  ]),
 });
 
 export function getClientForChain(chainId: number) {
