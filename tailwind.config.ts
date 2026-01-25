@@ -58,6 +58,8 @@ export default {
         aave: "hsl(var(--aave))",
         summer: "hsl(var(--summer))",
         yo: "hsl(var(--yo))",
+        morpho: "hsl(var(--morpho))",
+        fluid: "hsl(var(--fluid))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

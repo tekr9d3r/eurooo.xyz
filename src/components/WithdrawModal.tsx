@@ -17,6 +17,7 @@ import { useAaveWithdraw, WithdrawStep as AaveWithdrawStep } from '@/hooks/useAa
 import { useSummerWithdraw, SummerWithdrawStep } from '@/hooks/useSummerWithdraw';
 import { useYoWithdraw, YoWithdrawStep } from '@/hooks/useYoWithdraw';
 import { useMorphoWithdraw, MorphoWithdrawStep } from '@/hooks/useMorphoWithdraw';
+import { useFluidWithdraw, FluidWithdrawStep } from '@/hooks/useFluidWithdraw';
 import { AlertCircle, Loader2, CheckCircle2, XCircle, ArrowRightLeft } from 'lucide-react';
 
 interface WithdrawModalProps {
@@ -58,6 +59,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
   const summerWithdraw = useSummerWithdraw();
   const yoWithdraw = useYoWithdraw();
   const morphoGauntletWithdraw = useMorphoWithdraw('morpho-gauntlet');
+  const fluidWithdraw = useFluidWithdraw();
 
   const blockExplorer = protocol?.chainId ? (BLOCK_EXPLORERS[protocol.chainId] || 'https://etherscan.io') : 'https://etherscan.io';
   
@@ -91,6 +93,11 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         return { 
           ...morphoGauntletWithdraw, 
           step: morphoGauntletWithdraw.step as UnifiedStep 
+        };
+      case 'fluid': 
+        return { 
+          ...fluidWithdraw, 
+          step: fluidWithdraw.step as UnifiedStep 
         };
       default: return null;
     }
@@ -155,6 +162,9 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         case 'morpho-gauntlet':
           await morphoGauntletWithdraw.withdraw(amountInUnits);
           break;
+        case 'fluid':
+          await fluidWithdraw.withdraw(amountInUnits);
+          break;
         default:
           onComplete();
           handleClose(false);
@@ -170,6 +180,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
       summerWithdraw.reset();
       yoWithdraw.reset();
       morphoGauntletWithdraw.reset();
+      fluidWithdraw.reset();
     }
     onOpenChange(isOpen);
   };
@@ -179,6 +190,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     summerWithdraw.reset();
     yoWithdraw.reset();
     morphoGauntletWithdraw.reset();
+    fluidWithdraw.reset();
     setUiStep('confirm');
   };
 

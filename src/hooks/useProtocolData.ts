@@ -2,6 +2,7 @@ import { useAaveData } from './useAaveData';
 import { useSummerData } from './useSummerData';
 import { useYoData } from './useYoData';
 import { useMorphoData } from './useMorphoData';
+import { useFluidData } from './useFluidData';
 import { useEURCBalance } from './useEURCBalance';
 import aaveLogo from '@/assets/aave-logo.png';
 
@@ -13,7 +14,7 @@ export interface ProtocolData {
   tvl: number;
   tvlFormatted: string;
   chains: string[];
-  color: 'aave' | 'summer' | 'yo' | 'morpho';
+  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid';
   chainId: number; // Required chain ID for protocol-specific actions
   userDeposit: number;
   isLoading: boolean;
@@ -39,6 +40,7 @@ export function useProtocolData() {
   const summerData = useSummerData();
   const yoData = useYoData();
   const morphoGauntletData = useMorphoData('morpho-gauntlet');
+  const fluidData = useFluidData();
 
   // Real data from all protocols
   const protocols: ProtocolData[] = [
@@ -141,6 +143,22 @@ export function useProtocolData() {
       stablecoin: 'EURC',
       learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0x2ed10624315b74a78f11FAbedAa1A228c198aEfB/gauntlet-eurc-core',
     },
+    {
+      id: 'fluid',
+      name: 'Fluid',
+      description: 'Lending protocol by Instadapp',
+      apy: fluidData.apy,
+      tvl: fluidData.tvl,
+      tvlFormatted: fluidData.tvl > 0 ? formatTVL(fluidData.tvl) : '—',
+      chains: ['Base'],
+      chainId: 8453,
+      color: 'fluid',
+      userDeposit: fluidData.userDeposit,
+      isLoading: fluidData.isLoading,
+      isSupported: true,
+      stablecoin: 'EURC',
+      learnMoreUrl: 'https://fluid.io/lending/8453/EURC',
+    },
   ];
 
   const totalDeposits = protocols.reduce((sum, p) => sum + p.userDeposit, 0);
@@ -156,6 +174,7 @@ export function useProtocolData() {
     summerData.refetch();
     yoData.refetch();
     morphoGauntletData.refetch();
+    fluidData.refetch();
   };
 
   return {
