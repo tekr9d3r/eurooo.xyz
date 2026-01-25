@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseUnits } from 'viem';
-import { mainnet, base } from 'wagmi/chains';
+import { mainnet, base, gnosis } from 'wagmi/chains';
 import {
   EURC_ADDRESSES,
   AAVE_V3_POOL_ADDRESSES,
@@ -14,7 +14,15 @@ export type DepositStep = 'idle' | 'checking' | 'approving' | 'waitingApproval' 
 const CHAIN_MAP = {
   1: mainnet,
   8453: base,
+  100: gnosis,
 } as const;
+
+// Token decimals per chain (EURC = 6, EURe on Gnosis = 18)
+const TOKEN_DECIMALS: Record<number, number> = {
+  1: 6,
+  8453: 6,
+  100: 18,
+};
 
 interface UseAaveDepositReturn {
   deposit: (amount: number) => Promise<void>;
@@ -36,6 +44,7 @@ export function useAaveDeposit(): UseAaveDepositReturn {
   const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
   const poolAddress = AAVE_V3_POOL_ADDRESSES[chainId as keyof typeof AAVE_V3_POOL_ADDRESSES];
   const chain = CHAIN_MAP[chainId as keyof typeof CHAIN_MAP];
+  const decimals = TOKEN_DECIMALS[chainId] || 6;
 
   const { writeContractAsync } = useWriteContract();
 
@@ -78,8 +87,8 @@ export function useAaveDeposit(): UseAaveDepositReturn {
       setError(null);
       setStep('checking');
 
-      // Convert amount to EURC units (6 decimals)
-      const amountInUnits = parseUnits(amount.toString(), 6);
+      // Convert amount to token units (6 decimals for EURC, 18 for EURe)
+      const amountInUnits = parseUnits(amount.toString(), decimals);
 
       // Check if we need approval
       await refetchAllowance();
@@ -156,7 +165,7 @@ export function useAaveDeposit(): UseAaveDepositReturn {
       }
       setStep('error');
     }
-  }, [address, eurcAddress, poolAddress, chain, currentAllowance, writeContractAsync, refetchAllowance]);
+  }, [address, eurcAddress, poolAddress, chain, decimals, currentAllowance, writeContractAsync, refetchAllowance]);
 
   return {
     deposit,

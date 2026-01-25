@@ -22,11 +22,13 @@ import { AlertCircle, TrendingUp, Loader2, CheckCircle2, XCircle, ArrowRightLeft
 const BLOCK_EXPLORERS: Record<number, string> = {
   1: 'https://etherscan.io',
   8453: 'https://basescan.org',
+  100: 'https://gnosisscan.io',
 };
 
 const CHAIN_NAMES: Record<number, string> = {
   1: 'Ethereum',
   8453: 'Base',
+  100: 'Gnosis',
 };
 
 interface DepositModalProps {
@@ -109,6 +111,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     switch (protocol.id) {
       case 'aave-ethereum':
       case 'aave-base':
+      case 'aave-gnosis':
         return { ...aaveDeposit, step: mapAaveStep(aaveDeposit.step), txHash: aaveDeposit.supplyTxHash };
       case 'summer': return { ...summerDeposit, step: mapSummerStep(summerDeposit.step) };
       case 'yo': return { ...yoDeposit, step: mapYoStep(yoDeposit.step) };
@@ -145,7 +148,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
 
   const handleSwitchNetwork = () => {
     if (protocol?.chainId) {
-      switchChain({ chainId: protocol.chainId as 1 | 8453 });
+      switchChain({ chainId: protocol.chainId as 1 | 8453 | 100 });
     }
   };
 
@@ -160,6 +163,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       switch (protocol.id) {
         case 'aave-ethereum':
         case 'aave-base':
+        case 'aave-gnosis':
           await aaveDeposit.deposit(numericAmount);
         case 'summer':
           await summerDeposit.deposit(numericAmount);

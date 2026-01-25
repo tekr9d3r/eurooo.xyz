@@ -39,11 +39,13 @@ const stepMessages: Record<UnifiedStep, string> = {
 const BLOCK_EXPLORERS: Record<number, string> = {
   1: 'https://etherscan.io',
   8453: 'https://basescan.org',
+  100: 'https://gnosisscan.io',
 };
 
 const CHAIN_NAMES: Record<number, string> = {
   1: 'Ethereum',
   8453: 'Base',
+  100: 'Gnosis',
 };
 
 export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: WithdrawModalProps) {
@@ -68,7 +70,8 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     if (!protocol) return null;
     switch (protocol.id) {
       case 'aave-ethereum':
-      case 'aave-base': 
+      case 'aave-base':
+      case 'aave-gnosis': 
         return { 
           ...aaveWithdraw, 
           step: aaveWithdraw.step as UnifiedStep, 
@@ -120,7 +123,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
 
   const handleSwitchNetwork = () => {
     if (protocol?.chainId) {
-      switchChain({ chainId: protocol.chainId as 1 | 8453 });
+      switchChain({ chainId: protocol.chainId as 1 | 8453 | 100 });
     }
   };
 
@@ -139,6 +142,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
       switch (protocol.id) {
         case 'aave-ethereum':
         case 'aave-base':
+        case 'aave-gnosis':
           await aaveWithdraw.withdraw(numericAmount, isWithdrawAll);
           break;
         case 'summer':
