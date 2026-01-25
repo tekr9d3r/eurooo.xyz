@@ -67,6 +67,13 @@ export const MORPHO_VAULT_ADDRESSES = {
   },
 } as const;
 
+// ============= FLUID =============
+// Fluid fToken vaults (ERC-4626)
+export const FLUID_VAULT_ADDRESSES = {
+  // fEURC on Base
+  8453: '0x1943FA26360f038230442525Cf1B9125b5DCB401' as const,
+} as const;
+
 // ERC20 ABI (includes approve for deposits)
 export const ERC20_ABI = [
   {

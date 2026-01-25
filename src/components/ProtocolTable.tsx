@@ -23,17 +23,20 @@ type SortDirection = 'asc' | 'desc';
 const protocolLogos: Record<string, string> = {
   'aave-ethereum': aaveLogo,
   'aave-base': aaveLogo,
+  'aave-gnosis': aaveLogo,
   summer: summerLogo,
   yo: yoLogo,
   'morpho-gauntlet': morphoLogo,
   'morpho-prime': morphoLogo,
+  fluid: summerLogo, // Using summer logo as placeholder - can be replaced with Fluid logo later
 };
 
 const colorClasses = {
   aave: 'bg-aave/10 border-aave/30',
   summer: 'bg-summer/10 border-summer/30',
   yo: 'bg-yo/10 border-yo/30',
-  morpho: 'bg-blue-500/10 border-blue-500/30',
+  morpho: 'bg-morpho/10 border-morpho/30',
+  fluid: 'bg-fluid/10 border-fluid/30',
 };
 
 export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTableProps) {
