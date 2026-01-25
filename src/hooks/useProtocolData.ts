@@ -5,6 +5,7 @@ import { useMorphoData } from './useMorphoData';
 import { useFluidData } from './useFluidData';
 import { useEURCBalance } from './useEURCBalance';
 import aaveLogo from '@/assets/aave-logo.png';
+import fluidLogo from '@/assets/fluid-logo.png';
 
 export interface ProtocolData {
   id: string;
@@ -157,6 +158,7 @@ export function useProtocolData() {
       isLoading: fluidData.isLoading,
       isSupported: true,
       stablecoin: 'EURC',
+      logo: fluidLogo,
       learnMoreUrl: 'https://fluid.io/lending/8453/EURC',
     },
   ];

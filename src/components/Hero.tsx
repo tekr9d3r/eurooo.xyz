@@ -6,6 +6,7 @@ import aaveLogo from '@/assets/aave-logo.png';
 import summerLogo from '@/assets/summer-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
+import fluidLogo from '@/assets/fluid-logo.png';
 
 // Animated EU-style gold stars component with parallax
 function AnimatedStars() {
@@ -97,6 +98,9 @@ export function Hero() {
   }, {
     name: 'YO Protocol',
     logo: yoLogo
+  }, {
+    name: 'Fluid',
+    logo: fluidLogo
   }];
   return <section className="relative overflow-hidden py-24 lg:py-40">
       {/* Animated background */}
@@ -160,7 +164,7 @@ export function Hero() {
               </div>
               <h3 className="font-semibold">Trusted Protocols</h3>
               <p className="text-sm text-muted-foreground">
-                Aave, Summer.fi, Morpho & YO — battle-tested DeFi platforms
+                Aave, Summer.fi, Morpho, YO & Fluid — battle-tested DeFi platforms
               </p>
             </div>
             <div className="group flex flex-col items-center gap-3 text-center p-6 rounded-2xl transition-all duration-300 hover:bg-secondary/50 hover:shadow-lg">
