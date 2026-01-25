@@ -1,10 +1,12 @@
-// Contract addresses for EURC and DeFi protocols
+// Contract addresses for EURC/EURe and DeFi protocols
 
 export const EURC_ADDRESSES = {
-  // Ethereum Mainnet
+  // Ethereum Mainnet (EURC)
   1: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c' as const,
-  // Base
+  // Base (EURC)
   8453: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42' as const,
+  // Gnosis (EURe)
+  100: '0xcB444e90D8198415266c6a2724b7900fb12FC56E' as const,
 } as const;
 
 // ============= AAVE V3 =============
@@ -13,6 +15,8 @@ export const AAVE_V3_POOL_ADDRESSES = {
   1: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2' as const,
   // Base
   8453: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5' as const,
+  // Gnosis
+  100: '0xb50201558B00496A145fE76f7424749556E326D8' as const,
 } as const;
 
 export const AAVE_V3_POOL_DATA_PROVIDER = {
@@ -20,14 +24,18 @@ export const AAVE_V3_POOL_DATA_PROVIDER = {
   1: '0x7B4EB56E7CD4b454BA8ff71E4518426369a138a3' as const,
   // Base  
   8453: '0x2d8A3C5677189723C4cB8873CfC9C8976FDF38Ac' as const,
+  // Gnosis
+  100: '0x501B4c19dd9C2e06E94dA7b6D5Ed4ddA013EC741' as const,
 } as const;
 
-// aEURC token addresses (receipt tokens for Aave deposits)
+// aEURC/aEURe token addresses (receipt tokens for Aave deposits)
 export const AAVE_AEURC_ADDRESSES = {
   // aEURC on Ethereum Mainnet
   1: '0xAA6e91C82942aeAE040303Bf96c15a6dBcB82CA0' as const,
   // aBasEURC on Base
   8453: '0x90da57e0a6c0d166bf15764e03b83745dc90025b' as const,
+  // aGnoEURe on Gnosis
+  100: '0xEdBC7449a9b594CA4E053D9737EC5Dc4CbCcBfb2' as const,
 } as const;
 
 // ============= SUMMER.FI (Lazy Summer Protocol) =============

@@ -18,7 +18,7 @@ export interface ProtocolData {
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
-  stablecoin: 'EURC';
+  stablecoin: 'EURC' | 'EURe';
   logo?: string;
   learnMoreUrl?: string;
 }
@@ -75,6 +75,23 @@ export function useProtocolData() {
       stablecoin: 'EURC',
       logo: aaveLogo,
       learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42&marketName=proto_base_v3',
+    },
+    {
+      id: 'aave-gnosis',
+      name: 'Aave',
+      description: 'Leading lending protocol',
+      apy: aaveData.gnosisData.apy,
+      tvl: aaveData.gnosisData.tvl,
+      tvlFormatted: formatTVL(aaveData.gnosisData.tvl),
+      chains: ['Gnosis'],
+      chainId: 100,
+      color: 'aave',
+      userDeposit: aaveData.gnosisUserDeposit,
+      isLoading: aaveData.isLoading,
+      isSupported: true,
+      stablecoin: 'EURe',
+      logo: aaveLogo,
+      learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0xcb444e90d8198415266c6a2724b7900fb12fc56e&marketName=proto_gnosis_v3',
     },
     {
       id: 'summer',

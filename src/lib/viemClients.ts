@@ -1,5 +1,5 @@
 import { createPublicClient, http, fallback } from 'viem';
-import { mainnet, base } from 'wagmi/chains';
+import { mainnet, base, gnosis } from 'wagmi/chains';
 
 // Public clients for fetching protocol data (APY, TVL) regardless of wallet connection
 export const ethereumClient = createPublicClient({
@@ -22,13 +22,25 @@ export const baseClient = createPublicClient({
   ]),
 });
 
+export const gnosisClient = createPublicClient({
+  chain: gnosis,
+  transport: fallback([
+    http('https://rpc.gnosischain.com'),
+    http('https://gnosis-rpc.publicnode.com'),
+    http('https://rpc.ankr.com/gnosis'),
+    http('https://gnosis.drpc.org'),
+  ]),
+});
+
 export function getClientForChain(chainId: number) {
-  return chainId === 1 ? ethereumClient : baseClient;
+  if (chainId === 1) return ethereumClient;
+  if (chainId === 100) return gnosisClient;
+  return baseClient;
 }
 
 // Helper to read contracts with proper typing
 export async function readContractMultichain<T>(
-  chainId: 1 | 8453,
+  chainId: 1 | 8453 | 100,
   params: {
     address: `0x${string}`;
     abi: readonly unknown[];
@@ -36,7 +48,7 @@ export async function readContractMultichain<T>(
     args?: readonly unknown[];
   }
 ): Promise<T> {
-  const client = chainId === 1 ? ethereumClient : baseClient;
+  const client = getClientForChain(chainId);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return client.readContract(params as any) as Promise<T>;
 }

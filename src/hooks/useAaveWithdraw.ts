@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAccount, useChainId, useWriteContract } from 'wagmi';
 import { parseUnits, maxUint256 } from 'viem';
-import { mainnet, base } from 'wagmi/chains';
+import { mainnet, base, gnosis } from 'wagmi/chains';
 import {
   EURC_ADDRESSES,
   AAVE_V3_POOL_ADDRESSES,
@@ -13,7 +13,15 @@ export type WithdrawStep = 'idle' | 'withdrawing' | 'waitingWithdraw' | 'success
 const CHAIN_MAP = {
   1: mainnet,
   8453: base,
+  100: gnosis,
 } as const;
+
+// Token decimals per chain (EURC = 6, EURe on Gnosis = 18)
+const TOKEN_DECIMALS: Record<number, number> = {
+  1: 6,
+  8453: 6,
+  100: 18,
+};
 
 interface UseAaveWithdrawReturn {
   withdraw: (amount: number, withdrawAll?: boolean) => Promise<void>;
@@ -33,6 +41,7 @@ export function useAaveWithdraw(): UseAaveWithdrawReturn {
   const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
   const poolAddress = AAVE_V3_POOL_ADDRESSES[chainId as keyof typeof AAVE_V3_POOL_ADDRESSES];
   const chain = CHAIN_MAP[chainId as keyof typeof CHAIN_MAP];
+  const decimals = TOKEN_DECIMALS[chainId] || 6;
 
   const { writeContractAsync } = useWriteContract();
 
@@ -54,7 +63,7 @@ export function useAaveWithdraw(): UseAaveWithdrawReturn {
       setStep('withdrawing');
 
       // For "withdraw all", use max uint256 which Aave interprets as full balance
-      const amountInUnits = withdrawAll ? maxUint256 : parseUnits(amount.toString(), 6);
+      const amountInUnits = withdrawAll ? maxUint256 : parseUnits(amount.toString(), decimals);
 
       const withdrawTx = await writeContractAsync({
         address: poolAddress,
@@ -84,7 +93,7 @@ export function useAaveWithdraw(): UseAaveWithdrawReturn {
       }
       setStep('error');
     }
-  }, [address, eurcAddress, poolAddress, chain, writeContractAsync]);
+  }, [address, eurcAddress, poolAddress, chain, decimals, writeContractAsync]);
 
   return {
     withdraw,
