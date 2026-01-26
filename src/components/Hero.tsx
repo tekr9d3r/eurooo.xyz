@@ -208,7 +208,7 @@ export function Hero() {
                     
 
 
-EUR deserves better in DeFi. Think together. Join the Telegram.
+EUR deserves better in DeFi. Think together. 
 
 
 
