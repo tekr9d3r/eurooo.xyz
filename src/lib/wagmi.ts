@@ -1,15 +1,51 @@
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { connectorsForWallets } from '@rainbow-me/rainbowkit';
+import {
+  braveWallet,
+  injectedWallet,
+  metaMaskWallet,
+  coinbaseWallet,
+  rainbowWallet,
+  walletConnectWallet,
+} from '@rainbow-me/rainbowkit/wallets';
+import { createConfig, http } from 'wagmi';
 import { mainnet, base, gnosis } from 'wagmi/chains';
 
-// WalletConnect Cloud project ID (public identifier)
-const projectId = 'dee68134-25b3-4ed1-ba9a-2f7b1e562b63';
+// WalletConnect Cloud project ID (32 characters, no hyphens)
+const projectId = 'dee6813425b34ed1ba9a2f7b1e562b63';
 
-export const config = getDefaultConfig({
-  appName: 'EURC Yield Hub',
-  projectId,
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Popular',
+      wallets: [
+        injectedWallet,
+        braveWallet,
+        metaMaskWallet,
+        rainbowWallet,
+        coinbaseWallet,
+      ],
+    },
+    {
+      groupName: 'More',
+      wallets: [
+        walletConnectWallet,
+      ],
+    },
+  ],
+  {
+    appName: 'EURC Yield Hub',
+    projectId,
+  }
+);
+
+export const config = createConfig({
+  connectors,
   chains: [mainnet, base, gnosis],
-  appDescription: 'Compare and deposit EURC across DeFi protocols',
-  appUrl: typeof window !== 'undefined' ? window.location.origin : '',
+  transports: {
+    [mainnet.id]: http(),
+    [base.id]: http(),
+    [gnosis.id]: http(),
+  },
 });
 
 declare module 'wagmi' {
