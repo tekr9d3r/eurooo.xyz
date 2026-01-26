@@ -182,7 +182,7 @@ export function Hero() {
               </div>
               <h3 className="font-semibold">Multi-chain</h3>
               <p className="text-sm text-muted-foreground">
-                Deposit on Ethereum or Base — your choice
+                Deposit on Ethereum, Gnosis or Base — your choice
               </p>
             </div>
           </div>
