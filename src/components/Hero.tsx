@@ -208,7 +208,7 @@ export function Hero() {
                     
 
 
-DeFi won't build for us until we move the money. Join the Telegram to vote on which protocols we pressure next and grab the alpha on the few EUR pools that actually pay.
+EUR deserves better in DeFi. Think together. Join the Telegram.
 
 
 
