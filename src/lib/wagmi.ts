@@ -11,7 +11,7 @@ import { createConfig, http } from 'wagmi';
 import { mainnet, base, gnosis } from 'wagmi/chains';
 
 // WalletConnect Cloud project ID (32 characters, no hyphens)
-const projectId = 'dee6813425b34ed1ba9a2f7b1e562b63';
+const projectId = 'febe70ce29e7ee3a9ffd15e3b6cb90dd';
 
 const connectors = connectorsForWallets(
   [
