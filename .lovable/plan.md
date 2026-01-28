@@ -1,179 +1,191 @@
 
 
-## Consolidate Aave Pools into Expandable Row
+## Switch to DefiLlama API for APY and TVL Data
 
-### Overview
+### Current Problem
 
-Group the three separate Aave entries (Ethereum, Base, Gnosis) into a single expandable row that shows:
-- **Collapsed view**: Average APY, combined TVL, total user deposits across all chains
-- **Expanded view**: Individual chain details with deposit/withdraw actions for each
+The current implementation fetches APY and TVL data directly from blockchain RPC nodes using on-chain contract calls. This approach has several issues:
+- **Slow and unreliable**: Multiple RPC calls needed per protocol
+- **Rate limiting**: Even with fallback RPCs, we hit rate limits causing data inconsistencies
+- **Buggy TVL values**: Decimal parsing errors occasionally return unrealistic values (scientific notation)
+- **Hardcoded APYs**: Some protocols (Summer, YO, Fluid, Morpho) use hardcoded APY estimates instead of real data
 
-This pattern will be reusable for Morpho in the future.
+### Solution: DefiLlama Yields API
+
+DefiLlama provides a free `/pools` API endpoint that returns:
+- **Real-time APY** (`apy` field with 30-day average via `apyMean30d`)
+- **TVL in USD** (`tvlUsd` field)
+- **Pool metadata** (chain, project, symbol)
+
+API endpoint: `https://yields.llama.fi/pools`
+
+This is a single HTTP call that returns data for thousands of pools, which we can filter client-side.
 
 ---
 
-### Visual Design
+### Architecture Changes
 
 ```text
-COLLAPSED STATE:
-┌────────────────────────────────────────────────────────────────────────────────┐
-│  [▼] [Aave Logo]  Aave              4.21%    €85.2M    93%    €500.00   [Deposit ▼]
-│                   EURC · 3 chains   avg APY  total TVL        total
-└────────────────────────────────────────────────────────────────────────────────┘
+BEFORE (Current - Multiple RPC calls):
+┌─────────────────────────────────────────────────────────────────┐
+│  useAaveData.ts    →  3 RPC calls (Eth, Base, Gnosis)           │
+│  useMorphoData.ts  →  3 RPC calls (3 vaults)                    │
+│  useFluidData.ts   →  1 RPC call                                │
+│  useSummerData.ts  →  1 RPC call + hardcoded APY                │
+│  useYoData.ts      →  1 RPC call + hardcoded APY                │
+└─────────────────────────────────────────────────────────────────┘
+Total: 9+ RPC calls, prone to rate limits and errors
 
-EXPANDED STATE:
-┌────────────────────────────────────────────────────────────────────────────────┐
-│  [▲] [Aave Logo]  Aave              4.21%    €85.2M    93%    €500.00
-│                   EURC · 3 chains   avg APY  total TVL        total
-├────────────────────────────────────────────────────────────────────────────────┤
-│       └─ Ethereum (EURC)            4.52%    €71.5M           €300.00   [Deposit] [Withdraw]
-│       └─ Base (EURC)                3.89%    €12.1M           €200.00   [Deposit] [Withdraw]
-│       └─ Gnosis (EURe)              4.22%    €1.6M            €0.00     [Deposit]
-└────────────────────────────────────────────────────────────────────────────────┘
+AFTER (DefiLlama API - Single HTTP call):
+┌─────────────────────────────────────────────────────────────────┐
+│  useDefiLlamaData.ts  →  1 API call (fetches all pools)         │
+│  Filter and map to our protocol IDs                             │
+│  Return { apy, tvl } for each protocol/pool                     │
+└─────────────────────────────────────────────────────────────────┘
+Total: 1 HTTP call, cached response, reliable data
 ```
 
 ---
 
-### Data Structure Changes
+### Pool Identification Strategy
 
-#### New Types in `useProtocolData.ts`:
+We need to map DefiLlama pool IDs to our protocol entries. DefiLlama pools can be identified by:
+- `project` field (e.g., "aave-v3", "morpho", "fluid", "summer-fi")
+- `chain` field (e.g., "Ethereum", "Base", "Gnosis")
+- `symbol` field (e.g., "EURC", "EURe")
+- `pool` address (contract address - most reliable)
+
+**Mapping approach:**
+| Our Protocol | DefiLlama Filter |
+|--------------|------------------|
+| Aave Ethereum | project=aave-v3, chain=Ethereum, symbol contains EURC |
+| Aave Base | project=aave-v3, chain=Base, symbol contains EURC |
+| Aave Gnosis | project=aave-v3, chain=Gnosis, symbol contains EURe |
+| Morpho Gauntlet | pool address match or project=morpho-blue |
+| Morpho Prime | pool address match |
+| Morpho KPK | pool address match |
+| Summer.fi | project=summer-fi, chain=Base, symbol contains EURC |
+| YO Protocol | project=yo or pool address match |
+| Fluid | project=fluid, chain=Base, symbol contains EURC |
+
+---
+
+### Files to Create/Modify
+
+#### 1. Create `src/hooks/useDefiLlamaData.ts` (NEW)
+
+A centralized hook that:
+- Fetches all pools from DefiLlama in a single call
+- Filters for EURC/EURe stablecoin pools
+- Returns APY and TVL for each of our protocols
+- Uses React Query with 5-minute cache (data doesn't change often)
 
 ```typescript
-// Extended ProtocolData with optional sub-protocols for grouped entries
-export interface ProtocolData {
-  // ...existing fields...
-  subProtocols?: ProtocolData[];  // Child protocols for expandable groups
-  isGrouped?: boolean;            // Flag to indicate this is a parent row
+interface DefiLlamaPool {
+  pool: string;           // Pool address/ID
+  chain: string;          // "Ethereum", "Base", "Gnosis"
+  project: string;        // "aave-v3", "morpho", "fluid"
+  symbol: string;         // "EURC", "EURe"
+  tvlUsd: number;         // TVL in USD
+  apy: number;            // Current APY %
+  apyMean30d?: number;    // 30-day average APY
 }
 ```
 
-#### Aggregated Aave Entry:
+#### 2. Modify `src/hooks/useAaveData.ts`
 
-```typescript
+- Replace on-chain APY/TVL fetching with DefiLlama data
+- Keep user balance fetching (still needs on-chain for user-specific data)
+
+#### 3. Modify `src/hooks/useMorphoData.ts`
+
+- Replace on-chain APY/TVL fetching with DefiLlama data
+- Keep user balance fetching
+
+#### 4. Modify `src/hooks/useFluidData.ts`
+
+- Replace on-chain APY/TVL fetching with DefiLlama data
+- Keep user balance fetching
+
+#### 5. Modify `src/hooks/useSummerData.ts`
+
+- Replace hardcoded APY with real DefiLlama data
+- Replace on-chain TVL with DefiLlama data
+- Keep user balance fetching
+
+#### 6. Modify `src/hooks/useYoData.ts`
+
+- Replace hardcoded APY with real DefiLlama data
+- Replace on-chain TVL with DefiLlama data
+- Keep user balance fetching
+
+---
+
+### Key Benefits
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| API calls | 9+ RPC calls | 1 HTTP call |
+| Rate limiting | Common issue | Not a concern |
+| APY accuracy | Hardcoded/calculated | Real 30-day average |
+| TVL accuracy | Decimal errors possible | Pre-validated USD value |
+| Load time | Slow (sequential RPCs) | Fast (single cached call) |
+| Maintenance | Update each hook | Single source of truth |
+
+---
+
+### Technical Details
+
+#### DefiLlama API Response Structure
+```json
 {
-  id: 'aave',
-  name: 'Aave',
-  apy: averageApy,           // Weighted average across chains
-  tvl: combinedTvl,          // Sum of all chains
-  chains: ['Ethereum', 'Base', 'Gnosis'],
-  userDeposit: totalDeposit, // Sum across chains
-  isGrouped: true,
-  subProtocols: [
-    { id: 'aave-ethereum', chainId: 1, ... },
-    { id: 'aave-base', chainId: 8453, ... },
-    { id: 'aave-gnosis', chainId: 100, ... },
+  "status": "success",
+  "data": [
+    {
+      "pool": "0x2ed10624315b74a78f11FAbedAa1A228c198aEfB",
+      "chain": "Ethereum",
+      "project": "morpho-blue",
+      "symbol": "EURC",
+      "tvlUsd": 15234567.89,
+      "apy": 4.38,
+      "apyMean30d": 4.25
+    }
   ]
 }
 ```
 
----
+#### Caching Strategy
+- Cache DefiLlama response for 5 minutes (staleTime: 300000)
+- Background refetch every 5 minutes (refetchInterval: 300000)
+- Use `placeholderData` to preserve valid data during refetches
 
-### Component Changes
-
-#### 1. Update `ProtocolTable.tsx`
-
-- Add `useState` to track expanded protocol groups
-- Create `ExpandableProtocolRow` component for grouped protocols
-- Keep existing `ProtocolRow` for non-grouped protocols
-- Add chevron icon to toggle expansion
-- Render sub-rows with indentation when expanded
-- Show aggregated deposit button with dropdown for chain selection
-
-#### 2. Update `useProtocolData.ts`
-
-- Create aggregated Aave entry with calculated:
-  - Average APY (weighted by TVL or simple average)
-  - Combined TVL (sum of all chains)
-  - Total user deposit (sum across chains)
-- Include individual chain entries as `subProtocols` array
-- Remove separate `aave-ethereum`, `aave-base`, `aave-gnosis` from main list
+#### User Balances (Keep On-Chain)
+User-specific data (deposits, shares) must still be fetched from blockchain:
+- Use `useReadContract` with explicit `chainId` for each chain
+- This is a small number of calls only when wallet is connected
+- No change to current user balance fetching logic
 
 ---
 
-### Deposit Flow for Grouped Protocols
+### Fallback Strategy
 
-When user clicks "Deposit" on the Aave parent row:
-1. Show a dropdown/popover with chain options
-2. Each option shows chain name + current APY
-3. Clicking an option opens deposit modal for that specific chain
-
-Alternatively, when expanded:
-- Each sub-row has its own Deposit/Withdraw buttons (simpler approach)
-
----
-
-### Implementation Details
-
-#### Files to Modify:
-
-**`src/hooks/useProtocolData.ts`**
-- Add `subProtocols` field to `ProtocolData` interface
-- Create helper function to aggregate Aave data
-- Return single "Aave" entry instead of 3 separate ones
-- Include sub-protocols for expansion
-
-**`src/components/ProtocolTable.tsx`**
-- Add `expandedGroups` state to track which groups are open
-- Create `ExpandableProtocolRow` component
-- Handle rendering of sub-rows when expanded
-- Add expand/collapse toggle button
-- Style sub-rows with indentation and lighter background
-
-#### New UI Components:
-
-**Collapsible Row Pattern:**
-```typescript
-// Parent row with expand toggle
-<div className="...parent-row-styles">
-  <button onClick={toggleExpand}>
-    {isExpanded ? <ChevronUp /> : <ChevronDown />}
-  </button>
-  {/* Aggregated data */}
-</div>
-
-// Child rows (when expanded)
-{isExpanded && protocol.subProtocols?.map(sub => (
-  <div className="pl-8 bg-secondary/10 ...">
-    {/* Individual chain row */}
-  </div>
-))}
-```
-
----
-
-### Mobile Considerations
-
-On mobile (card layout):
-- Parent card shows "3 chains" with expand button
-- Expanded state shows stacked sub-cards with chain-specific data
-- Each sub-card has its own action buttons
-
----
-
-### APY Calculation
-
-For the aggregated APY, two options:
-
-**Option A: Simple Average**
-```typescript
-const avgApy = (ethApy + baseApy + gnosisApy) / 3;
-```
-
-**Option B: TVL-Weighted Average** (recommended - shows where most money is)
-```typescript
-const totalTvl = ethTvl + baseTvl + gnosisTvl;
-const avgApy = (ethApy * ethTvl + baseApy * baseTvl + gnosisApy * gnosisTvl) / totalTvl;
-```
+If DefiLlama API is unavailable:
+1. Return cached data if available
+2. Fall back to hardcoded estimates as last resort
+3. Log warning for debugging
 
 ---
 
 ### Summary of Changes
 
-| File | Changes |
-|------|---------|
-| `src/hooks/useProtocolData.ts` | Add `subProtocols` field, create aggregated Aave entry |
-| `src/components/ProtocolTable.tsx` | Add expansion state, create expandable row component |
-| `src/components/ui/collapsible.tsx` | Create if needed (or use inline state) |
+| File | Action | Changes |
+|------|--------|---------|
+| `src/hooks/useDefiLlamaData.ts` | CREATE | New centralized hook for DefiLlama API |
+| `src/hooks/useAaveData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
+| `src/hooks/useMorphoData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
+| `src/hooks/useFluidData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
+| `src/hooks/useSummerData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
+| `src/hooks/useYoData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
 
-This design is reusable - when adding more Morpho vaults, the same pattern applies.
+This refactor will provide reliable, accurate, and fast APY/TVL data from a single trusted source while maintaining user-specific on-chain balance fetching.
 
