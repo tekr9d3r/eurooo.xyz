@@ -1,101 +1,92 @@
 
 
-## Make Safety Scores More Subtle
+## Add Legal Disclaimer - Footer + Terms Page
 
-### Current vs. Proposed Design
+### Overview
 
-**Current (Too Prominent)**
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  Protocol    │  Safety      │  APY   │  TVL    │  Deposit      │
-│              │  ┌────────┐  │        │         │               │
-│  Aave        │  │ 93% ✓  │  │ 4.21%  │ €12.4M  │ —             │
-│              │  │DeFiSafety│ │        │         │               │
-│              │  └────────┘  │        │         │               │
-└─────────────────────────────────────────────────────────────────┘
-```
+Add legal protection through two elements:
+1. A footer disclaimer visible on all pages
+2. A dedicated Terms of Service page at `/terms`
 
-**Proposed (Subtle)**
-```text
-┌───────────────────────────────────────────────────────────────┐
-│  Protocol              │  APY   │  TVL    │  Deposit  │ Actions│
-│                        │        │         │           │        │
-│  🏛️ Aave  93%↗        │ 4.21%  │ €12.4M  │ —         │[Deposit]│
-│  [EURC] [Ethereum]     │        │         │           │        │
-└───────────────────────────────────────────────────────────────┘
-```
+No changes to the deposit flow.
 
 ---
 
-### Changes to Make
+### What Will Be Added
 
-#### 1. Remove Dedicated Safety Column
-- Remove the "Safety" column header from the desktop table
-- This frees up visual space and reduces clutter
+#### 1. Footer Disclaimer Update
 
-#### 2. Inline Safety Score with Protocol Name
-- Move the safety badge to appear next to the protocol name (after the learn more arrow)
-- Display as a small, text-only percentage with subtle styling
-
-#### 3. Redesign SafetyScoreBadge for Subtle Display
-- Remove colored backgrounds - use plain text styling
-- Remove the shield icon (too attention-grabbing)
-- Keep only the percentage + external link icon
-- Use muted colors that blend with other UI elements
-- On hover, reveal the tooltip with full details
-
-#### 4. Mobile View Adjustments
-- Remove the safety badge from the badges row
-- Display inline with protocol name similar to desktop
-
----
-
-### Technical Changes
-
-**File: `src/components/SafetyScoreBadge.tsx`**
-
-```typescript
-// Before: Colorful badge with background
-"inline-flex flex-col items-center gap-0.5 rounded-lg border px-2 py-1"
-getScoreColor(score) // bg-success/20 text-success border-success/30
-
-// After: Subtle text-only style
-"inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground"
-// No backgrounds, no borders, just subtle text
-```
-
-- Remove `ShieldCheck` icon
-- Remove `flex-col` layout (make it horizontal/inline)
-- Remove provider name display (keep only in tooltip)
-- Use `text-muted-foreground` for understated appearance
-
-**File: `src/components/ProtocolTable.tsx`**
-
-Desktop:
-- Remove `<div className="col-span-1">Safety</div>` from header
-- Remove dedicated Safety column from row grid
-- Add safety badge inline after protocol name/learn more link
-- Adjust grid from `grid-cols-12` to `grid-cols-11` or redistribute columns
-
-Mobile:
-- Remove `SafetyScoreBadge` from badges row
-- Add inline with protocol name
-
----
-
-### Visual Result
-
-The safety score will appear as subtle secondary text:
+Add a legal notice to the existing footer:
 
 ```text
-Aave ↗ 93%↗    ← Protocol name, learn more, then subtle score
-[EURC] [Ethereum]
+┌─────────────────────────────────────────────────────────────────────┐
+│  [Logo] eurooo.xyz          [X icon] [Telegram icon]                │
+│  Grow Your Euros in DeFi.                                           │
+│                                                                     │
+│  ──────────────────────────────────────────────────────────────     │
+│  eurooo.xyz is an interface for third-party DeFi protocols.        │
+│  Deposits go directly to protocols, not Eurooo.                    │
+│  Terms of Service ←(link)                                          │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-Users who care about safety can still:
-- See the score at a glance
-- Hover for full tooltip explanation
-- Click to open the DeFiSafety report
+#### 2. Terms of Service Page (`/terms`)
 
-But the dashboard focus remains on APY, TVL, and user deposits.
+A clean, readable page covering:
+
+**Section 1: Nature of Service**
+- Eurooo is an aggregator interface only
+- We do not operate or control the underlying protocols
+
+**Section 2: Third-Party Protocols**
+- Funds are deposited directly to Aave, Morpho, Summer.fi, YO, Fluid
+- Eurooo never takes custody of assets
+- Each protocol has its own risks and terms
+
+**Section 3: Risk Disclosure**
+- Smart contract risks
+- Market/liquidity risks
+- Regulatory risks
+- No guarantee of returns
+
+**Section 4: Limitation of Liability**
+- Eurooo not responsible for protocol failures
+- No warranty on accuracy of displayed data
+- User assumes all risks
+
+**Section 5: User Acknowledgment**
+- Users responsible for own research
+- Users confirm understanding of DeFi risks
+
+---
+
+### Files to Create
+
+**`src/pages/Terms.tsx`**
+- Full Terms of Service page
+- Clean typography matching site design
+- Back link to home/app
+
+### Files to Modify
+
+**`src/components/Footer.tsx`**
+- Add disclaimer text below existing content
+- Add link to Terms page
+
+**`src/App.tsx`**
+- Add `/terms` route
+
+---
+
+### Visual Design
+
+The footer disclaimer will use:
+- `text-xs text-muted-foreground` for subtle appearance
+- Centered text below the existing footer content
+- Underlined link to Terms page
+
+The Terms page will use:
+- Clean headings with proper hierarchy
+- Readable paragraph spacing
+- Consistent styling with rest of site
 
