@@ -20,12 +20,15 @@ export interface ProtocolData {
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
-  stablecoin: 'EURC' | 'EURe';
+  stablecoin: 'EURC' | 'EURe' | 'EURC/EURe';
   logo?: string;
   learnMoreUrl?: string;
   safetyScore?: number;
   safetyProvider?: string;
   safetyReportUrl?: string;
+  // Grouped protocol fields
+  isGrouped?: boolean;
+  subProtocols?: ProtocolData[];
 }
 
 function formatTVL(tvl: number): string {
@@ -46,68 +49,107 @@ export function useProtocolData() {
   const morphoGauntletData = useMorphoData('morpho-gauntlet');
   const fluidData = useFluidData();
 
+  // Individual Aave chain entries (used as sub-protocols)
+  const aaveEthereum: ProtocolData = {
+    id: 'aave-ethereum',
+    name: 'Aave',
+    description: 'Leading lending protocol',
+    apy: aaveData.ethereumData.apy,
+    tvl: aaveData.ethereumData.tvl,
+    tvlFormatted: formatTVL(aaveData.ethereumData.tvl),
+    chains: ['Ethereum'],
+    chainId: 1,
+    color: 'aave',
+    userDeposit: aaveData.ethereumUserDeposit,
+    isLoading: aaveData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: aaveLogo,
+    learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0x1abaea1f7c830bd89acc67ec4af516284b1bc33c&marketName=proto_mainnet_v3',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
+  };
+
+  const aaveBase: ProtocolData = {
+    id: 'aave-base',
+    name: 'Aave',
+    description: 'Leading lending protocol',
+    apy: aaveData.baseData.apy,
+    tvl: aaveData.baseData.tvl,
+    tvlFormatted: formatTVL(aaveData.baseData.tvl),
+    chains: ['Base'],
+    chainId: 8453,
+    color: 'aave',
+    userDeposit: aaveData.baseUserDeposit,
+    isLoading: aaveData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: aaveLogo,
+    learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42&marketName=proto_base_v3',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
+  };
+
+  const aaveGnosis: ProtocolData = {
+    id: 'aave-gnosis',
+    name: 'Aave',
+    description: 'Leading lending protocol',
+    apy: aaveData.gnosisData.apy,
+    tvl: aaveData.gnosisData.tvl,
+    tvlFormatted: formatTVL(aaveData.gnosisData.tvl),
+    chains: ['Gnosis'],
+    chainId: 100,
+    color: 'aave',
+    userDeposit: aaveData.gnosisUserDeposit,
+    isLoading: aaveData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURe',
+    logo: aaveLogo,
+    learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0xcb444e90d8198415266c6a2724b7900fb12fc56e&marketName=proto_gnosis_v3',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
+  };
+
+  // Calculate aggregated Aave metrics
+  const aaveSubProtocols = [aaveEthereum, aaveBase, aaveGnosis];
+  const aaveTotalTvl = aaveSubProtocols.reduce((sum, p) => sum + p.tvl, 0);
+  const aaveTotalDeposit = aaveSubProtocols.reduce((sum, p) => sum + p.userDeposit, 0);
+  
+  // TVL-weighted average APY
+  const aaveWeightedApy = aaveTotalTvl > 0
+    ? aaveSubProtocols.reduce((sum, p) => sum + (p.apy * p.tvl), 0) / aaveTotalTvl
+    : 0;
+
+  // Aggregated Aave entry
+  const aaveGrouped: ProtocolData = {
+    id: 'aave',
+    name: 'Aave',
+    description: 'Leading lending protocol',
+    apy: aaveWeightedApy,
+    tvl: aaveTotalTvl,
+    tvlFormatted: formatTVL(aaveTotalTvl),
+    chains: ['Ethereum', 'Base', 'Gnosis'],
+    chainId: 1, // Default to Ethereum for the group
+    color: 'aave',
+    userDeposit: aaveTotalDeposit,
+    isLoading: aaveData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC/EURe',
+    logo: aaveLogo,
+    learnMoreUrl: 'https://aave.com',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
+    isGrouped: true,
+    subProtocols: aaveSubProtocols,
+  };
+
   // Real data from all protocols
   const protocols: ProtocolData[] = [
-    {
-      id: 'aave-ethereum',
-      name: 'Aave',
-      description: 'Leading lending protocol',
-      apy: aaveData.ethereumData.apy,
-      tvl: aaveData.ethereumData.tvl,
-      tvlFormatted: formatTVL(aaveData.ethereumData.tvl),
-      chains: ['Ethereum'],
-      chainId: 1,
-      color: 'aave',
-      userDeposit: aaveData.ethereumUserDeposit,
-      isLoading: aaveData.isLoading,
-      isSupported: true,
-      stablecoin: 'EURC',
-      logo: aaveLogo,
-      learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0x1abaea1f7c830bd89acc67ec4af516284b1bc33c&marketName=proto_mainnet_v3',
-      safetyScore: 93,
-      safetyProvider: 'DeFiSafety',
-      safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
-    },
-    {
-      id: 'aave-base',
-      name: 'Aave',
-      description: 'Leading lending protocol',
-      apy: aaveData.baseData.apy,
-      tvl: aaveData.baseData.tvl,
-      tvlFormatted: formatTVL(aaveData.baseData.tvl),
-      chains: ['Base'],
-      chainId: 8453,
-      color: 'aave',
-      userDeposit: aaveData.baseUserDeposit,
-      isLoading: aaveData.isLoading,
-      isSupported: true,
-      stablecoin: 'EURC',
-      logo: aaveLogo,
-      learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42&marketName=proto_base_v3',
-      safetyScore: 93,
-      safetyProvider: 'DeFiSafety',
-      safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
-    },
-    {
-      id: 'aave-gnosis',
-      name: 'Aave',
-      description: 'Leading lending protocol',
-      apy: aaveData.gnosisData.apy,
-      tvl: aaveData.gnosisData.tvl,
-      tvlFormatted: formatTVL(aaveData.gnosisData.tvl),
-      chains: ['Gnosis'],
-      chainId: 100,
-      color: 'aave',
-      userDeposit: aaveData.gnosisUserDeposit,
-      isLoading: aaveData.isLoading,
-      isSupported: true,
-      stablecoin: 'EURe',
-      logo: aaveLogo,
-      learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0xcb444e90d8198415266c6a2724b7900fb12fc56e&marketName=proto_gnosis_v3',
-      safetyScore: 93,
-      safetyProvider: 'DeFiSafety',
-      safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
-    },
+    aaveGrouped,
     {
       id: 'summer',
       name: 'Summer.fi',

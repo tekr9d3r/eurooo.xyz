@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronUp, ChevronDown, TrendingUp, ArrowUpRight } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronRight, TrendingUp, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProtocolData } from '@/hooks/useProtocolData';
 import { SafetyScoreBadge } from '@/components/SafetyScoreBadge';
@@ -22,6 +22,7 @@ type SortKey = 'apy' | 'tvl' | 'userDeposit';
 type SortDirection = 'asc' | 'desc';
 
 const protocolLogos: Record<string, string> = {
+  'aave': aaveLogo,
   'aave-ethereum': aaveLogo,
   'aave-base': aaveLogo,
   'aave-gnosis': aaveLogo,
@@ -43,9 +44,12 @@ const colorClasses = {
 export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTableProps) {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
-  // Check if user has any deposits
-  const hasAnyDeposits = protocols.some(p => p.userDeposit > 0);
+  // Check if user has any deposits (including sub-protocols)
+  const hasAnyDeposits = protocols.some(p => 
+    p.userDeposit > 0 || (p.subProtocols?.some(sp => sp.userDeposit > 0))
+  );
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -54,6 +58,18 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
       setSortKey(key);
       setSortDirection('desc');
     }
+  };
+
+  const toggleGroup = (protocolId: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(protocolId)) {
+        next.delete(protocolId);
+      } else {
+        next.add(protocolId);
+      }
+      return next;
+    });
   };
 
   const sortedProtocols = [...protocols].sort((a, b) => {
@@ -82,10 +98,21 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
     );
   };
 
-  // Calculate totals for footer
-  const totalDeposits = protocols.reduce((sum, p) => sum + p.userDeposit, 0);
+  // Calculate totals for footer (including sub-protocols)
+  const totalDeposits = protocols.reduce((sum, p) => {
+    if (p.isGrouped && p.subProtocols) {
+      return sum + p.subProtocols.reduce((s, sp) => s + sp.userDeposit, 0);
+    }
+    return sum + p.userDeposit;
+  }, 0);
+  
   const weightedApy = totalDeposits > 0
-    ? protocols.reduce((sum, p) => sum + (p.apy * p.userDeposit), 0) / totalDeposits
+    ? protocols.reduce((sum, p) => {
+        if (p.isGrouped && p.subProtocols) {
+          return sum + p.subProtocols.reduce((s, sp) => s + (sp.apy * sp.userDeposit), 0);
+        }
+        return sum + (p.apy * p.userDeposit);
+      }, 0) / totalDeposits
     : 0;
   const dailyYield = (totalDeposits * (weightedApy / 100)) / 365;
 
@@ -124,6 +151,8 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
             protocol={protocol}
             onDeposit={onDeposit}
             onWithdraw={onWithdraw}
+            isExpanded={expandedGroups.has(protocol.id)}
+            onToggleExpand={() => toggleGroup(protocol.id)}
           />
         ))}
       </div>
@@ -151,12 +180,16 @@ interface ProtocolRowProps {
   protocol: ProtocolData;
   onDeposit: (protocol: ProtocolData) => void;
   onWithdraw: (protocol: ProtocolData) => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  isSubRow?: boolean;
 }
 
-function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
+function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpand, isSubRow }: ProtocolRowProps) {
   const hasDeposit = protocol.userDeposit > 0;
   const hasData = protocol.apy > 0 || protocol.tvl > 0;
   const dailyYield = (protocol.userDeposit * (protocol.apy / 100)) / 365;
+  const isGrouped = protocol.isGrouped && protocol.subProtocols;
 
   const logoSrc = protocol.logo || protocolLogos[protocol.id];
 
@@ -166,12 +199,26 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
       <div 
         className={cn(
           "md:hidden p-4 space-y-3",
-          hasDeposit && "bg-success/5 border-l-2 border-l-success"
+          hasDeposit && !isSubRow && "bg-success/5 border-l-2 border-l-success",
+          isSubRow && "pl-8 bg-secondary/10"
         )}
       >
         {/* Row 1: Protocol Info + APY */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Expand toggle for grouped protocols */}
+            {isGrouped && (
+              <button 
+                onClick={onToggleExpand}
+                className="p-1 -ml-2 hover:bg-secondary/50 rounded transition-colors"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+            )}
             <div className={cn(
               "flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden flex-shrink-0",
               colorClasses[protocol.color]
@@ -184,7 +231,8 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
             </div>
             <div>
               <div className="flex items-center gap-1">
-                <span className="font-semibold text-sm">{protocol.name}</span>
+                {isSubRow && <span className="text-muted-foreground">└─</span>}
+                <span className="font-semibold text-sm">{isSubRow ? protocol.chains[0] : protocol.name}</span>
                 {protocol.learnMoreUrl && (
                   <a
                     href={protocol.learnMoreUrl}
@@ -201,12 +249,18 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
                   {protocol.stablecoin}
                 </Badge>
-                {protocol.chains.map((chain) => (
-                  <Badge key={chain} variant="secondary" className="text-[10px] px-1.5 py-0">
-                    {chain}
+                {isGrouped ? (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {protocol.chains.length} chains
                   </Badge>
-                ))}
-                {protocol.safetyScore !== undefined && (
+                ) : (
+                  protocol.chains.map((chain) => (
+                    <Badge key={chain} variant="secondary" className="text-[10px] px-1.5 py-0">
+                      {chain}
+                    </Badge>
+                  ))
+                )}
+                {protocol.safetyScore !== undefined && !isSubRow && (
                   <SafetyScoreBadge 
                     score={protocol.safetyScore} 
                     provider={protocol.safetyProvider}
@@ -251,38 +305,82 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
           </div>
         )}
 
-        {/* Row 3: Action Buttons */}
-        <div className="flex gap-2">
-          <Button 
-            size="sm"
-            className="flex-1 bg-primary hover:bg-primary/90"
-            onClick={() => onDeposit(protocol)}
-            disabled={!hasData}
-          >
-            Deposit
-          </Button>
-          {hasDeposit && (
+        {/* Row 3: Action Buttons - Only show for non-grouped or sub-rows */}
+        {(!isGrouped || isSubRow) && (
+          <div className="flex gap-2">
             <Button 
               size="sm"
-              variant="outline"
-              className="flex-1"
-              onClick={() => onWithdraw(protocol)}
+              className="flex-1 bg-primary hover:bg-primary/90"
+              onClick={() => onDeposit(protocol)}
+              disabled={!hasData}
             >
-              Withdraw
+              Deposit
             </Button>
-          )}
-        </div>
+            {hasDeposit && (
+              <Button 
+                size="sm"
+                variant="outline"
+                className="flex-1"
+                onClick={() => onWithdraw(protocol)}
+              >
+                Withdraw
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Expand button for grouped protocols */}
+        {isGrouped && !isSubRow && (
+          <Button 
+            size="sm"
+            variant="outline"
+            className="w-full"
+            onClick={onToggleExpand}
+          >
+            {isExpanded ? 'Hide chains' : `Show ${protocol.subProtocols?.length} chains`}
+          </Button>
+        )}
       </div>
+
+      {/* Mobile: Sub-rows when expanded */}
+      {isGrouped && isExpanded && (
+        <div className="md:hidden">
+          {protocol.subProtocols?.map((sub) => (
+            <ProtocolRow
+              key={sub.id}
+              protocol={sub}
+              onDeposit={onDeposit}
+              onWithdraw={onWithdraw}
+              isSubRow
+            />
+          ))}
+        </div>
+      )}
 
       {/* Desktop Table Row - Hidden on mobile */}
       <div 
         className={cn(
           "hidden md:grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-secondary/20",
-          hasDeposit && "bg-success/5 border-l-2 border-l-success"
+          hasDeposit && !isSubRow && "bg-success/5 border-l-2 border-l-success",
+          isSubRow && "bg-secondary/10 pl-10"
         )}
       >
         {/* Protocol Info */}
         <div className="col-span-3 flex items-center gap-3">
+          {/* Expand toggle for grouped protocols */}
+          {isGrouped && (
+            <button 
+              onClick={onToggleExpand}
+              className="p-1 -ml-2 hover:bg-secondary/50 rounded transition-colors"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+          )}
+          {isSubRow && <span className="text-muted-foreground -ml-2">└─</span>}
           <div className={cn(
             "flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden",
             colorClasses[protocol.color]
@@ -295,7 +393,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">{protocol.name}</span>
+              <span className="font-semibold">{isSubRow ? protocol.chains[0] : protocol.name}</span>
               {protocol.learnMoreUrl && (
                 <a
                   href={protocol.learnMoreUrl}
@@ -312,11 +410,17 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
                 {protocol.stablecoin}
               </Badge>
-              {protocol.chains.map((chain) => (
-                <Badge key={chain} variant="secondary" className="text-[10px] px-1.5 py-0">
-                  {chain}
+              {isGrouped ? (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {protocol.chains.length} chains
                 </Badge>
-              ))}
+              ) : (
+                protocol.chains.map((chain) => (
+                  <Badge key={chain} variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {chain}
+                  </Badge>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -346,11 +450,13 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
 
         {/* Safety Score */}
         <div className="col-span-1">
-          <SafetyScoreBadge 
-            score={protocol.safetyScore} 
-            provider={protocol.safetyProvider}
-            reportUrl={protocol.safetyReportUrl}
-          />
+          {!isSubRow && (
+            <SafetyScoreBadge 
+              score={protocol.safetyScore} 
+              provider={protocol.safetyProvider}
+              reportUrl={protocol.safetyReportUrl}
+            />
+          )}
         </div>
 
         {/* User Deposit */}
@@ -373,25 +479,53 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
 
         {/* Actions */}
         <div className="col-span-2 flex justify-end gap-2">
-          <Button 
-            size="sm"
-            className="bg-primary hover:bg-primary/90"
-            onClick={() => onDeposit(protocol)}
-            disabled={!hasData}
-          >
-            Deposit
-          </Button>
-          {hasDeposit && (
+          {/* For grouped rows, show expand button instead of direct deposit */}
+          {isGrouped ? (
             <Button 
               size="sm"
               variant="outline"
-              onClick={() => onWithdraw(protocol)}
+              onClick={onToggleExpand}
             >
-              Withdraw
+              {isExpanded ? 'Hide' : 'Expand'}
             </Button>
+          ) : (
+            <>
+              <Button 
+                size="sm"
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => onDeposit(protocol)}
+                disabled={!hasData}
+              >
+                Deposit
+              </Button>
+              {hasDeposit && (
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onWithdraw(protocol)}
+                >
+                  Withdraw
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>
+
+      {/* Desktop: Sub-rows when expanded */}
+      {isGrouped && isExpanded && (
+        <div className="hidden md:block">
+          {protocol.subProtocols?.map((sub) => (
+            <ProtocolRow
+              key={sub.id}
+              protocol={sub}
+              onDeposit={onDeposit}
+              onWithdraw={onWithdraw}
+              isSubRow
+            />
+          ))}
+        </div>
+      )}
     </>
   );
 }
