@@ -195,8 +195,8 @@ export function useProtocolData() {
 
   const morphoKpk: ProtocolData = {
     id: 'morpho-kpk',
-    name: 'KPK EURC Yield',
-    description: 'Morpho vault by KPK',
+    name: 'kpkEURC Yield',
+    description: 'Morpho vault by kpk',
     apy: morphoKpkData.apy,
     tvl: morphoKpkData.tvl,
     tvlFormatted: morphoKpkData.tvl > 0 ? formatTVL(morphoKpkData.tvl) : '—',
