@@ -10,6 +10,9 @@ import {
 
 const FLUID_CHAIN_ID = 8453; // Base
 
+// Maximum reasonable TVL (1 billion EUR) - anything higher is clearly an error
+const MAX_REASONABLE_TVL = 1_000_000_000;
+
 // Fetch TVL from Base using public client (no wallet required)
 async function fetchFluidTVL(vaultAddress: `0x${string}`) {
   try {
@@ -19,10 +22,18 @@ async function fetchFluidTVL(vaultAddress: `0x${string}`) {
       functionName: 'totalAssets',
     });
 
-    return Number(formatUnits(totalAssets, 6)); // EURC has 6 decimals
+    const tvl = Number(formatUnits(totalAssets, 6)); // EURC has 6 decimals
+    
+    // Sanity check: if TVL is unrealistically high, it's likely a decimal error
+    if (tvl > MAX_REASONABLE_TVL || !Number.isFinite(tvl) || tvl < 0) {
+      console.warn('[Fluid] TVL value seems incorrect, returning null:', tvl);
+      return null; // Return null to indicate invalid data
+    }
+    
+    return tvl;
   } catch (error) {
     console.error('[Fluid] Error fetching TVL:', error);
-    return 0;
+    return null;
   }
 }
 
@@ -32,12 +43,15 @@ export function useFluidData() {
   const vaultAddress = FLUID_VAULT_ADDRESSES[8453];
 
   // Fetch TVL regardless of connected chain
+  // keepPreviousData prevents showing 0 or null when refetch returns invalid data
   const { data: tvl, isLoading: isLoadingTVL, refetch: refetchTVL } = useQuery({
     queryKey: ['fluid-tvl'],
     queryFn: () => fetchFluidTVL(vaultAddress),
     enabled: !!vaultAddress,
     refetchInterval: 60000,
     staleTime: 30000,
+    // Don't replace valid data with null on refetch errors
+    placeholderData: (previousData) => previousData,
   });
 
   // Get user's vault shares balance (fEURC token)
@@ -80,7 +94,7 @@ export function useFluidData() {
 
   return {
     apy: estimatedApy,
-    tvl: tvl || 0,
+    tvl: tvl ?? 0,
     userDeposit,
     userShares: userShares || 0n,
     vaultAddress,
