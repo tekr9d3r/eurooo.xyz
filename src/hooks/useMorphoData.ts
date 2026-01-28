@@ -18,6 +18,7 @@ const MORPHO_APYS: Record<MorphoVaultId, number> = {
 };
 
 const MORPHO_CHAIN_ID = 1; // Ethereum only
+const MAX_REASONABLE_TVL = 1_000_000_000; // €1B sanity check
 
 // Fetch TVL from Ethereum using public client (no wallet required)
 async function fetchMorphoTVL(vaultAddress: `0x${string}`) {
@@ -28,10 +29,18 @@ async function fetchMorphoTVL(vaultAddress: `0x${string}`) {
       functionName: 'totalAssets',
     });
 
-    return Number(formatUnits(totalAssets, 6));
+    const tvl = Number(formatUnits(totalAssets, 6));
+    
+    // Sanity check: reject unreasonably high values
+    if (tvl > MAX_REASONABLE_TVL || !Number.isFinite(tvl) || tvl < 0) {
+      console.warn(`[Morpho] TVL value ${tvl} exceeds reasonable limits, returning null`);
+      return null;
+    }
+    
+    return tvl;
   } catch (error) {
     console.error('[Morpho] Error fetching TVL:', error);
-    return 0;
+    return null;
   }
 }
 
@@ -48,6 +57,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     enabled: !!vaultAddress,
     refetchInterval: 60000,
     staleTime: 30000,
+    placeholderData: (previousData) => previousData, // Keep last valid value during refetch
   });
 
   // Get user's vault shares balance (always fetch from Ethereum regardless of connected chain)
@@ -90,7 +100,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
 
   return {
     apy: estimatedApy,
-    tvl: tvl || 0,
+    tvl: tvl ?? 0,
     userDeposit,
     userShares: userShares || 0n,
     vaultAddress,
