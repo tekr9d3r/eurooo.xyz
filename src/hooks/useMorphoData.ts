@@ -1,4 +1,4 @@
-import { useReadContract, useAccount } from 'wagmi';
+import { useReadContract, useAccount, useConfig } from 'wagmi';
 import { formatUnits } from 'viem';
 import { useDefiLlamaData } from './useDefiLlamaData';
 import {
@@ -12,7 +12,11 @@ export type MorphoVaultId = 'morpho-gauntlet' | 'morpho-prime' | 'morpho-kpk';
 const MORPHO_CHAIN_ID = 1; // Ethereum only
 
 export function useMorphoData(vaultId: MorphoVaultId) {
+  const config = useConfig();
   const { address } = useAccount();
+  
+  // Safety check - if wagmi config isn't ready, return defaults
+  const isReady = !!config;
   
   // Get APY and TVL from DefiLlama
   const { morphoGauntlet, morphoPrime, morphoKpk, isLoading: isLoadingDefiLlama, refetch: refetchDefiLlama } = useDefiLlamaData();
@@ -35,7 +39,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     args: address ? [address] : undefined,
     chainId: MORPHO_CHAIN_ID,
     query: {
-      enabled: !!address && !!vaultAddress,
+      enabled: isReady && !!address && !!vaultAddress,
       refetchInterval: 30000,
     },
   });
@@ -48,7 +52,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     args: userShares ? [userShares] : undefined,
     chainId: MORPHO_CHAIN_ID,
     query: {
-      enabled: !!userShares && userShares > 0n,
+      enabled: isReady && !!userShares && userShares > 0n,
       refetchInterval: 30000,
     },
   });
@@ -58,8 +62,10 @@ export function useMorphoData(vaultId: MorphoVaultId) {
 
   const refetch = () => {
     refetchDefiLlama();
-    refetchUserShares();
-    refetchUserAssets();
+    if (isReady) {
+      refetchUserShares();
+      refetchUserAssets();
+    }
   };
 
   return {

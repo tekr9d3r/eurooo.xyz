@@ -1,4 +1,4 @@
-import { useReadContract, useAccount } from 'wagmi';
+import { useReadContract, useAccount, useConfig } from 'wagmi';
 import { formatUnits } from 'viem';
 import { useDefiLlamaData } from './useDefiLlamaData';
 import {
@@ -10,7 +10,11 @@ import {
 const FLUID_CHAIN_ID = 8453; // Base
 
 export function useFluidData() {
+  const config = useConfig();
   const { address } = useAccount();
+  
+  // Safety check - if wagmi config isn't ready, return defaults
+  const isReady = !!config;
   
   const vaultAddress = FLUID_VAULT_ADDRESSES[8453];
 
@@ -25,7 +29,7 @@ export function useFluidData() {
     args: address ? [address] : undefined,
     chainId: FLUID_CHAIN_ID,
     query: {
-      enabled: !!address && !!vaultAddress,
+      enabled: isReady && !!address && !!vaultAddress,
       refetchInterval: 30000,
     },
   });
@@ -38,7 +42,7 @@ export function useFluidData() {
     args: userShares ? [userShares] : undefined,
     chainId: FLUID_CHAIN_ID,
     query: {
-      enabled: !!userShares && userShares > 0n,
+      enabled: isReady && !!userShares && userShares > 0n,
       refetchInterval: 30000,
     },
   });
@@ -48,8 +52,10 @@ export function useFluidData() {
 
   const refetch = () => {
     refetchDefiLlama();
-    refetchUserShares();
-    refetchUserAssets();
+    if (isReady) {
+      refetchUserShares();
+      refetchUserAssets();
+    }
   };
 
   return {

@@ -1,4 +1,4 @@
-import { useReadContract, useAccount } from 'wagmi';
+import { useReadContract, useAccount, useConfig } from 'wagmi';
 import { formatUnits } from 'viem';
 import { useDefiLlamaData } from './useDefiLlamaData';
 import {
@@ -11,7 +11,11 @@ const SUMMER_CHAIN_ID = 8453; // Base only
 const vaultAddress = SUMMER_VAULT_ADDRESSES[SUMMER_CHAIN_ID];
 
 export function useSummerData() {
+  const config = useConfig();
   const { address } = useAccount();
+  
+  // Safety check - if wagmi config isn't ready, return defaults
+  const isReady = !!config;
 
   // Get APY and TVL from DefiLlama
   const { summerBase, isLoading: isLoadingDefiLlama, refetch: refetchDefiLlama } = useDefiLlamaData();
@@ -24,7 +28,7 @@ export function useSummerData() {
     args: address ? [address] : undefined,
     chainId: SUMMER_CHAIN_ID,
     query: {
-      enabled: !!address,
+      enabled: isReady && !!address,
       refetchInterval: 30000,
     },
   });
@@ -37,7 +41,7 @@ export function useSummerData() {
     args: userShares ? [userShares] : undefined,
     chainId: SUMMER_CHAIN_ID,
     query: {
-      enabled: !!userShares && userShares > 0n,
+      enabled: isReady && !!userShares && userShares > 0n,
       refetchInterval: 30000,
     },
   });
@@ -47,8 +51,10 @@ export function useSummerData() {
 
   const refetch = () => {
     refetchDefiLlama();
-    refetchUserShares();
-    refetchUserAssets();
+    if (isReady) {
+      refetchUserShares();
+      refetchUserAssets();
+    }
   };
 
   return {
