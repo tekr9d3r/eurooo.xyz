@@ -262,11 +262,13 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
                     </Badge>
                   ))
                 )}
-                {protocol.safetyScore !== undefined && !isSubRow && (
+                {(protocol.safetyScore !== undefined || protocol.auditUrl) && !isSubRow && (
                   <SafetyScoreBadge 
                     score={protocol.safetyScore} 
                     provider={protocol.safetyProvider}
                     reportUrl={protocol.safetyReportUrl}
+                    auditUrl={protocol.auditUrl}
+                    auditProvider={protocol.auditProvider}
                     compact
                   />
                 )}
@@ -457,6 +459,8 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
               score={protocol.safetyScore} 
               provider={protocol.safetyProvider}
               reportUrl={protocol.safetyReportUrl}
+              auditUrl={protocol.auditUrl}
+              auditProvider={protocol.auditProvider}
             />
           )}
         </div>
