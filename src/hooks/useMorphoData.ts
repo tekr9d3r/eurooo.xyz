@@ -79,7 +79,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     userShares: userShares || 0n,
     vaultAddress,
     isSupported: true,
-    isLoading: isLoadingDefiLlama || (sharesQueryEnabled && isLoadingUserShares) || (assetsQueryEnabled && isLoadingUserAssets),
+    isLoading: isLoadingDefiLlama,
     refetch,
   };
 }
