@@ -1,7 +1,6 @@
 import { useReadContract, useAccount } from 'wagmi';
 import { formatUnits } from 'viem';
-import { useQuery } from '@tanstack/react-query';
-import { readContractMultichain } from '@/lib/viemClients';
+import { useDefiLlamaData } from './useDefiLlamaData';
 import {
   SUMMER_VAULT_ADDRESSES,
   ERC4626_VAULT_ABI,
@@ -11,32 +10,11 @@ import {
 const SUMMER_CHAIN_ID = 8453; // Base only
 const vaultAddress = SUMMER_VAULT_ADDRESSES[SUMMER_CHAIN_ID];
 
-// Fetch TVL from Base using public client (no wallet required)
-async function fetchSummerTVL() {
-  try {
-    const totalAssets = await readContractMultichain<bigint>(SUMMER_CHAIN_ID, {
-      address: vaultAddress,
-      abi: ERC4626_VAULT_ABI,
-      functionName: 'totalAssets',
-    });
-
-    return Number(formatUnits(totalAssets, 6));
-  } catch (error) {
-    console.error('[Summer] Error fetching TVL:', error);
-    return 0;
-  }
-}
-
 export function useSummerData() {
   const { address } = useAccount();
 
-  // Fetch TVL regardless of connected chain
-  const { data: tvl, isLoading: isLoadingTVL, refetch: refetchTVL } = useQuery({
-    queryKey: ['summer-tvl'],
-    queryFn: fetchSummerTVL,
-    refetchInterval: 60000,
-    staleTime: 30000,
-  });
+  // Get APY and TVL from DefiLlama
+  const { summerBase, isLoading: isLoadingDefiLlama, refetch: refetchDefiLlama } = useDefiLlamaData();
 
   // Get user's vault shares balance (always fetch from Base regardless of connected chain)
   const { data: userShares, isLoading: isLoadingUserShares, refetch: refetchUserShares } = useReadContract({
@@ -64,26 +42,23 @@ export function useSummerData() {
     },
   });
 
-  // Summer.fi typically offers 3-5% on stablecoins
-  const estimatedApy = 3.5;
-
   // Format user deposit (EURC has 6 decimals)
   const userDeposit = userAssets ? Number(formatUnits(userAssets, 6)) : 0;
 
   const refetch = () => {
-    refetchTVL();
+    refetchDefiLlama();
     refetchUserShares();
     refetchUserAssets();
   };
 
   return {
-    apy: estimatedApy,
-    tvl: tvl || 0,
+    apy: summerBase.apy,
+    tvl: summerBase.tvl,
     userDeposit,
     userShares: userShares || 0n,
     vaultAddress,
-    isSupported: true, // Always supported now since we fetch from Base directly
-    isLoading: isLoadingTVL || isLoadingUserShares || isLoadingUserAssets,
+    isSupported: true,
+    isLoading: isLoadingDefiLlama || isLoadingUserShares || isLoadingUserAssets,
     refetch,
   };
 }
