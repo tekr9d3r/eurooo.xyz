@@ -1,10 +1,14 @@
-import { useAccount, useReadContract, useChainId } from 'wagmi';
+import { useAccount, useReadContract, useChainId, useConfig } from 'wagmi';
 import { EURC_ADDRESSES, ERC20_ABI } from '@/lib/contracts';
 import { formatUnits } from 'viem';
 
 export function useEURCBalance() {
+  const config = useConfig();
   const { address } = useAccount();
   const chainId = useChainId();
+  
+  // Safety check - if wagmi config isn't ready, return defaults
+  const isReady = !!config;
   
   const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
   
@@ -14,7 +18,7 @@ export function useEURCBalance() {
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address && !!eurcAddress,
+      enabled: isReady && !!address && !!eurcAddress,
       refetchInterval: 30000, // Refetch every 30 seconds
     },
   });

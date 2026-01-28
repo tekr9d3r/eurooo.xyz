@@ -1,4 +1,4 @@
-import { useReadContract, useAccount } from 'wagmi';
+import { useReadContract, useAccount, useConfig } from 'wagmi';
 import { formatUnits } from 'viem';
 import { useDefiLlamaData } from './useDefiLlamaData';
 import {
@@ -7,7 +7,11 @@ import {
 } from '@/lib/contracts';
 
 export function useAaveData() {
+  const config = useConfig();
   const { address } = useAccount();
+  
+  // Safety check - if wagmi config isn't ready, return defaults
+  const isReady = !!config;
   
   // Get APY and TVL from DefiLlama (single cached API call)
   const { aaveEthereum, aaveBase, aaveGnosis, isLoading: isLoadingDefiLlama, refetch: refetchDefiLlama } = useDefiLlamaData();
@@ -21,7 +25,7 @@ export function useAaveData() {
     args: address ? [address] : undefined,
     chainId: 1,
     query: {
-      enabled: !!address,
+      enabled: isReady && !!address,
       refetchInterval: 30000,
     },
   });
@@ -35,7 +39,7 @@ export function useAaveData() {
     args: address ? [address] : undefined,
     chainId: 8453,
     query: {
-      enabled: !!address,
+      enabled: isReady && !!address,
       refetchInterval: 30000,
     },
   });
@@ -49,7 +53,7 @@ export function useAaveData() {
     args: address ? [address] : undefined,
     chainId: 100,
     query: {
-      enabled: !!address,
+      enabled: isReady && !!address,
       refetchInterval: 30000,
     },
   });
@@ -61,9 +65,11 @@ export function useAaveData() {
 
   const refetch = () => {
     refetchDefiLlama();
-    refetchEthereumBalance();
-    refetchBaseBalance();
-    refetchGnosisBalance();
+    if (isReady) {
+      refetchEthereumBalance();
+      refetchBaseBalance();
+      refetchGnosisBalance();
+    }
   };
 
   return {
