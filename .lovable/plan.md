@@ -1,67 +1,91 @@
 
-## Fix Morpho Slow Loading Issue
+## Fix: Balance Not Displaying When Switching Chains
 
 ### Problem Analysis
 
-After comparing all protocol hooks, I found the root causes for Morpho's slow loading:
+When you switch chains in your wallet, the total portfolio balance disappears because:
 
-| Issue | Details |
-|-------|---------|
-| **Ethereum vs Base** | Morpho queries Ethereum mainnet (slower RPCs) while YO/Summer/Fluid use Base (faster) |
-| **6 RPC calls** | 3 Morpho vaults × 2 calls each (balanceOf → convertToAssets) |
-| **Sequential waterfall** | convertToAssets waits for balanceOf to complete first |
-| **Inconsistent isLoading** | Aave ignores user loading; Morpho/YO/Summer wait for it |
+| Issue | Location | Impact |
+|-------|----------|--------|
+| `useChainId()` dependency | `useEURCBalance.ts` line 8 | Returns connected chain, not a fixed chain |
+| Chain-dependent address lookup | `useEURCBalance.ts` line 13 | `EURC_ADDRESSES[chainId]` returns `undefined` for unsupported chains |
+| Loading state cascades | `useProtocolData.ts` line 334 | `isLoadingEurc` blocks all data display |
 
-### Why Aave Feels Fast
+### Data Flow Diagram
 
-Looking at `useAaveData.ts` line 82:
-```typescript
-isLoading: isLoadingDefiLlama  // Only hardcoded data!
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     User Switches Chain                          │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ useChainId() → New chain ID (e.g., 100 for Gnosis)              │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ EURC_ADDRESSES[100] → undefined (if not mapped) or new address │
+│ → Query disabled OR refetching                                   │
+│ → isLoading becomes true                                         │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ useProtocolData.isLoading = isLoadingEurc || protocols.some()   │
+│ → isLoading = true                                               │
+│ → Total balance not displayed                                    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Aave **ignores** user balance loading states, so it displays immediately with hardcoded data and balances appear when ready.
+### Key Insight
 
-### Solution: Consistent Loading Strategy
+The EURC wallet balance is only used for the deposit modal's max amount - it should NOT affect the portfolio display. Protocol deposits are fetched from their respective chains with hardcoded `chainId` parameters, independent of the connected chain.
 
-Make all protocol hooks behave like Aave - display hardcoded APY/TVL immediately, and let user balances "pop in" when ready.
+### Solution
+
+Decouple the EURC wallet balance loading state from the protocol data loading state.
+
+### Technical Changes
+
+#### 1. `src/hooks/useProtocolData.ts`
+
+Remove `isLoadingEurc` from the main loading state calculation:
+
+```typescript
+// Before (line 334)
+isLoading: isLoadingEurc || protocols.some(p => p.isLoading)
+
+// After
+isLoading: protocols.some(p => p.isLoading)
+```
+
+The EURC balance is passed as `eurcBalance` for the deposit modal, but it doesn't need to block protocol data rendering.
+
+#### 2. `src/hooks/useEURCBalance.ts`
+
+Improve resilience when chain changes:
+- Return `0` balance gracefully when on an unsupported chain
+- Ensure `isLoading` is `false` when query is disabled (unsupported chain)
+
+```typescript
+// Add fallback for unsupported chains
+const { data: balance, isLoading: isQueryLoading, ... } = useReadContract({...});
+
+// isLoading should be false if the query is disabled (unsupported chain)
+const isLoading = isReady && !!address && !!eurcAddress && isQueryLoading;
+```
+
+### Expected Behavior After Fix
+
+| Scenario | Before | After |
+|----------|--------|-------|
+| Page load | ✅ Shows total | ✅ Shows total |
+| Switch to supported chain | ❌ Loading... | ✅ Shows total instantly |
+| Switch to unsupported chain | ❌ Loading forever | ✅ Shows total (wallet balance = 0) |
+| Protocol deposits | ✅ Independent | ✅ Independent |
 
 ### Files to Modify
 
-#### 1. `src/hooks/useMorphoData.ts`
-Change isLoading to only wait for hardcoded data:
-```typescript
-// Before (waits for user balance)
-isLoading: isLoadingDefiLlama || (sharesQueryEnabled && isLoadingUserShares) || ...
-
-// After (only hardcoded data)
-isLoading: isLoadingDefiLlama
-```
-
-#### 2. `src/hooks/useYoData.ts`
-Same fix:
-```typescript
-// Before
-isLoading: isLoadingDefiLlama || isLoadingUserShares || isLoadingUserAssets
-
-// After
-isLoading: isLoadingDefiLlama
-```
-
-#### 3. `src/hooks/useSummerData.ts`
-Same fix for consistency.
-
-#### 4. `src/hooks/useFluidData.ts`
-Same fix for consistency.
-
----
-
-### Benefits
-
-| Metric | Before | After |
-|--------|--------|-------|
-| Morpho load time | 5+ seconds | Instant |
-| APY/TVL display | Blocked by RPC | Immediate |
-| User balance | Blocked | Loads async (pops in) |
-| UX consistency | Mixed behavior | All protocols behave same |
-
-The user balance will simply appear when the RPC calls complete, but the row won't show as "loading" - APY and TVL are visible immediately.
+1. **`src/hooks/useEURCBalance.ts`** - Fix isLoading logic for unsupported chains
+2. **`src/hooks/useProtocolData.ts`** - Remove EURC loading from main loading state
