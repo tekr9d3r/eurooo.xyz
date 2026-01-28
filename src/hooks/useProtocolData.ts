@@ -23,6 +23,9 @@ export interface ProtocolData {
   stablecoin: 'EURC' | 'EURe';
   logo?: string;
   learnMoreUrl?: string;
+  safetyScore?: number;
+  safetyProvider?: string;
+  safetyReportUrl?: string;
 }
 
 function formatTVL(tvl: number): string {
@@ -61,6 +64,9 @@ export function useProtocolData() {
       stablecoin: 'EURC',
       logo: aaveLogo,
       learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0x1abaea1f7c830bd89acc67ec4af516284b1bc33c&marketName=proto_mainnet_v3',
+      safetyScore: 93,
+      safetyProvider: 'DeFiSafety',
+      safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
     },
     {
       id: 'aave-base',
@@ -78,6 +84,9 @@ export function useProtocolData() {
       stablecoin: 'EURC',
       logo: aaveLogo,
       learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42&marketName=proto_base_v3',
+      safetyScore: 93,
+      safetyProvider: 'DeFiSafety',
+      safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
     },
     {
       id: 'aave-gnosis',
@@ -95,6 +104,9 @@ export function useProtocolData() {
       stablecoin: 'EURe',
       logo: aaveLogo,
       learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0xcb444e90d8198415266c6a2724b7900fb12fc56e&marketName=proto_gnosis_v3',
+      safetyScore: 93,
+      safetyProvider: 'DeFiSafety',
+      safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
     },
     {
       id: 'summer',
@@ -111,6 +123,9 @@ export function useProtocolData() {
       isSupported: true,
       stablecoin: 'EURC',
       learnMoreUrl: 'https://summer.fi/earn/base/position/0x64db8f51f1bf7064bb5a361a7265f602d348e0f0',
+      safetyScore: 71,
+      safetyProvider: 'DeFiSafety',
+      safetyReportUrl: 'https://defisafety.com/app/pqrs/578',
     },
     {
       id: 'yo',
@@ -127,6 +142,7 @@ export function useProtocolData() {
       isSupported: true,
       stablecoin: 'EURC',
       learnMoreUrl: 'https://app.yo.xyz/vault/base/0x50c749aE210D3977ADC824AE11F3c7fd10c871e9',
+      // YO Protocol not yet rated by DeFiSafety
     },
     {
       id: 'morpho-gauntlet',
@@ -143,6 +159,9 @@ export function useProtocolData() {
       isSupported: true,
       stablecoin: 'EURC',
       learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0x2ed10624315b74a78f11FAbedAa1A228c198aEfB/gauntlet-eurc-core',
+      safetyScore: 93,
+      safetyProvider: 'DeFiSafety',
+      safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
     },
     {
       id: 'fluid',
@@ -160,6 +179,7 @@ export function useProtocolData() {
       stablecoin: 'EURC',
       logo: fluidLogo,
       learnMoreUrl: 'https://fluid.io/lending/8453/EURC',
+      // Fluid not yet rated by DeFiSafety
     },
   ];
 
