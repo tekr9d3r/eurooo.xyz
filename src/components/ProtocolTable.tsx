@@ -234,7 +234,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             <div>
               <div className="flex items-center gap-1">
                 {isSubRow && <span className="text-muted-foreground">└─</span>}
-                <span className="font-semibold text-sm">{isSubRow ? protocol.chains[0] : protocol.name}</span>
+                <span className="font-semibold text-sm">{protocol.name}</span>
                 {protocol.learnMoreUrl && (
                   <a
                     href={protocol.learnMoreUrl}
@@ -395,7 +395,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">{isSubRow ? protocol.chains[0] : protocol.name}</span>
+              <span className="font-semibold">{protocol.name}</span>
               {protocol.learnMoreUrl && (
                 <a
                   href={protocol.learnMoreUrl}
