@@ -1,191 +1,67 @@
 
+## Fix Morpho Slow Loading Issue
 
-## Switch to DefiLlama API for APY and TVL Data
+### Problem Analysis
 
-### Current Problem
+After comparing all protocol hooks, I found the root causes for Morpho's slow loading:
 
-The current implementation fetches APY and TVL data directly from blockchain RPC nodes using on-chain contract calls. This approach has several issues:
-- **Slow and unreliable**: Multiple RPC calls needed per protocol
-- **Rate limiting**: Even with fallback RPCs, we hit rate limits causing data inconsistencies
-- **Buggy TVL values**: Decimal parsing errors occasionally return unrealistic values (scientific notation)
-- **Hardcoded APYs**: Some protocols (Summer, YO, Fluid, Morpho) use hardcoded APY estimates instead of real data
+| Issue | Details |
+|-------|---------|
+| **Ethereum vs Base** | Morpho queries Ethereum mainnet (slower RPCs) while YO/Summer/Fluid use Base (faster) |
+| **6 RPC calls** | 3 Morpho vaults × 2 calls each (balanceOf → convertToAssets) |
+| **Sequential waterfall** | convertToAssets waits for balanceOf to complete first |
+| **Inconsistent isLoading** | Aave ignores user loading; Morpho/YO/Summer wait for it |
 
-### Solution: DefiLlama Yields API
+### Why Aave Feels Fast
 
-DefiLlama provides a free `/pools` API endpoint that returns:
-- **Real-time APY** (`apy` field with 30-day average via `apyMean30d`)
-- **TVL in USD** (`tvlUsd` field)
-- **Pool metadata** (chain, project, symbol)
-
-API endpoint: `https://yields.llama.fi/pools`
-
-This is a single HTTP call that returns data for thousands of pools, which we can filter client-side.
-
----
-
-### Architecture Changes
-
-```text
-BEFORE (Current - Multiple RPC calls):
-┌─────────────────────────────────────────────────────────────────┐
-│  useAaveData.ts    →  3 RPC calls (Eth, Base, Gnosis)           │
-│  useMorphoData.ts  →  3 RPC calls (3 vaults)                    │
-│  useFluidData.ts   →  1 RPC call                                │
-│  useSummerData.ts  →  1 RPC call + hardcoded APY                │
-│  useYoData.ts      →  1 RPC call + hardcoded APY                │
-└─────────────────────────────────────────────────────────────────┘
-Total: 9+ RPC calls, prone to rate limits and errors
-
-AFTER (DefiLlama API - Single HTTP call):
-┌─────────────────────────────────────────────────────────────────┐
-│  useDefiLlamaData.ts  →  1 API call (fetches all pools)         │
-│  Filter and map to our protocol IDs                             │
-│  Return { apy, tvl } for each protocol/pool                     │
-└─────────────────────────────────────────────────────────────────┘
-Total: 1 HTTP call, cached response, reliable data
-```
-
----
-
-### Pool Identification Strategy
-
-We need to map DefiLlama pool IDs to our protocol entries. DefiLlama pools can be identified by:
-- `project` field (e.g., "aave-v3", "morpho", "fluid", "summer-fi")
-- `chain` field (e.g., "Ethereum", "Base", "Gnosis")
-- `symbol` field (e.g., "EURC", "EURe")
-- `pool` address (contract address - most reliable)
-
-**Mapping approach:**
-| Our Protocol | DefiLlama Filter |
-|--------------|------------------|
-| Aave Ethereum | project=aave-v3, chain=Ethereum, symbol contains EURC |
-| Aave Base | project=aave-v3, chain=Base, symbol contains EURC |
-| Aave Gnosis | project=aave-v3, chain=Gnosis, symbol contains EURe |
-| Morpho Gauntlet | pool address match or project=morpho-blue |
-| Morpho Prime | pool address match |
-| Morpho KPK | pool address match |
-| Summer.fi | project=summer-fi, chain=Base, symbol contains EURC |
-| YO Protocol | project=yo or pool address match |
-| Fluid | project=fluid, chain=Base, symbol contains EURC |
-
----
-
-### Files to Create/Modify
-
-#### 1. Create `src/hooks/useDefiLlamaData.ts` (NEW)
-
-A centralized hook that:
-- Fetches all pools from DefiLlama in a single call
-- Filters for EURC/EURe stablecoin pools
-- Returns APY and TVL for each of our protocols
-- Uses React Query with 5-minute cache (data doesn't change often)
-
+Looking at `useAaveData.ts` line 82:
 ```typescript
-interface DefiLlamaPool {
-  pool: string;           // Pool address/ID
-  chain: string;          // "Ethereum", "Base", "Gnosis"
-  project: string;        // "aave-v3", "morpho", "fluid"
-  symbol: string;         // "EURC", "EURe"
-  tvlUsd: number;         // TVL in USD
-  apy: number;            // Current APY %
-  apyMean30d?: number;    // 30-day average APY
-}
+isLoading: isLoadingDefiLlama  // Only hardcoded data!
 ```
 
-#### 2. Modify `src/hooks/useAaveData.ts`
+Aave **ignores** user balance loading states, so it displays immediately with hardcoded data and balances appear when ready.
 
-- Replace on-chain APY/TVL fetching with DefiLlama data
-- Keep user balance fetching (still needs on-chain for user-specific data)
+### Solution: Consistent Loading Strategy
 
-#### 3. Modify `src/hooks/useMorphoData.ts`
+Make all protocol hooks behave like Aave - display hardcoded APY/TVL immediately, and let user balances "pop in" when ready.
 
-- Replace on-chain APY/TVL fetching with DefiLlama data
-- Keep user balance fetching
+### Files to Modify
 
-#### 4. Modify `src/hooks/useFluidData.ts`
+#### 1. `src/hooks/useMorphoData.ts`
+Change isLoading to only wait for hardcoded data:
+```typescript
+// Before (waits for user balance)
+isLoading: isLoadingDefiLlama || (sharesQueryEnabled && isLoadingUserShares) || ...
 
-- Replace on-chain APY/TVL fetching with DefiLlama data
-- Keep user balance fetching
+// After (only hardcoded data)
+isLoading: isLoadingDefiLlama
+```
 
-#### 5. Modify `src/hooks/useSummerData.ts`
+#### 2. `src/hooks/useYoData.ts`
+Same fix:
+```typescript
+// Before
+isLoading: isLoadingDefiLlama || isLoadingUserShares || isLoadingUserAssets
 
-- Replace hardcoded APY with real DefiLlama data
-- Replace on-chain TVL with DefiLlama data
-- Keep user balance fetching
+// After
+isLoading: isLoadingDefiLlama
+```
 
-#### 6. Modify `src/hooks/useYoData.ts`
+#### 3. `src/hooks/useSummerData.ts`
+Same fix for consistency.
 
-- Replace hardcoded APY with real DefiLlama data
-- Replace on-chain TVL with DefiLlama data
-- Keep user balance fetching
+#### 4. `src/hooks/useFluidData.ts`
+Same fix for consistency.
 
 ---
 
-### Key Benefits
+### Benefits
 
-| Aspect | Before | After |
+| Metric | Before | After |
 |--------|--------|-------|
-| API calls | 9+ RPC calls | 1 HTTP call |
-| Rate limiting | Common issue | Not a concern |
-| APY accuracy | Hardcoded/calculated | Real 30-day average |
-| TVL accuracy | Decimal errors possible | Pre-validated USD value |
-| Load time | Slow (sequential RPCs) | Fast (single cached call) |
-| Maintenance | Update each hook | Single source of truth |
+| Morpho load time | 5+ seconds | Instant |
+| APY/TVL display | Blocked by RPC | Immediate |
+| User balance | Blocked | Loads async (pops in) |
+| UX consistency | Mixed behavior | All protocols behave same |
 
----
-
-### Technical Details
-
-#### DefiLlama API Response Structure
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "pool": "0x2ed10624315b74a78f11FAbedAa1A228c198aEfB",
-      "chain": "Ethereum",
-      "project": "morpho-blue",
-      "symbol": "EURC",
-      "tvlUsd": 15234567.89,
-      "apy": 4.38,
-      "apyMean30d": 4.25
-    }
-  ]
-}
-```
-
-#### Caching Strategy
-- Cache DefiLlama response for 5 minutes (staleTime: 300000)
-- Background refetch every 5 minutes (refetchInterval: 300000)
-- Use `placeholderData` to preserve valid data during refetches
-
-#### User Balances (Keep On-Chain)
-User-specific data (deposits, shares) must still be fetched from blockchain:
-- Use `useReadContract` with explicit `chainId` for each chain
-- This is a small number of calls only when wallet is connected
-- No change to current user balance fetching logic
-
----
-
-### Fallback Strategy
-
-If DefiLlama API is unavailable:
-1. Return cached data if available
-2. Fall back to hardcoded estimates as last resort
-3. Log warning for debugging
-
----
-
-### Summary of Changes
-
-| File | Action | Changes |
-|------|--------|---------|
-| `src/hooks/useDefiLlamaData.ts` | CREATE | New centralized hook for DefiLlama API |
-| `src/hooks/useAaveData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
-| `src/hooks/useMorphoData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
-| `src/hooks/useFluidData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
-| `src/hooks/useSummerData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
-| `src/hooks/useYoData.ts` | MODIFY | Use DefiLlama for APY/TVL, keep user balances |
-
-This refactor will provide reliable, accurate, and fast APY/TVL data from a single trusted source while maintaining user-specific on-chain balance fetching.
-
+The user balance will simply appear when the RPC calls complete, but the row won't show as "loading" - APY and TVL are visible immediately.
