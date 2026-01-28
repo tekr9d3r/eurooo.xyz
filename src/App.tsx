@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletProvider } from "@/components/WalletProvider";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 
 // Lazy load route components for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -36,6 +37,7 @@ const App = () => (
           </Suspense>
         </BrowserRouter>
         <SpeedInsights />
+        <Analytics />
       </TooltipProvider>
     </WalletProvider>
   </ThemeProvider>
