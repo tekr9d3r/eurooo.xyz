@@ -92,8 +92,9 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
   return (
     <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
       {/* Desktop Table Header - Hidden on mobile */}
-      <div className="hidden md:grid grid-cols-11 gap-4 px-6 py-4 bg-secondary/30 border-b border-border/50 text-sm font-medium text-muted-foreground">
+      <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-secondary/30 border-b border-border/50 text-sm font-medium text-muted-foreground">
         <div className="col-span-3">Protocol</div>
+        <div className="col-span-1">Safety</div>
         <button 
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
           onClick={() => handleSort('apy')}
@@ -129,8 +130,9 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
 
       {/* Desktop Table Footer - Summary (Hidden on mobile) */}
       {totalDeposits > 0 && (
-        <div className="hidden md:grid grid-cols-11 gap-4 px-6 py-4 bg-success/5 border-t border-success/20 text-sm font-medium">
+        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-success/5 border-t border-success/20 text-sm font-medium">
           <div className="col-span-3 text-muted-foreground">Total Portfolio</div>
+          <div className="col-span-1">—</div>
           <div className="col-span-2 text-success">{weightedApy.toFixed(2)}% avg</div>
           <div className="col-span-2">—</div>
           <div className="col-span-2 font-bold">
@@ -194,14 +196,6 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
                     <ArrowUpRight className="h-3 w-3" />
                   </a>
                 )}
-                {protocol.safetyScore !== undefined && (
-                  <SafetyScoreBadge 
-                    score={protocol.safetyScore} 
-                    provider={protocol.safetyProvider}
-                    reportUrl={protocol.safetyReportUrl}
-                    compact
-                  />
-                )}
               </div>
               <div className="flex gap-1 mt-0.5 flex-wrap">
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
@@ -212,6 +206,14 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
                     {chain}
                   </Badge>
                 ))}
+                {protocol.safetyScore !== undefined && (
+                  <SafetyScoreBadge 
+                    score={protocol.safetyScore} 
+                    provider={protocol.safetyProvider}
+                    reportUrl={protocol.safetyReportUrl}
+                    compact
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -275,7 +277,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
       {/* Desktop Table Row - Hidden on mobile */}
       <div 
         className={cn(
-          "hidden md:grid grid-cols-11 gap-4 px-6 py-4 items-center transition-colors hover:bg-secondary/20",
+          "hidden md:grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-secondary/20",
           hasDeposit && "bg-success/5 border-l-2 border-l-success"
         )}
       >
@@ -305,13 +307,6 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
                   <ArrowUpRight className="h-3 w-3" />
                 </a>
               )}
-              {protocol.safetyScore !== undefined && (
-                <SafetyScoreBadge 
-                  score={protocol.safetyScore} 
-                  provider={protocol.safetyProvider}
-                  reportUrl={protocol.safetyReportUrl}
-                />
-              )}
             </div>
             <div className="flex gap-1 mt-1 flex-wrap">
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
@@ -324,6 +319,15 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Safety Score */}
+        <div className="col-span-1">
+          <SafetyScoreBadge 
+            score={protocol.safetyScore} 
+            provider={protocol.safetyProvider}
+            reportUrl={protocol.safetyReportUrl}
+          />
         </div>
 
         {/* APY */}
