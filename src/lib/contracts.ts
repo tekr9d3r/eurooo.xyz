@@ -65,6 +65,14 @@ export const MORPHO_VAULT_ADDRESSES = {
   'morpho-gauntlet': {
     1: '0x2ed10624315b74a78f11FAbedAa1A228c198aEfB' as const,
   },
+  // EURCV Prime vault
+  'morpho-prime': {
+    1: '0x34eCe536d2ae03192B06c0A67030D1Faf4c0Ba43' as const,
+  },
+  // KPK EURC Yield vault
+  'morpho-kpk': {
+    1: '0x0c6aec603d48eBf1cECc7b247a2c3DA08b398DC1' as const,
+  },
 } as const;
 
 // ============= FLUID =============
