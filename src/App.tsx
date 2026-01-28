@@ -9,6 +9,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 // Lazy load route components for code splitting
 const Home = lazy(() => import("./pages/Home"));
 const AppPage = lazy(() => import("./pages/App"));
+const Terms = lazy(() => import("./pages/Terms"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Minimal loading fallback
@@ -28,6 +29,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/app" element={<AppPage />} />
+              <Route path="/terms" element={<Terms />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

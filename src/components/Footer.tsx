@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom';
+import { Separator } from '@/components/ui/separator';
+
 // X (Twitter) icon component
 const XIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -54,6 +57,15 @@ export function Footer() {
             </a>
           </div>
         </div>
+
+        {/* Legal Disclaimer */}
+        <Separator className="my-6" />
+        <p className="text-xs text-muted-foreground text-center">
+          eurooo.xyz is an interface for third-party DeFi protocols. Deposits go directly to protocols, not Eurooo.{' '}
+          <Link to="/terms" className="underline hover:text-foreground transition-colors">
+            Terms of Service
+          </Link>
+        </p>
       </div>
     </footer>
   );
