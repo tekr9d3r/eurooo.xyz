@@ -27,6 +27,9 @@ export interface ProtocolData {
   safetyScore?: number;
   safetyProvider?: string;
   safetyReportUrl?: string;
+  // For protocols with independent audits but no DeFiSafety score
+  auditUrl?: string;
+  auditProvider?: string;
   // Grouped protocol fields
   isGrouped?: boolean;
   subProtocols?: ProtocolData[];
@@ -285,7 +288,8 @@ export function useProtocolData() {
       isSupported: true,
       stablecoin: 'EURC',
       learnMoreUrl: 'https://app.yo.xyz/vault/base/0x50c749aE210D3977ADC824AE11F3c7fd10c871e9',
-      // YO Protocol not yet rated by DeFiSafety
+      auditUrl: 'https://docs.yo.xyz/protocol/security-audits',
+      auditProvider: 'YO Docs',
     },
     morphoGrouped,
     {
@@ -304,7 +308,8 @@ export function useProtocolData() {
       stablecoin: 'EURC',
       logo: fluidLogo,
       learnMoreUrl: 'https://fluid.io/lending/8453/EURC',
-      // Fluid not yet rated by DeFiSafety
+      auditUrl: 'https://fluid.guides.instadapp.io/liquidity-layer/risks',
+      auditProvider: 'Instadapp Docs',
     },
   ];
 
