@@ -1,4 +1,4 @@
-import { ExternalLink, ShieldCheck } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -21,36 +21,19 @@ export function SafetyScoreBadge({
   compact = false 
 }: SafetyScoreBadgeProps) {
   if (score === undefined) {
-    return (
-      <div className="text-muted-foreground text-sm">—</div>
-    );
+    return null;
   }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-success/20 text-success border-success/30';
-    if (score >= 60) return 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500 border-yellow-500/30';
-    return 'bg-destructive/20 text-destructive border-destructive/30';
-  };
-
   const badge = (
-    <div 
+    <span 
       className={cn(
-        "inline-flex flex-col items-center gap-0.5 rounded-lg border px-2 py-1 transition-colors",
-        getScoreColor(score),
-        reportUrl && "cursor-pointer hover:opacity-80"
+        "inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors",
+        reportUrl && "cursor-pointer"
       )}
     >
-      <div className="flex items-center gap-1">
-        <ShieldCheck className="h-3 w-3" />
-        <span className={cn("font-semibold", compact ? "text-xs" : "text-sm")}>
-          {score}%
-        </span>
-        {reportUrl && <ExternalLink className="h-2.5 w-2.5 opacity-60" />}
-      </div>
-      {!compact && (
-        <span className="text-[10px] opacity-70">{provider}</span>
-      )}
-    </div>
+      <span className="font-medium">{score}%</span>
+      {reportUrl && <ExternalLink className="h-2.5 w-2.5" />}
+    </span>
   );
 
   const content = reportUrl ? (
