@@ -43,17 +43,14 @@ const colorClasses = {
   fluid: 'bg-fluid/10 border-fluid/30',
 };
 
-// Minimum deposit threshold to be considered "active" (€0.001)
-const MIN_DEPOSIT_THRESHOLD = 0.001;
-
 export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTableProps) {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
-  // Check if user has any meaningful deposits (including sub-protocols)
+  // Check if user has any deposits (including sub-protocols)
   const hasAnyDeposits = protocols.some(p => 
-    p.userDeposit >= MIN_DEPOSIT_THRESHOLD || (p.subProtocols?.some(sp => sp.userDeposit >= MIN_DEPOSIT_THRESHOLD))
+    p.userDeposit > 0 || (p.subProtocols?.some(sp => sp.userDeposit > 0))
   );
 
   const handleSort = (key: SortKey) => {
@@ -191,10 +188,7 @@ interface ProtocolRowProps {
 }
 
 function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpand, isSubRow }: ProtocolRowProps) {
-  // Only highlight as "has deposit" if above threshold
-  const hasDeposit = protocol.userDeposit >= MIN_DEPOSIT_THRESHOLD;
-  // But still show withdraw button for any non-zero balance
-  const hasAnyBalance = protocol.userDeposit > 0;
+  const hasDeposit = protocol.userDeposit > 0;
   const hasData = protocol.apy > 0 || protocol.tvl > 0;
   const dailyYield = (protocol.userDeposit * (protocol.apy / 100)) / 365;
   const isGrouped = protocol.isGrouped && protocol.subProtocols;
@@ -324,7 +318,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             >
               Deposit
             </Button>
-            {hasAnyBalance && (
+            {hasDeposit && (
               <Button 
                 size="sm"
                 variant="outline"
@@ -471,7 +465,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
         <div className="col-span-2">
           {protocol.isLoading ? (
             <Skeleton className="h-6 w-20" />
-          ) : hasAnyBalance ? (
+          ) : hasDeposit ? (
             <div>
               <div className="font-bold">
                 €{protocol.userDeposit.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
@@ -506,7 +500,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
               >
                 Deposit
               </Button>
-              {hasAnyBalance && (
+              {hasDeposit && (
                 <Button 
                   size="sm"
                   variant="outline"
