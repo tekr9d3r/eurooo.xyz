@@ -1,7 +1,6 @@
 import { useReadContract, useAccount } from 'wagmi';
 import { formatUnits } from 'viem';
-import { useQuery } from '@tanstack/react-query';
-import { readContractMultichain } from '@/lib/viemClients';
+import { useDefiLlamaData } from './useDefiLlamaData';
 import {
   MORPHO_VAULT_ADDRESSES,
   ERC4626_VAULT_ABI,
@@ -10,55 +9,23 @@ import {
 
 export type MorphoVaultId = 'morpho-gauntlet' | 'morpho-prime' | 'morpho-kpk';
 
-// Estimated APYs for each vault (these would ideally come from an API)
-const MORPHO_APYS: Record<MorphoVaultId, number> = {
-  'morpho-gauntlet': 4.38,
-  'morpho-prime': 3.85,
-  'morpho-kpk': 4.12,
-};
-
 const MORPHO_CHAIN_ID = 1; // Ethereum only
-const MAX_REASONABLE_TVL = 1_000_000_000; // €1B sanity check
-
-// Fetch TVL from Ethereum using public client (no wallet required)
-async function fetchMorphoTVL(vaultAddress: `0x${string}`) {
-  try {
-    const totalAssets = await readContractMultichain<bigint>(MORPHO_CHAIN_ID, {
-      address: vaultAddress,
-      abi: ERC4626_VAULT_ABI,
-      functionName: 'totalAssets',
-    });
-
-    const tvl = Number(formatUnits(totalAssets, 6));
-    
-    // Sanity check: reject unreasonably high values
-    if (tvl > MAX_REASONABLE_TVL || !Number.isFinite(tvl) || tvl < 0) {
-      console.warn(`[Morpho] TVL value ${tvl} exceeds reasonable limits, returning null`);
-      return null;
-    }
-    
-    return tvl;
-  } catch (error) {
-    console.error('[Morpho] Error fetching TVL:', error);
-    return null;
-  }
-}
 
 export function useMorphoData(vaultId: MorphoVaultId) {
   const { address } = useAccount();
   
+  // Get APY and TVL from DefiLlama
+  const { morphoGauntlet, morphoPrime, morphoKpk, isLoading: isLoadingDefiLlama, refetch: refetchDefiLlama } = useDefiLlamaData();
+  
+  // Map vault ID to DefiLlama data
+  const defiLlamaData = {
+    'morpho-gauntlet': morphoGauntlet,
+    'morpho-prime': morphoPrime,
+    'morpho-kpk': morphoKpk,
+  }[vaultId];
+
   const vaultConfig = MORPHO_VAULT_ADDRESSES[vaultId];
   const vaultAddress = vaultConfig?.[1]; // Chain 1 address
-
-  // Fetch TVL regardless of connected chain
-  const { data: tvl, isLoading: isLoadingTVL, refetch: refetchTVL } = useQuery({
-    queryKey: ['morpho-tvl', vaultId],
-    queryFn: () => fetchMorphoTVL(vaultAddress!),
-    enabled: !!vaultAddress,
-    refetchInterval: 60000,
-    staleTime: 30000,
-    placeholderData: (previousData) => previousData, // Keep last valid value during refetch
-  });
 
   // Get user's vault shares balance (always fetch from Ethereum regardless of connected chain)
   const { data: userShares, isLoading: isLoadingUserShares, refetch: refetchUserShares } = useReadContract({
@@ -86,26 +53,23 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     },
   });
 
-  // Get APY for this vault
-  const estimatedApy = MORPHO_APYS[vaultId];
-
   // Format user deposit (EURC has 6 decimals)
   const userDeposit = userAssets ? Number(formatUnits(userAssets, 6)) : 0;
 
   const refetch = () => {
-    refetchTVL();
+    refetchDefiLlama();
     refetchUserShares();
     refetchUserAssets();
   };
 
   return {
-    apy: estimatedApy,
-    tvl: tvl ?? 0,
+    apy: defiLlamaData.apy,
+    tvl: defiLlamaData.tvl,
     userDeposit,
     userShares: userShares || 0n,
     vaultAddress,
-    isSupported: true, // Always supported now since we fetch from Ethereum directly
-    isLoading: isLoadingTVL || isLoadingUserShares || isLoadingUserAssets,
+    isSupported: true,
+    isLoading: isLoadingDefiLlama || isLoadingUserShares || isLoadingUserAssets,
     refetch,
   };
 }
