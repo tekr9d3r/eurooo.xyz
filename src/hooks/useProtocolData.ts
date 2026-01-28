@@ -5,6 +5,7 @@ import { useMorphoData } from './useMorphoData';
 import { useFluidData } from './useFluidData';
 import { useEURCBalance } from './useEURCBalance';
 import aaveLogo from '@/assets/aave-logo.png';
+import morphoLogo from '@/assets/morpho-logo.svg';
 import fluidLogo from '@/assets/fluid-logo.png';
 
 export interface ProtocolData {
@@ -47,6 +48,8 @@ export function useProtocolData() {
   const summerData = useSummerData();
   const yoData = useYoData();
   const morphoGauntletData = useMorphoData('morpho-gauntlet');
+  const morphoPrimeData = useMorphoData('morpho-prime');
+  const morphoKpkData = useMorphoData('morpho-kpk');
   const fluidData = useFluidData();
 
   // Individual Aave chain entries (used as sub-protocols)
@@ -147,6 +150,104 @@ export function useProtocolData() {
     subProtocols: aaveSubProtocols,
   };
 
+  // Individual Morpho vault entries (used as sub-protocols)
+  const morphoGauntlet: ProtocolData = {
+    id: 'morpho-gauntlet',
+    name: 'Gauntlet EURC Core',
+    description: 'Morpho vault by Gauntlet',
+    apy: morphoGauntletData.apy,
+    tvl: morphoGauntletData.tvl,
+    tvlFormatted: morphoGauntletData.tvl > 0 ? formatTVL(morphoGauntletData.tvl) : '—',
+    chains: ['Ethereum'],
+    chainId: 1,
+    color: 'morpho',
+    userDeposit: morphoGauntletData.userDeposit,
+    isLoading: morphoGauntletData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0x2ed10624315b74a78f11FAbedAa1A228c198aEfB/gauntlet-eurc-core',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+  };
+
+  const morphoPrime: ProtocolData = {
+    id: 'morpho-prime',
+    name: 'EURCV Prime',
+    description: 'Morpho vault for EURCV',
+    apy: morphoPrimeData.apy,
+    tvl: morphoPrimeData.tvl,
+    tvlFormatted: morphoPrimeData.tvl > 0 ? formatTVL(morphoPrimeData.tvl) : '—',
+    chains: ['Ethereum'],
+    chainId: 1,
+    color: 'morpho',
+    userDeposit: morphoPrimeData.userDeposit,
+    isLoading: morphoPrimeData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0x34eCe536d2ae03192B06c0A67030D1Faf4c0Ba43/eurcv-prime',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+  };
+
+  const morphoKpk: ProtocolData = {
+    id: 'morpho-kpk',
+    name: 'KPK EURC Yield',
+    description: 'Morpho vault by KPK',
+    apy: morphoKpkData.apy,
+    tvl: morphoKpkData.tvl,
+    tvlFormatted: morphoKpkData.tvl > 0 ? formatTVL(morphoKpkData.tvl) : '—',
+    chains: ['Ethereum'],
+    chainId: 1,
+    color: 'morpho',
+    userDeposit: morphoKpkData.userDeposit,
+    isLoading: morphoKpkData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0x0c6aec603d48eBf1cECc7b247a2c3DA08b398DC1/kpk-eurc-yield',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+  };
+
+  // Calculate aggregated Morpho metrics
+  const morphoSubProtocols = [morphoGauntlet, morphoPrime, morphoKpk];
+  const morphoTotalTvl = morphoSubProtocols.reduce((sum, p) => sum + p.tvl, 0);
+  const morphoTotalDeposit = morphoSubProtocols.reduce((sum, p) => sum + p.userDeposit, 0);
+  
+  // TVL-weighted average APY
+  const morphoWeightedApy = morphoTotalTvl > 0
+    ? morphoSubProtocols.reduce((sum, p) => sum + (p.apy * p.tvl), 0) / morphoTotalTvl
+    : morphoSubProtocols.reduce((sum, p) => sum + p.apy, 0) / morphoSubProtocols.length;
+
+  // Aggregated Morpho entry
+  const morphoGrouped: ProtocolData = {
+    id: 'morpho',
+    name: 'Morpho',
+    description: 'Optimized lending vaults',
+    apy: morphoWeightedApy,
+    tvl: morphoTotalTvl,
+    tvlFormatted: formatTVL(morphoTotalTvl),
+    chains: ['Ethereum'],
+    chainId: 1,
+    color: 'morpho',
+    userDeposit: morphoTotalDeposit,
+    isLoading: morphoGauntletData.isLoading || morphoPrimeData.isLoading || morphoKpkData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+    isGrouped: true,
+    subProtocols: morphoSubProtocols,
+  };
+
   // Real data from all protocols
   const protocols: ProtocolData[] = [
     aaveGrouped,
@@ -186,25 +287,7 @@ export function useProtocolData() {
       learnMoreUrl: 'https://app.yo.xyz/vault/base/0x50c749aE210D3977ADC824AE11F3c7fd10c871e9',
       // YO Protocol not yet rated by DeFiSafety
     },
-    {
-      id: 'morpho-gauntlet',
-      name: 'Gauntlet EURC Core',
-      description: 'Morpho vault by Gauntlet',
-      apy: morphoGauntletData.apy,
-      tvl: morphoGauntletData.tvl,
-      tvlFormatted: morphoGauntletData.tvl > 0 ? formatTVL(morphoGauntletData.tvl) : '—',
-      chains: ['Ethereum'],
-      chainId: 1,
-      color: 'morpho',
-      userDeposit: morphoGauntletData.userDeposit,
-      isLoading: morphoGauntletData.isLoading,
-      isSupported: true,
-      stablecoin: 'EURC',
-      learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0x2ed10624315b74a78f11FAbedAa1A228c198aEfB/gauntlet-eurc-core',
-      safetyScore: 93,
-      safetyProvider: 'DeFiSafety',
-      safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
-    },
+    morphoGrouped,
     {
       id: 'fluid',
       name: 'Fluid',
@@ -238,6 +321,8 @@ export function useProtocolData() {
     summerData.refetch();
     yoData.refetch();
     morphoGauntletData.refetch();
+    morphoPrimeData.refetch();
+    morphoKpkData.refetch();
     fluidData.refetch();
   };
 

@@ -8,7 +8,14 @@ import {
   ERC20_ABI,
 } from '@/lib/contracts';
 
-export type MorphoVaultId = 'morpho-gauntlet';
+export type MorphoVaultId = 'morpho-gauntlet' | 'morpho-prime' | 'morpho-kpk';
+
+// Estimated APYs for each vault (these would ideally come from an API)
+const MORPHO_APYS: Record<MorphoVaultId, number> = {
+  'morpho-gauntlet': 4.38,
+  'morpho-prime': 3.85,
+  'morpho-kpk': 4.12,
+};
 
 const MORPHO_CHAIN_ID = 1; // Ethereum only
 
@@ -69,8 +76,8 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     },
   });
 
-  // Gauntlet EURC Core: ~4.38% APY
-  const estimatedApy = 4.38;
+  // Get APY for this vault
+  const estimatedApy = MORPHO_APYS[vaultId];
 
   // Format user deposit (EURC has 6 decimals)
   const userDeposit = userAssets ? Number(formatUnits(userAssets, 6)) : 0;

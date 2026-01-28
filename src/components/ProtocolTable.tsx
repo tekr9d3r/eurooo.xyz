@@ -26,10 +26,12 @@ const protocolLogos: Record<string, string> = {
   'aave-ethereum': aaveLogo,
   'aave-base': aaveLogo,
   'aave-gnosis': aaveLogo,
-  summer: summerLogo,
-  yo: yoLogo,
+  'morpho': morphoLogo,
   'morpho-gauntlet': morphoLogo,
   'morpho-prime': morphoLogo,
+  'morpho-kpk': morphoLogo,
+  summer: summerLogo,
+  yo: yoLogo,
   fluid: summerLogo, // Using summer logo as placeholder - can be replaced with Fluid logo later
 };
 
