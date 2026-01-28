@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronUp, ChevronDown, TrendingUp, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProtocolData } from '@/hooks/useProtocolData';
+import { SafetyScoreBadge } from '@/components/SafetyScoreBadge';
 
 import aaveLogo from '@/assets/aave-logo.png';
 import summerLogo from '@/assets/summer-logo.png';
@@ -93,6 +94,7 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
       {/* Desktop Table Header - Hidden on mobile */}
       <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-secondary/30 border-b border-border/50 text-sm font-medium text-muted-foreground">
         <div className="col-span-3">Protocol</div>
+        <div className="col-span-1">Safety</div>
         <button 
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
           onClick={() => handleSort('apy')}
@@ -111,7 +113,7 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
         >
           Your Deposit <SortIcon columnKey="userDeposit" />
         </button>
-        <div className="col-span-3 text-right">Actions</div>
+        <div className="col-span-2 text-right">Actions</div>
       </div>
 
       {/* Table Body */}
@@ -130,12 +132,13 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
       {totalDeposits > 0 && (
         <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-success/5 border-t border-success/20 text-sm font-medium">
           <div className="col-span-3 text-muted-foreground">Total Portfolio</div>
+          <div className="col-span-1">—</div>
           <div className="col-span-2 text-success">{weightedApy.toFixed(2)}% avg</div>
           <div className="col-span-2">—</div>
           <div className="col-span-2 font-bold">
             €{totalDeposits.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
           </div>
-          <div className="col-span-3 text-right text-success">
+          <div className="col-span-2 text-right text-success">
             +€{dailyYield.toFixed(4)}/day
           </div>
         </div>
@@ -194,7 +197,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
                   </a>
                 )}
               </div>
-              <div className="flex gap-1 mt-0.5">
+              <div className="flex gap-1 mt-0.5 flex-wrap">
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/30 text-primary">
                   {protocol.stablecoin}
                 </Badge>
@@ -203,6 +206,14 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
                     {chain}
                   </Badge>
                 ))}
+                {protocol.safetyScore !== undefined && (
+                  <SafetyScoreBadge 
+                    score={protocol.safetyScore} 
+                    provider={protocol.safetyProvider}
+                    reportUrl={protocol.safetyReportUrl}
+                    compact
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -310,6 +321,15 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
           </div>
         </div>
 
+        {/* Safety Score */}
+        <div className="col-span-1">
+          <SafetyScoreBadge 
+            score={protocol.safetyScore} 
+            provider={protocol.safetyProvider}
+            reportUrl={protocol.safetyReportUrl}
+          />
+        </div>
+
         {/* APY */}
         <div className="col-span-2">
           {protocol.isLoading ? (
@@ -352,7 +372,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
         </div>
 
         {/* Actions */}
-        <div className="col-span-3 flex justify-end gap-2">
+        <div className="col-span-2 flex justify-end gap-2">
           <Button 
             size="sm"
             className="bg-primary hover:bg-primary/90"
