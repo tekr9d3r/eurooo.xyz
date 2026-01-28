@@ -65,7 +65,7 @@ export function useFluidData() {
     userShares: userShares || 0n,
     vaultAddress,
     isSupported: true,
-    isLoading: isLoadingDefiLlama || isLoadingUserShares || isLoadingUserAssets,
+    isLoading: isLoadingDefiLlama,
     refetch,
   };
 }
