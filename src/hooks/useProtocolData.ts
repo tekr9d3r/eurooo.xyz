@@ -331,7 +331,7 @@ export function useProtocolData() {
     eurcBalance,
     totalDeposits,
     averageApy: weightedApy,
-    isLoading: isLoadingEurc || protocols.some(p => p.isLoading),
+    isLoading: protocols.some(p => p.isLoading),
     refetch,
   };
 }
