@@ -94,7 +94,6 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
       {/* Desktop Table Header - Hidden on mobile */}
       <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-secondary/30 border-b border-border/50 text-sm font-medium text-muted-foreground">
         <div className="col-span-3">Protocol</div>
-        <div className="col-span-1">Safety</div>
         <button 
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
           onClick={() => handleSort('apy')}
@@ -107,6 +106,7 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
         >
           TVL <SortIcon columnKey="tvl" />
         </button>
+        <div className="col-span-1">Safety</div>
         <button 
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
           onClick={() => handleSort('userDeposit')}
@@ -321,15 +321,6 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
           </div>
         </div>
 
-        {/* Safety Score */}
-        <div className="col-span-1">
-          <SafetyScoreBadge 
-            score={protocol.safetyScore} 
-            provider={protocol.safetyProvider}
-            reportUrl={protocol.safetyReportUrl}
-          />
-        </div>
-
         {/* APY */}
         <div className="col-span-2">
           {protocol.isLoading ? (
@@ -351,6 +342,15 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw }: ProtocolRowProps) {
           ) : (
             <span className="font-medium">{protocol.tvlFormatted}</span>
           )}
+        </div>
+
+        {/* Safety Score */}
+        <div className="col-span-1">
+          <SafetyScoreBadge 
+            score={protocol.safetyScore} 
+            provider={protocol.safetyProvider}
+            reportUrl={protocol.safetyReportUrl}
+          />
         </div>
 
         {/* User Deposit */}
