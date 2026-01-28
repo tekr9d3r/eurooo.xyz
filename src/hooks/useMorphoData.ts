@@ -31,6 +31,8 @@ export function useMorphoData(vaultId: MorphoVaultId) {
   const vaultConfig = MORPHO_VAULT_ADDRESSES[vaultId];
   const vaultAddress = vaultConfig?.[1]; // Chain 1 address
 
+  const sharesQueryEnabled = isReady && !!address && !!vaultAddress;
+
   // Get user's vault shares balance (always fetch from Ethereum regardless of connected chain)
   const { data: userShares, isLoading: isLoadingUserShares, refetch: refetchUserShares } = useReadContract({
     address: vaultAddress,
@@ -39,10 +41,12 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     args: address ? [address] : undefined,
     chainId: MORPHO_CHAIN_ID,
     query: {
-      enabled: isReady && !!address && !!vaultAddress,
+      enabled: sharesQueryEnabled,
       refetchInterval: 30000,
     },
   });
+
+  const assetsQueryEnabled = isReady && !!userShares && userShares > 0n;
 
   // Convert user shares to assets (always fetch from Ethereum regardless of connected chain)
   const { data: userAssets, isLoading: isLoadingUserAssets, refetch: refetchUserAssets } = useReadContract({
@@ -52,7 +56,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     args: userShares ? [userShares] : undefined,
     chainId: MORPHO_CHAIN_ID,
     query: {
-      enabled: isReady && !!userShares && userShares > 0n,
+      enabled: assetsQueryEnabled,
       refetchInterval: 30000,
     },
   });
@@ -75,7 +79,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     userShares: userShares || 0n,
     vaultAddress,
     isSupported: true,
-    isLoading: isLoadingDefiLlama || isLoadingUserShares || isLoadingUserAssets,
+    isLoading: isLoadingDefiLlama || (sharesQueryEnabled && isLoadingUserShares) || (assetsQueryEnabled && isLoadingUserAssets),
     refetch,
   };
 }
