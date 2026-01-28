@@ -12,19 +12,24 @@ export function useEURCBalance() {
   
   const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
   
-  const { data: balance, isLoading, error, refetch } = useReadContract({
+  const queryEnabled = isReady && !!address && !!eurcAddress;
+  
+  const { data: balance, isLoading: isQueryLoading, error, refetch } = useReadContract({
     address: eurcAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     query: {
-      enabled: isReady && !!address && !!eurcAddress,
+      enabled: queryEnabled,
       refetchInterval: 30000, // Refetch every 30 seconds
     },
   });
 
   // EURC has 6 decimals
   const formattedBalance = balance ? Number(formatUnits(balance, 6)) : 0;
+  
+  // isLoading should be false if the query is disabled (unsupported chain)
+  const isLoading = queryEnabled && isQueryLoading;
 
   return {
     balance: formattedBalance,
