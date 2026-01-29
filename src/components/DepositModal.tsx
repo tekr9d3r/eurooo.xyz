@@ -114,6 +114,9 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const morphoGauntletDeposit = useMorphoDeposit('morpho-gauntlet');
   const morphoPrimeDeposit = useMorphoDeposit('morpho-prime');
   const morphoKpkDeposit = useMorphoDeposit('morpho-kpk');
+  const morphoMoonwellDeposit = useMorphoDeposit('morpho-moonwell');
+  const morphoSteakhouseDeposit = useMorphoDeposit('morpho-steakhouse');
+  const morphoSteakhousePrimeDeposit = useMorphoDeposit('morpho-steakhouse-prime');
   const fluidDeposit = useFluidDeposit();
   
   // Determine token name for this protocol
@@ -138,6 +141,9 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       case 'morpho-gauntlet': return { ...morphoGauntletDeposit, step: mapMorphoStep(morphoGauntletDeposit.step) };
       case 'morpho-prime': return { ...morphoPrimeDeposit, step: mapMorphoStep(morphoPrimeDeposit.step) };
       case 'morpho-kpk': return { ...morphoKpkDeposit, step: mapMorphoStep(morphoKpkDeposit.step) };
+      case 'morpho-moonwell': return { ...morphoMoonwellDeposit, step: mapMorphoStep(morphoMoonwellDeposit.step) };
+      case 'morpho-steakhouse': return { ...morphoSteakhouseDeposit, step: mapMorphoStep(morphoSteakhouseDeposit.step) };
+      case 'morpho-steakhouse-prime': return { ...morphoSteakhousePrimeDeposit, step: mapMorphoStep(morphoSteakhousePrimeDeposit.step) };
       case 'fluid': return { ...fluidDeposit, step: mapFluidStep(fluidDeposit.step) };
       default: return null;
     }

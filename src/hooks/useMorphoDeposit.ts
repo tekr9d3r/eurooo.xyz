@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAccount, useChainId, useWriteContract, useReadContract } from 'wagmi';
 import { parseUnits } from 'viem';
-import { mainnet } from 'wagmi/chains';
+import { mainnet, base } from 'wagmi/chains';
 import {
   EURC_ADDRESSES,
   EURCV_ADDRESS,
@@ -13,13 +13,28 @@ import { MorphoVaultId } from './useMorphoData';
 
 export type MorphoDepositStep = 'idle' | 'checking' | 'approving' | 'waitingApproval' | 'depositing' | 'waitingDeposit' | 'success' | 'error';
 
+// Map vault IDs to their required chain
+const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453> = {
+  'morpho-gauntlet': 1,
+  'morpho-prime': 1,
+  'morpho-kpk': 1,
+  'morpho-moonwell': 8453,
+  'morpho-steakhouse': 8453,
+  'morpho-steakhouse-prime': 8453,
+};
+
+const CHAIN_CONFIG = {
+  1: mainnet,
+  8453: base,
+} as const;
+
 // Helper to get the correct token address for each vault
 function getTokenAddress(vaultId: MorphoVaultId, chainId: number): `0x${string}` | undefined {
-  // EURCV Prime uses EURCV token
+  // EURCV Prime uses EURCV token (Ethereum only)
   if (vaultId === 'morpho-prime') {
     return chainId === 1 ? EURCV_ADDRESS : undefined;
   }
-  // Other vaults use EURC
+  // Other vaults use EURC on their respective chains
   return EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
 }
 
@@ -30,10 +45,14 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
+  const requiredChainId = VAULT_CHAIN_IDS[vaultId];
   const tokenAddress = getTokenAddress(vaultId, chainId);
   const vaultConfig = MORPHO_VAULT_ADDRESSES[vaultId];
-  const vaultAddress = chainId === 1 ? vaultConfig?.[1] : undefined;
-  const isSupported = chainId === 1 && !!vaultAddress && !!tokenAddress;
+  const vaultAddress = chainId === requiredChainId 
+    ? (vaultConfig?.[requiredChainId as keyof typeof vaultConfig] as `0x${string}` | undefined)
+    : undefined;
+  const isSupported = chainId === requiredChainId && !!vaultAddress && !!tokenAddress;
+  const chain = CHAIN_CONFIG[requiredChainId];
 
   const { writeContractAsync } = useWriteContract();
 
@@ -62,7 +81,8 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
     }
 
     if (!isSupported) {
-      setError('Switch to Ethereum Mainnet to use Morpho');
+      const chainName = requiredChainId === 1 ? 'Ethereum' : 'Base';
+      setError(`Switch to ${chainName} to use this Morpho vault`);
       setStep('error');
       return;
     }
@@ -86,7 +106,7 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
           functionName: 'approve',
           args: [vaultAddress, amountInUnits],
           account: address,
-          chain: mainnet,
+          chain,
         });
 
         setStep('waitingApproval');
@@ -122,7 +142,7 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
         functionName: 'deposit',
         args: [amountInUnits, address],
         account: address,
-        chain: mainnet,
+        chain,
       });
 
       setTxHash(depositTx);
@@ -143,7 +163,7 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
       }
       setStep('error');
     }
-  }, [address, tokenAddress, vaultAddress, isSupported, writeContractAsync, refetchAllowance]);
+  }, [address, tokenAddress, vaultAddress, isSupported, requiredChainId, chain, writeContractAsync, refetchAllowance]);
 
   return {
     deposit,
@@ -152,5 +172,6 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
     reset,
     txHash,
     isSupported,
+    requiredChainId,
   };
 }

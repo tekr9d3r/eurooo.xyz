@@ -70,6 +70,9 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
   const morphoGauntletWithdraw = useMorphoWithdraw('morpho-gauntlet');
   const morphoPrimeWithdraw = useMorphoWithdraw('morpho-prime');
   const morphoKpkWithdraw = useMorphoWithdraw('morpho-kpk');
+  const morphoMoonwellWithdraw = useMorphoWithdraw('morpho-moonwell');
+  const morphoSteakhouseWithdraw = useMorphoWithdraw('morpho-steakhouse');
+  const morphoSteakhousePrimeWithdraw = useMorphoWithdraw('morpho-steakhouse-prime');
   const fluidWithdraw = useFluidWithdraw();
   
   // Determine token name for this protocol
@@ -117,6 +120,21 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         return { 
           ...morphoKpkWithdraw, 
           step: morphoKpkWithdraw.step as UnifiedStep 
+        };
+      case 'morpho-moonwell': 
+        return { 
+          ...morphoMoonwellWithdraw, 
+          step: morphoMoonwellWithdraw.step as UnifiedStep 
+        };
+      case 'morpho-steakhouse': 
+        return { 
+          ...morphoSteakhouseWithdraw, 
+          step: morphoSteakhouseWithdraw.step as UnifiedStep 
+        };
+      case 'morpho-steakhouse-prime': 
+        return { 
+          ...morphoSteakhousePrimeWithdraw, 
+          step: morphoSteakhousePrimeWithdraw.step as UnifiedStep 
         };
       case 'fluid': 
         return { 
