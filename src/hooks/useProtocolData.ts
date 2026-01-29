@@ -21,7 +21,7 @@ export interface ProtocolData {
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
-  stablecoin: 'EURC' | 'EURe' | 'EURC/EURe';
+  stablecoin: 'EURC' | 'EURe' | 'EURCV' | 'EURC/EURe';
   logo?: string;
   learnMoreUrl?: string;
   safetyScore?: number;
@@ -188,7 +188,7 @@ export function useProtocolData() {
     userDeposit: morphoPrimeData.userDeposit,
     isLoading: morphoPrimeData.isLoading,
     isSupported: true,
-    stablecoin: 'EURC', // Note: This vault accepts EURCV but displays as EURCV in the modal
+    stablecoin: 'EURCV',
     logo: morphoLogo,
     learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0x34eCe536d2ae03192B06c0A67030D1Faf4c0Ba43/eurcv-prime',
     safetyScore: 93,

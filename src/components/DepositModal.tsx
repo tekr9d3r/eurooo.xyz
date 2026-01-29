@@ -85,8 +85,10 @@ function mapFluidStep(step: FluidDepositStep): UnifiedStep {
 // Get the token name based on protocol
 function getTokenName(protocol: ProtocolData | null): string {
   if (!protocol) return 'EURC';
-  return protocol.stablecoin === 'EURe' ? 'EURe' : 
-         protocol.id === 'morpho-prime' ? 'EURCV' : 'EURC';
+  // Use the stablecoin field directly - supports EURC, EURe, EURCV
+  if (protocol.stablecoin === 'EURe') return 'EURe';
+  if (protocol.stablecoin === 'EURCV') return 'EURCV';
+  return 'EURC';
 }
 
 const getStepMessages = (tokenName: string): Record<UnifiedStep, string> => ({

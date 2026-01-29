@@ -1,4 +1,4 @@
-// Contract addresses for EURC/EURe and DeFi protocols
+// Contract addresses for EURC/EURe/EURCV and DeFi protocols
 
 export const EURC_ADDRESSES = {
   // Ethereum Mainnet (EURC)
@@ -8,6 +8,9 @@ export const EURC_ADDRESSES = {
   // Gnosis (EURe)
   100: '0xcB444e90D8198415266c6a2724b7900fb12FC56E' as const,
 } as const;
+
+// EURCV token address (Ethereum only - used by Morpho Prime vault)
+export const EURCV_ADDRESS = '0x5F227B47CA59c59F16Ce6E7BC7382D693C804A46' as const;
 
 // ============= AAVE V3 =============
 export const AAVE_V3_POOL_ADDRESSES = {

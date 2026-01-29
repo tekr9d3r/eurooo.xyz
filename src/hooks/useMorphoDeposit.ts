@@ -4,6 +4,7 @@ import { parseUnits } from 'viem';
 import { mainnet } from 'wagmi/chains';
 import {
   EURC_ADDRESSES,
+  EURCV_ADDRESS,
   MORPHO_VAULT_ADDRESSES,
   ERC20_ABI,
   ERC4626_VAULT_ABI,
@@ -12,6 +13,16 @@ import { MorphoVaultId } from './useMorphoData';
 
 export type MorphoDepositStep = 'idle' | 'checking' | 'approving' | 'waitingApproval' | 'depositing' | 'waitingDeposit' | 'success' | 'error';
 
+// Helper to get the correct token address for each vault
+function getTokenAddress(vaultId: MorphoVaultId, chainId: number): `0x${string}` | undefined {
+  // EURCV Prime uses EURCV token
+  if (vaultId === 'morpho-prime') {
+    return chainId === 1 ? EURCV_ADDRESS : undefined;
+  }
+  // Other vaults use EURC
+  return EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
+}
+
 export function useMorphoDeposit(vaultId: MorphoVaultId) {
   const { address } = useAccount();
   const chainId = useChainId();
@@ -19,21 +30,21 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
-  const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
+  const tokenAddress = getTokenAddress(vaultId, chainId);
   const vaultConfig = MORPHO_VAULT_ADDRESSES[vaultId];
   const vaultAddress = chainId === 1 ? vaultConfig?.[1] : undefined;
-  const isSupported = chainId === 1 && !!vaultAddress;
+  const isSupported = chainId === 1 && !!vaultAddress && !!tokenAddress;
 
   const { writeContractAsync } = useWriteContract();
 
   // Check current allowance
   const { refetch: refetchAllowance } = useReadContract({
-    address: eurcAddress,
+    address: tokenAddress,
     abi: ERC20_ABI,
     functionName: 'allowance',
     args: address && vaultAddress ? [address, vaultAddress] : undefined,
     query: {
-      enabled: isSupported && !!address && !!eurcAddress,
+      enabled: isSupported && !!address && !!tokenAddress,
     },
   });
 
@@ -44,7 +55,7 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
   }, []);
 
   const deposit = useCallback(async (amount: number) => {
-    if (!address || !eurcAddress || !vaultAddress) {
+    if (!address || !tokenAddress || !vaultAddress) {
       setError('Wallet not connected or chain not supported');
       setStep('error');
       return;
@@ -70,7 +81,7 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
         setStep('approving');
         
         await writeContractAsync({
-          address: eurcAddress,
+          address: tokenAddress,
           abi: ERC20_ABI,
           functionName: 'approve',
           args: [vaultAddress, amountInUnits],
@@ -132,7 +143,7 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
       }
       setStep('error');
     }
-  }, [address, eurcAddress, vaultAddress, isSupported, writeContractAsync, refetchAllowance]);
+  }, [address, tokenAddress, vaultAddress, isSupported, writeContractAsync, refetchAllowance]);
 
   return {
     deposit,
