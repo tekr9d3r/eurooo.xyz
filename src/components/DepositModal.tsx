@@ -82,16 +82,23 @@ function mapFluidStep(step: FluidDepositStep): UnifiedStep {
   return mapSummerStep(step as SummerDepositStep);
 }
 
-const stepMessages: Record<UnifiedStep, string> = {
+// Get the token name based on protocol
+function getTokenName(protocol: ProtocolData | null): string {
+  if (!protocol) return 'EURC';
+  return protocol.stablecoin === 'EURe' ? 'EURe' : 
+         protocol.id === 'morpho-prime' ? 'EURCV' : 'EURC';
+}
+
+const getStepMessages = (tokenName: string): Record<UnifiedStep, string> => ({
   idle: '',
   checking: 'Checking allowance...',
-  approving: 'Please approve EURC spending in your wallet...',
+  approving: `Please approve ${tokenName} spending in your wallet...`,
   waitingApproval: 'Waiting for approval confirmation...',
   depositing: 'Please confirm the deposit in your wallet...',
   waitingDeposit: 'Waiting for deposit confirmation...',
   success: 'Deposit successful!',
   error: 'Transaction failed',
-};
+});
 
 export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmount = 0 }: DepositModalProps) {
   const [amount, setAmount] = useState('');
@@ -103,7 +110,12 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const summerDeposit = useSummerDeposit();
   const yoDeposit = useYoDeposit();
   const morphoGauntletDeposit = useMorphoDeposit('morpho-gauntlet');
+  const morphoPrimeDeposit = useMorphoDeposit('morpho-prime');
+  const morphoKpkDeposit = useMorphoDeposit('morpho-kpk');
   const fluidDeposit = useFluidDeposit();
+  
+  // Determine token name for this protocol
+  const tokenName = getTokenName(protocol);
   
   const blockExplorer = protocol?.chainId ? (BLOCK_EXPLORERS[protocol.chainId] || 'https://etherscan.io') : 'https://etherscan.io';
   
@@ -122,6 +134,8 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       case 'summer': return { ...summerDeposit, step: mapSummerStep(summerDeposit.step) };
       case 'yo': return { ...yoDeposit, step: mapYoStep(yoDeposit.step) };
       case 'morpho-gauntlet': return { ...morphoGauntletDeposit, step: mapMorphoStep(morphoGauntletDeposit.step) };
+      case 'morpho-prime': return { ...morphoPrimeDeposit, step: mapMorphoStep(morphoPrimeDeposit.step) };
+      case 'morpho-kpk': return { ...morphoKpkDeposit, step: mapMorphoStep(morphoKpkDeposit.step) };
       case 'fluid': return { ...fluidDeposit, step: mapFluidStep(fluidDeposit.step) };
       default: return null;
     }
@@ -182,6 +196,12 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
         case 'morpho-gauntlet':
           await morphoGauntletDeposit.deposit(numericAmount);
           break;
+        case 'morpho-prime':
+          await morphoPrimeDeposit.deposit(numericAmount);
+          break;
+        case 'morpho-kpk':
+          await morphoKpkDeposit.deposit(numericAmount);
+          break;
         case 'fluid':
           await fluidDeposit.deposit(numericAmount);
           break;
@@ -200,6 +220,8 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       summerDeposit.reset();
       yoDeposit.reset();
       morphoGauntletDeposit.reset();
+      morphoPrimeDeposit.reset();
+      morphoKpkDeposit.reset();
       fluidDeposit.reset();
     }
     onOpenChange(isOpen);
@@ -210,6 +232,8 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     summerDeposit.reset();
     yoDeposit.reset();
     morphoGauntletDeposit.reset();
+    morphoPrimeDeposit.reset();
+    morphoKpkDeposit.reset();
     fluidDeposit.reset();
     setUiStep('confirm');
   };
@@ -228,9 +252,9 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
             {uiStep === 'processing' && (isSuccess ? 'Success!' : isError ? 'Error' : 'Processing...')}
           </DialogTitle>
           <DialogDescription>
-            {uiStep === 'input' && 'Enter the amount of EURC you want to deposit'}
+            {uiStep === 'input' && `Enter the amount of ${tokenName} you want to deposit`}
             {uiStep === 'confirm' && 'Please review your deposit details'}
-            {uiStep === 'processing' && stepMessages[txStep]}
+            {uiStep === 'processing' && getStepMessages(tokenName)[txStep]}
           </DialogDescription>
         </DialogHeader>
 
@@ -238,7 +262,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="amount">Amount (EURC)</Label>
+                <Label htmlFor="amount">Amount ({tokenName})</Label>
                 {maxAmount > 0 && (
                   <button
                     type="button"
@@ -322,7 +346,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
             {isProcessing && (
               <>
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="text-center text-muted-foreground">{stepMessages[txStep]}</p>
+                <p className="text-center text-muted-foreground">{getStepMessages(tokenName)[txStep]}</p>
               </>
             )}
             

@@ -29,6 +29,13 @@ interface WithdrawModalProps {
 
 type UnifiedStep = 'idle' | 'withdrawing' | 'waitingWithdraw' | 'success' | 'error';
 
+// Get the token name based on protocol
+function getTokenName(protocol: ProtocolData | null): string {
+  if (!protocol) return 'EURC';
+  return protocol.stablecoin === 'EURe' ? 'EURe' : 
+         protocol.id === 'morpho-prime' ? 'EURCV' : 'EURC';
+}
+
 const stepMessages: Record<UnifiedStep, string> = {
   idle: '',
   withdrawing: 'Please confirm the withdrawal in your wallet...',
@@ -59,7 +66,12 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
   const summerWithdraw = useSummerWithdraw();
   const yoWithdraw = useYoWithdraw();
   const morphoGauntletWithdraw = useMorphoWithdraw('morpho-gauntlet');
+  const morphoPrimeWithdraw = useMorphoWithdraw('morpho-prime');
+  const morphoKpkWithdraw = useMorphoWithdraw('morpho-kpk');
   const fluidWithdraw = useFluidWithdraw();
+  
+  // Determine token name for this protocol
+  const tokenName = getTokenName(protocol);
 
   const blockExplorer = protocol?.chainId ? (BLOCK_EXPLORERS[protocol.chainId] || 'https://etherscan.io') : 'https://etherscan.io';
   
@@ -93,6 +105,16 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         return { 
           ...morphoGauntletWithdraw, 
           step: morphoGauntletWithdraw.step as UnifiedStep 
+        };
+      case 'morpho-prime': 
+        return { 
+          ...morphoPrimeWithdraw, 
+          step: morphoPrimeWithdraw.step as UnifiedStep 
+        };
+      case 'morpho-kpk': 
+        return { 
+          ...morphoKpkWithdraw, 
+          step: morphoKpkWithdraw.step as UnifiedStep 
         };
       case 'fluid': 
         return { 
@@ -162,7 +184,14 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         case 'morpho-gauntlet':
           await morphoGauntletWithdraw.withdraw(amountInUnits);
           break;
+        case 'morpho-prime':
+          await morphoPrimeWithdraw.withdraw(amountInUnits);
+          break;
+        case 'morpho-kpk':
+          await morphoKpkWithdraw.withdraw(amountInUnits);
+          break;
         case 'fluid':
+          // For Fluid we need to pass the user's shares, not assets
           await fluidWithdraw.withdraw(amountInUnits);
           break;
         default:
@@ -180,6 +209,8 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
       summerWithdraw.reset();
       yoWithdraw.reset();
       morphoGauntletWithdraw.reset();
+      morphoPrimeWithdraw.reset();
+      morphoKpkWithdraw.reset();
       fluidWithdraw.reset();
     }
     onOpenChange(isOpen);
@@ -190,6 +221,8 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     summerWithdraw.reset();
     yoWithdraw.reset();
     morphoGauntletWithdraw.reset();
+    morphoPrimeWithdraw.reset();
+    morphoKpkWithdraw.reset();
     fluidWithdraw.reset();
     setUiStep('confirm');
   };
@@ -218,7 +251,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="withdraw-amount">Amount (EURC)</Label>
+                <Label htmlFor="withdraw-amount">Amount ({tokenName})</Label>
                 {maxAmount > 0 && (
                   <button
                     type="button"

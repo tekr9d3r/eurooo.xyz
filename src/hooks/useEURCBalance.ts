@@ -2,6 +2,13 @@ import { useAccount, useReadContract, useChainId, useConfig } from 'wagmi';
 import { EURC_ADDRESSES, ERC20_ABI } from '@/lib/contracts';
 import { formatUnits } from 'viem';
 
+// Decimals per chain: EURC has 6 decimals, EURe on Gnosis has 18
+const DECIMALS_BY_CHAIN: Record<number, number> = {
+  1: 6,      // Ethereum EURC
+  8453: 6,   // Base EURC
+  100: 18,   // Gnosis EURe
+};
+
 export function useEURCBalance() {
   const config = useConfig();
   const { address } = useAccount();
@@ -11,6 +18,7 @@ export function useEURCBalance() {
   const isReady = !!config;
   
   const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
+  const decimals = DECIMALS_BY_CHAIN[chainId] ?? 6;
   
   const queryEnabled = isReady && !!address && !!eurcAddress;
   
@@ -25,8 +33,8 @@ export function useEURCBalance() {
     },
   });
 
-  // EURC has 6 decimals
-  const formattedBalance = balance ? Number(formatUnits(balance, 6)) : 0;
+  // Use correct decimals based on chain
+  const formattedBalance = balance ? Number(formatUnits(balance, decimals)) : 0;
   
   // isLoading should be false if the query is disabled (unsupported chain)
   const isLoading = queryEnabled && isQueryLoading;
@@ -37,5 +45,6 @@ export function useEURCBalance() {
     isLoading,
     error,
     refetch,
+    decimals,
   };
 }
