@@ -28,7 +28,8 @@ export function useMorphoWithdraw(vaultId: MorphoVaultId) {
     setTxHash(undefined);
   }, []);
 
-  const withdraw = useCallback(async (shares: bigint) => {
+  // Withdraw using the ERC4626 withdraw function (takes assets, not shares)
+  const withdraw = useCallback(async (assets: bigint) => {
     if (!address || !vaultAddress) {
       setError('Wallet not connected');
       setStep('error');
@@ -45,11 +46,12 @@ export function useMorphoWithdraw(vaultId: MorphoVaultId) {
       setError(null);
       setStep('withdrawing');
 
+      // Use withdraw function which takes assets amount, not redeem which takes shares
       const withdrawTx = await writeContractAsync({
         address: vaultAddress,
         abi: ERC4626_VAULT_ABI,
-        functionName: 'redeem',
-        args: [shares, address, address],
+        functionName: 'withdraw',
+        args: [assets, address, address],
         account: address,
         chain: mainnet,
       });
@@ -67,6 +69,8 @@ export function useMorphoWithdraw(vaultId: MorphoVaultId) {
         setError('Transaction was rejected');
       } else if (errorMessage.includes('insufficient funds')) {
         setError('Insufficient funds for gas');
+      } else if (errorMessage.includes('burn amount exceeds balance')) {
+        setError('Withdrawal amount exceeds your deposit');
       } else {
         setError(errorMessage);
       }
