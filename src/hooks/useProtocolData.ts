@@ -53,6 +53,9 @@ export function useProtocolData() {
   const morphoGauntletData = useMorphoData('morpho-gauntlet');
   const morphoPrimeData = useMorphoData('morpho-prime');
   const morphoKpkData = useMorphoData('morpho-kpk');
+  const morphoMoonwellData = useMorphoData('morpho-moonwell');
+  const morphoSteakhouseData = useMorphoData('morpho-steakhouse');
+  const morphoSteakhousePrimeData = useMorphoData('morpho-steakhouse-prime');
   const fluidData = useFluidData();
 
   // Individual Aave chain entries (used as sub-protocols)
@@ -217,8 +220,72 @@ export function useProtocolData() {
     safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
   };
 
+  // Base Morpho vault entries
+  const morphoMoonwell: ProtocolData = {
+    id: 'morpho-moonwell',
+    name: 'Moonwell Flagship EURC',
+    description: 'Morpho vault by Moonwell',
+    apy: morphoMoonwellData.apy,
+    tvl: morphoMoonwellData.tvl,
+    tvlFormatted: morphoMoonwellData.tvl > 0 ? formatTVL(morphoMoonwellData.tvl) : '—',
+    chains: ['Base'],
+    chainId: 8453,
+    color: 'morpho',
+    userDeposit: morphoMoonwellData.userDeposit,
+    isLoading: morphoMoonwellData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org/base/vault/0xf24608E0CCb972b0b0f4A6446a0BBf58c701a026/moonwell-flagship-eurc',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+  };
+
+  const morphoSteakhouse: ProtocolData = {
+    id: 'morpho-steakhouse',
+    name: 'Steakhouse EURC',
+    description: 'Morpho vault by Steakhouse',
+    apy: morphoSteakhouseData.apy,
+    tvl: morphoSteakhouseData.tvl,
+    tvlFormatted: morphoSteakhouseData.tvl > 0 ? formatTVL(morphoSteakhouseData.tvl) : '—',
+    chains: ['Base'],
+    chainId: 8453,
+    color: 'morpho',
+    userDeposit: morphoSteakhouseData.userDeposit,
+    isLoading: morphoSteakhouseData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org/base/vault/0xBeEF086b8807Dc5E5A1740C5E3a7C4c366eA6ab5/steakhouse-eurc',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+  };
+
+  const morphoSteakhousePrime: ProtocolData = {
+    id: 'morpho-steakhouse-prime',
+    name: 'Steakhouse Prime EURC',
+    description: 'Morpho vault by Steakhouse',
+    apy: morphoSteakhousePrimeData.apy,
+    tvl: morphoSteakhousePrimeData.tvl,
+    tvlFormatted: morphoSteakhousePrimeData.tvl > 0 ? formatTVL(morphoSteakhousePrimeData.tvl) : '—',
+    chains: ['Base'],
+    chainId: 8453,
+    color: 'morpho',
+    userDeposit: morphoSteakhousePrimeData.userDeposit,
+    isLoading: morphoSteakhousePrimeData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org/base/vault/0xbeef009F28cCf367444a9F79096862920e025DC1/steakhouse-prime-eurc',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+  };
+
   // Calculate aggregated Morpho metrics
-  const morphoSubProtocols = [morphoGauntlet, morphoPrime, morphoKpk];
+  const morphoSubProtocols = [morphoGauntlet, morphoPrime, morphoKpk, morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime];
   const morphoTotalTvl = morphoSubProtocols.reduce((sum, p) => sum + p.tvl, 0);
   const morphoTotalDeposit = morphoSubProtocols.reduce((sum, p) => sum + p.userDeposit, 0);
   
@@ -235,11 +302,11 @@ export function useProtocolData() {
     apy: morphoWeightedApy,
     tvl: morphoTotalTvl,
     tvlFormatted: formatTVL(morphoTotalTvl),
-    chains: ['Ethereum'],
+    chains: ['Ethereum', 'Base'],
     chainId: 1,
     color: 'morpho',
     userDeposit: morphoTotalDeposit,
-    isLoading: morphoGauntletData.isLoading || morphoPrimeData.isLoading || morphoKpkData.isLoading,
+    isLoading: morphoSubProtocols.some(p => p.isLoading),
     isSupported: true,
     stablecoin: 'EURC',
     logo: morphoLogo,
@@ -328,6 +395,9 @@ export function useProtocolData() {
     morphoGauntletData.refetch();
     morphoPrimeData.refetch();
     morphoKpkData.refetch();
+    morphoMoonwellData.refetch();
+    morphoSteakhouseData.refetch();
+    morphoSteakhousePrimeData.refetch();
     fluidData.refetch();
   };
 

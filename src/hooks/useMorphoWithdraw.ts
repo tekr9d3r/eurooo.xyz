@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useAccount, useChainId, useWriteContract } from 'wagmi';
-import { mainnet } from 'wagmi/chains';
+import { mainnet, base } from 'wagmi/chains';
 import {
   MORPHO_VAULT_ADDRESSES,
   ERC4626_VAULT_ABI,
@@ -9,6 +9,21 @@ import { MorphoVaultId } from './useMorphoData';
 
 export type MorphoWithdrawStep = 'idle' | 'withdrawing' | 'waitingWithdraw' | 'success' | 'error';
 
+// Map vault IDs to their required chain
+const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453> = {
+  'morpho-gauntlet': 1,
+  'morpho-prime': 1,
+  'morpho-kpk': 1,
+  'morpho-moonwell': 8453,
+  'morpho-steakhouse': 8453,
+  'morpho-steakhouse-prime': 8453,
+};
+
+const CHAIN_CONFIG = {
+  1: mainnet,
+  8453: base,
+} as const;
+
 export function useMorphoWithdraw(vaultId: MorphoVaultId) {
   const { address } = useAccount();
   const chainId = useChainId();
@@ -16,9 +31,13 @@ export function useMorphoWithdraw(vaultId: MorphoVaultId) {
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
+  const requiredChainId = VAULT_CHAIN_IDS[vaultId];
   const vaultConfig = MORPHO_VAULT_ADDRESSES[vaultId];
-  const vaultAddress = chainId === 1 ? vaultConfig?.[1] : undefined;
-  const isSupported = chainId === 1 && !!vaultAddress;
+  const vaultAddress = chainId === requiredChainId 
+    ? (vaultConfig?.[requiredChainId as keyof typeof vaultConfig] as `0x${string}` | undefined)
+    : undefined;
+  const isSupported = chainId === requiredChainId && !!vaultAddress;
+  const chain = CHAIN_CONFIG[requiredChainId];
 
   const { writeContractAsync } = useWriteContract();
 
@@ -37,7 +56,8 @@ export function useMorphoWithdraw(vaultId: MorphoVaultId) {
     }
 
     if (!isSupported) {
-      setError('Switch to Ethereum Mainnet to use Morpho');
+      const chainName = requiredChainId === 1 ? 'Ethereum' : 'Base';
+      setError(`Switch to ${chainName} to use this Morpho vault`);
       setStep('error');
       return;
     }
@@ -53,7 +73,7 @@ export function useMorphoWithdraw(vaultId: MorphoVaultId) {
         functionName: 'withdraw',
         args: [assets, address, address],
         account: address,
-        chain: mainnet,
+        chain,
       });
 
       setTxHash(withdrawTx);
@@ -76,7 +96,7 @@ export function useMorphoWithdraw(vaultId: MorphoVaultId) {
       }
       setStep('error');
     }
-  }, [address, vaultAddress, isSupported, writeContractAsync]);
+  }, [address, vaultAddress, isSupported, requiredChainId, chain, writeContractAsync]);
 
   return {
     withdraw,
@@ -85,5 +105,6 @@ export function useMorphoWithdraw(vaultId: MorphoVaultId) {
     txHash,
     reset,
     isSupported,
+    requiredChainId,
   };
 }

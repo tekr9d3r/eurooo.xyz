@@ -62,19 +62,27 @@ export const YO_GATEWAY_ADDRESSES = {
 } as const;
 
 // ============= MORPHO =============
-// Morpho ERC-4626 vaults for EURC on Ethereum
+// Morpho ERC-4626 vaults for EURC
 export const MORPHO_VAULT_ADDRESSES = {
-  // Gauntlet EURC Core vault
+  // Ethereum vaults
   'morpho-gauntlet': {
     1: '0x2ed10624315b74a78f11FAbedAa1A228c198aEfB' as const,
   },
-  // EURCV Prime vault
   'morpho-prime': {
     1: '0x34eCe536d2ae03192B06c0A67030D1Faf4c0Ba43' as const,
   },
-  // KPK EURC Yield vault
   'morpho-kpk': {
     1: '0x0c6aec603d48eBf1cECc7b247a2c3DA08b398DC1' as const,
+  },
+  // Base vaults
+  'morpho-moonwell': {
+    8453: '0xf24608E0CCb972b0b0f4A6446a0BBf58c701a026' as const,
+  },
+  'morpho-steakhouse': {
+    8453: '0xBeEF086b8807Dc5E5A1740C5E3a7C4c366eA6ab5' as const,
+  },
+  'morpho-steakhouse-prime': {
+    8453: '0xbeef009F28cCf367444a9F79096862920e025DC1' as const,
   },
 } as const;
 

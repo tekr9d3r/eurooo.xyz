@@ -1,6 +1,6 @@
 /**
  * Hardcoded APY and TVL data - Updated weekly
- * Last updated: 2026-01-28
+ * Last updated: 2026-01-29
  */
 
 export interface PoolData {
@@ -19,10 +19,15 @@ const PROTOCOL_DATA = {
   yoBase: { apy: 6.02, tvl: 1_780_000 },
   summerBase: { apy: 3.22, tvl: 969_800 },
   
-  // Morpho vaults
+  // Morpho vaults - Ethereum
   morphoGauntlet: { apy: 3.76, tvl: 10_020_000 },
   morphoPrime: { apy: 5.96, tvl: 14_000_000 },
   morphoKpk: { apy: 4.37, tvl: 2_010_000 },
+  
+  // Morpho vaults - Base
+  morphoMoonwell: { apy: 2.06, tvl: 6_630_000 },
+  morphoSteakhouse: { apy: 1.78, tvl: 6_030_000 },
+  morphoSteakhousePrime: { apy: 2.76, tvl: 4_870_000 },
   
   // Fluid
   fluidBase: { apy: 4.35, tvl: 2_695_000 },
@@ -42,10 +47,15 @@ export function useDefiLlamaData() {
     yoBase: PROTOCOL_DATA.yoBase,
     summerBase: PROTOCOL_DATA.summerBase,
     
-    // Morpho
+    // Morpho - Ethereum
     morphoGauntlet: PROTOCOL_DATA.morphoGauntlet,
     morphoPrime: PROTOCOL_DATA.morphoPrime,
     morphoKpk: PROTOCOL_DATA.morphoKpk,
+    
+    // Morpho - Base
+    morphoMoonwell: PROTOCOL_DATA.morphoMoonwell,
+    morphoSteakhouse: PROTOCOL_DATA.morphoSteakhouse,
+    morphoSteakhousePrime: PROTOCOL_DATA.morphoSteakhousePrime,
     
     // Fluid
     fluidBase: PROTOCOL_DATA.fluidBase,
