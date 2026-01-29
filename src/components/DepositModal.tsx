@@ -210,6 +210,15 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
         case 'morpho-kpk':
           await morphoKpkDeposit.deposit(numericAmount);
           break;
+        case 'morpho-moonwell':
+          await morphoMoonwellDeposit.deposit(numericAmount);
+          break;
+        case 'morpho-steakhouse':
+          await morphoSteakhouseDeposit.deposit(numericAmount);
+          break;
+        case 'morpho-steakhouse-prime':
+          await morphoSteakhousePrimeDeposit.deposit(numericAmount);
+          break;
         case 'fluid':
           await fluidDeposit.deposit(numericAmount);
           break;
@@ -230,6 +239,9 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       morphoGauntletDeposit.reset();
       morphoPrimeDeposit.reset();
       morphoKpkDeposit.reset();
+      morphoMoonwellDeposit.reset();
+      morphoSteakhouseDeposit.reset();
+      morphoSteakhousePrimeDeposit.reset();
       fluidDeposit.reset();
     }
     onOpenChange(isOpen);
@@ -242,6 +254,9 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     morphoGauntletDeposit.reset();
     morphoPrimeDeposit.reset();
     morphoKpkDeposit.reset();
+    morphoMoonwellDeposit.reset();
+    morphoSteakhouseDeposit.reset();
+    morphoSteakhousePrimeDeposit.reset();
     fluidDeposit.reset();
     setUiStep('confirm');
   };
