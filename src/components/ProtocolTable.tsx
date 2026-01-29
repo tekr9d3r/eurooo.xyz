@@ -167,7 +167,7 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
           <div className="col-span-2 text-success">{weightedApy.toFixed(2)}% avg</div>
           <div className="col-span-2">—</div>
           <div className="col-span-2 font-bold">
-            €{totalDeposits.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+            €{totalDeposits.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="col-span-2 text-right text-success">
             +€{dailyYield.toFixed(4)}/day
@@ -297,7 +297,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             <div>
               <span className="text-xs text-muted-foreground">Your Deposit</span>
               <div className="font-bold">
-                €{protocol.userDeposit.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                €{protocol.userDeposit.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
             <div className="text-right">
@@ -472,7 +472,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
           ) : hasDeposit ? (
             <div>
               <div className="font-bold">
-                €{protocol.userDeposit.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                €{protocol.userDeposit.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
               <div className="text-xs text-success">
                 +€{dailyYield.toFixed(4)}/day
