@@ -5,7 +5,6 @@ import { mainnet, base } from 'wagmi/chains';
 import {
   EURC_ADDRESSES,
   EURCV_ADDRESS,
-  MORPHO_VAULT_ADDRESSES,
   ERC20_ABI,
   ERC4626_VAULT_ABI,
 } from '@/lib/contracts';
@@ -21,6 +20,16 @@ const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453> = {
   'morpho-moonwell': 8453,
   'morpho-steakhouse': 8453,
   'morpho-steakhouse-prime': 8453,
+};
+
+// Direct vault address lookup
+const VAULT_ADDRESSES: Record<MorphoVaultId, `0x${string}`> = {
+  'morpho-gauntlet': '0x2ed10624315b74a78f11FAbedAa1A228c198aEfB',
+  'morpho-prime': '0x34eCe536d2ae03192B06c0A67030D1Faf4c0Ba43',
+  'morpho-kpk': '0x0c6aec603d48eBf1cECc7b247a2c3DA08b398DC1',
+  'morpho-moonwell': '0xf24608E0CCb972b0b0f4A6446a0BBf58c701a026',
+  'morpho-steakhouse': '0xBeEF086b8807Dc5E5A1740C5E3a7C4c366eA6ab5',
+  'morpho-steakhouse-prime': '0xbeef009F28cCf367444a9F79096862920e025DC1',
 };
 
 const CHAIN_CONFIG = {
@@ -47,10 +56,7 @@ export function useMorphoDeposit(vaultId: MorphoVaultId) {
 
   const requiredChainId = VAULT_CHAIN_IDS[vaultId];
   const tokenAddress = getTokenAddress(vaultId, chainId);
-  const vaultConfig = MORPHO_VAULT_ADDRESSES[vaultId];
-  const vaultAddress = chainId === requiredChainId 
-    ? (vaultConfig?.[requiredChainId as keyof typeof vaultConfig] as `0x${string}` | undefined)
-    : undefined;
+  const vaultAddress = VAULT_ADDRESSES[vaultId];
   const isSupported = chainId === requiredChainId && !!vaultAddress && !!tokenAddress;
   const chain = CHAIN_CONFIG[requiredChainId];
 
