@@ -53,7 +53,7 @@ export function PortfolioHeader({
               <Skeleton className="h-8 w-48 mx-auto md:mx-0" />
             ) : (
               <div className="text-2xl sm:text-3xl font-bold yield-glow text-success tracking-tight">
-                €{displayValue.toLocaleString('de-DE', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
+                €{displayValue.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             )}
           </div>
