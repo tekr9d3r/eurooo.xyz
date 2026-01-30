@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, TrendingUp, Zap } from 'lucide-react';
+import { useDefiLlamaData } from '@/hooks/useDefiLlamaData';
 import aaveLogo from '@/assets/aave-logo.png';
 import summerLogo from '@/assets/summer-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
@@ -83,6 +84,27 @@ function AnimatedStars() {
 }
 export function Hero() {
   const navigate = useNavigate();
+  const defiLlamaData = useDefiLlamaData();
+  
+  // Get highest APY from all protocols
+  const highestApy = useMemo(() => {
+    const allApys = [
+      defiLlamaData.aaveEthereum.apy,
+      defiLlamaData.aaveBase.apy,
+      defiLlamaData.aaveGnosis.apy,
+      defiLlamaData.yoBase.apy,
+      defiLlamaData.summerBase.apy,
+      defiLlamaData.morphoGauntlet.apy,
+      defiLlamaData.morphoPrime.apy,
+      defiLlamaData.morphoKpk.apy,
+      defiLlamaData.morphoMoonwell.apy,
+      defiLlamaData.morphoSteakhouse.apy,
+      defiLlamaData.morphoSteakhousePrime.apy,
+      defiLlamaData.fluidBase.apy,
+    ];
+    return Math.max(...allApys);
+  }, [defiLlamaData]);
+  
   const handleStartEarning = () => {
     navigate('/app');
   };
@@ -116,7 +138,7 @@ export function Hero() {
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-2 text-sm opacity-0 animate-fade-in">
             <span className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
             <span className="text-muted-foreground">Live APY up to</span>
-            <span className="font-semibold text-success">6.5%</span>
+            <span className="font-semibold text-success">{highestApy.toFixed(2)}%</span>
           </div>
 
           {/* Headline with animated stars */}
