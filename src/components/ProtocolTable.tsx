@@ -208,19 +208,6 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
         {/* Row 1: Protocol Info + APY */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Expand toggle for grouped protocols */}
-            {isGrouped && (
-              <button 
-                onClick={onToggleExpand}
-                className="p-1 -ml-2 hover:bg-secondary/50 rounded transition-colors"
-              >
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                )}
-              </button>
-            )}
             <div className={cn(
               "flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden flex-shrink-0",
               colorClasses[protocol.color]
@@ -245,6 +232,19 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
                   >
                     <ArrowUpRight className="h-3 w-3" />
                   </a>
+                )}
+                {/* Expand toggle for grouped protocols - after name */}
+                {isGrouped && (
+                  <button 
+                    onClick={onToggleExpand}
+                    className="p-1 hover:bg-secondary/50 rounded transition-colors"
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
                 )}
               </div>
               <div className="flex gap-1 mt-0.5 flex-wrap">
@@ -371,19 +371,6 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
       >
         {/* Protocol Info */}
         <div className="col-span-3 flex items-center gap-3">
-          {/* Expand toggle for grouped protocols */}
-          {isGrouped && (
-            <button 
-              onClick={onToggleExpand}
-              className="p-1 -ml-2 hover:bg-secondary/50 rounded transition-colors"
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              )}
-            </button>
-          )}
           {isSubRow && <span className="text-muted-foreground -ml-2">└─</span>}
           <div className={cn(
             "flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden",
@@ -408,6 +395,19 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
                 >
                   <ArrowUpRight className="h-3 w-3" />
                 </a>
+              )}
+              {/* Expand toggle for grouped protocols - after name */}
+              {isGrouped && (
+                <button 
+                  onClick={onToggleExpand}
+                  className="p-1 hover:bg-secondary/50 rounded transition-colors"
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
               )}
             </div>
             <div className="flex gap-1 mt-1 flex-wrap">
