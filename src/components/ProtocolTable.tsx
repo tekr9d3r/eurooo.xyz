@@ -341,7 +341,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             className="w-full"
             onClick={onToggleExpand}
           >
-            {isExpanded ? 'Hide chains' : `Show ${protocol.subProtocols?.length} chains`}
+            {isExpanded ? 'Hide options' : `Show ${protocol.subProtocols?.length} options`}
           </Button>
         )}
       </div>
