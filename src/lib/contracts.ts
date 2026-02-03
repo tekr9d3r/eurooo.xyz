@@ -45,8 +45,8 @@ export const AAVE_AEURC_ADDRESSES = {
   8453: '0x90Da57E0a6C0D166Bf15764E03B83745dC90025B' as const,
   // aGnoEURe on Gnosis
   100: '0xEdBC7449a9b594CA4E053D9737EC5Dc4CbCcBfb2' as const,
-  // aAvaEURC on Avalanche - checksummed
-  43114: '0xC613C3C7FA0DA614E6fA42D7fC29E7b1D7294E73' as const,
+  // aAvaEURC on Avalanche (from Aave address book)
+  43114: '0x8a9FdE6925a839F6B1932d16B36aC026F8d3FbdB' as const,
 } as const;
 
 // ============= SUMMER.FI (Lazy Summer Protocol) =============
