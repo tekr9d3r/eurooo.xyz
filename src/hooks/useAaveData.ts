@@ -5,6 +5,7 @@ import {
   AAVE_AEURC_ADDRESSES,
   ERC20_ABI,
 } from '@/lib/contracts';
+import { asAddress } from '@/lib/evmAddress';
 
 export function useAaveData() {
   const config = useConfig();
@@ -17,7 +18,7 @@ export function useAaveData() {
   const { aaveEthereum, aaveBase, aaveGnosis, aaveAvalanche, isLoading: isLoadingDefiLlama, refetch: refetchDefiLlama } = useDefiLlamaData();
 
   // Get user's aEURC balance on Ethereum
-  const ethereumAEurcAddress = AAVE_AEURC_ADDRESSES[1];
+  const ethereumAEurcAddress = asAddress(AAVE_AEURC_ADDRESSES[1]);
   const { data: ethereumUserBalance, refetch: refetchEthereumBalance } = useReadContract({
     address: ethereumAEurcAddress,
     abi: ERC20_ABI,
@@ -31,7 +32,7 @@ export function useAaveData() {
   });
 
   // Get user's aEURC balance on Base
-  const baseAEurcAddress = AAVE_AEURC_ADDRESSES[8453];
+  const baseAEurcAddress = asAddress(AAVE_AEURC_ADDRESSES[8453]);
   const { data: baseUserBalance, refetch: refetchBaseBalance } = useReadContract({
     address: baseAEurcAddress,
     abi: ERC20_ABI,
@@ -45,7 +46,7 @@ export function useAaveData() {
   });
 
   // Get user's aEURe balance on Gnosis
-  const gnosisAEurcAddress = AAVE_AEURC_ADDRESSES[100];
+  const gnosisAEurcAddress = asAddress(AAVE_AEURC_ADDRESSES[100]);
   const { data: gnosisUserBalance, refetch: refetchGnosisBalance } = useReadContract({
     address: gnosisAEurcAddress,
     abi: ERC20_ABI,
@@ -59,7 +60,7 @@ export function useAaveData() {
   });
 
   // Get user's aEURC balance on Avalanche
-  const avalancheAEurcAddress = AAVE_AEURC_ADDRESSES[43114];
+  const avalancheAEurcAddress = asAddress(AAVE_AEURC_ADDRESSES[43114]);
   const { data: avalancheUserBalance, refetch: refetchAvalancheBalance } = useReadContract({
     address: avalancheAEurcAddress,
     abi: ERC20_ABI,
