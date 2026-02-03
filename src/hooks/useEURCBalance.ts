@@ -1,6 +1,7 @@
 import { useAccount, useReadContract, useChainId, useConfig } from 'wagmi';
 import { EURC_ADDRESSES, ERC20_ABI } from '@/lib/contracts';
 import { formatUnits } from 'viem';
+import { asAddress } from '@/lib/evmAddress';
 
 // Decimals per chain: EURC has 6 decimals, EURe on Gnosis has 18
 const DECIMALS_BY_CHAIN: Record<number, number> = {
@@ -18,7 +19,7 @@ export function useEURCBalance() {
   // Safety check - if wagmi config isn't ready, return defaults
   const isReady = !!config;
   
-  const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
+  const eurcAddress = asAddress(EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES]);
   const decimals = DECIMALS_BY_CHAIN[chainId] ?? 6;
   
   const queryEnabled = isReady && !!address && !!eurcAddress;

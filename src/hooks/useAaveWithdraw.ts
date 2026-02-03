@@ -7,6 +7,7 @@ import {
   AAVE_V3_POOL_ADDRESSES,
   AAVE_V3_POOL_ABI,
 } from '@/lib/contracts';
+import { asAddress } from '@/lib/evmAddress';
 
 export type WithdrawStep = 'idle' | 'withdrawing' | 'waitingWithdraw' | 'success' | 'error';
 
@@ -40,8 +41,8 @@ export function useAaveWithdraw(): UseAaveWithdrawReturn {
   const [error, setError] = useState<string | null>(null);
   const [withdrawTxHash, setWithdrawTxHash] = useState<`0x${string}` | undefined>();
 
-  const eurcAddress = EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES];
-  const poolAddress = AAVE_V3_POOL_ADDRESSES[chainId as keyof typeof AAVE_V3_POOL_ADDRESSES];
+  const eurcAddress = asAddress(EURC_ADDRESSES[chainId as keyof typeof EURC_ADDRESSES]);
+  const poolAddress = asAddress(AAVE_V3_POOL_ADDRESSES[chainId as keyof typeof AAVE_V3_POOL_ADDRESSES]);
   const chain = CHAIN_MAP[chainId as keyof typeof CHAIN_MAP];
   const decimals = TOKEN_DECIMALS[chainId] || 6;
 
