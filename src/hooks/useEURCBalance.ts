@@ -7,6 +7,7 @@ const DECIMALS_BY_CHAIN: Record<number, number> = {
   1: 6,      // Ethereum EURC
   8453: 6,   // Base EURC
   100: 18,   // Gnosis EURe
+  43114: 6,  // Avalanche EURC
 };
 
 export function useEURCBalance() {
