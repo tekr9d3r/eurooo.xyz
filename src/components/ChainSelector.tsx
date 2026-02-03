@@ -16,6 +16,7 @@ const chains = [
   { id: 'ethereum', name: 'Ethereum' },
   { id: 'base', name: 'Base' },
   { id: 'gnosis', name: 'Gnosis' },
+  { id: 'avalanche', name: 'Avalanche' },
 ];
 
 export function ChainSelector({ value, onChange }: ChainSelectorProps) {

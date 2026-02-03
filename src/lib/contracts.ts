@@ -7,6 +7,8 @@ export const EURC_ADDRESSES = {
   8453: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42' as const,
   // Gnosis (EURe)
   100: '0xcB444e90D8198415266c6a2724b7900fb12FC56E' as const,
+  // Avalanche (EURC)
+  43114: '0xc891EB4CbdEFf6e073e859e987815Ed1505c2ACD' as const,
 } as const;
 
 // EURCV token address (Ethereum only - used by Morpho Prime vault)
@@ -20,6 +22,8 @@ export const AAVE_V3_POOL_ADDRESSES = {
   8453: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5' as const,
   // Gnosis
   100: '0xb50201558B00496A145fE76f7424749556E326D8' as const,
+  // Avalanche
+  43114: '0x794a61358D6845594F94dc1DB02A252b5b4814aD' as const,
 } as const;
 
 export const AAVE_V3_POOL_DATA_PROVIDER = {
@@ -29,6 +33,8 @@ export const AAVE_V3_POOL_DATA_PROVIDER = {
   8453: '0x2d8A3C5677189723C4cB8873CfC9C8976FDF38Ac' as const,
   // Gnosis
   100: '0x501B4c19dd9C2e06E94dA7b6D5Ed4ddA013EC741' as const,
+  // Avalanche
+  43114: '0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654' as const,
 } as const;
 
 // aEURC/aEURe token addresses (receipt tokens for Aave deposits)
@@ -39,6 +45,8 @@ export const AAVE_AEURC_ADDRESSES = {
   8453: '0x90da57e0a6c0d166bf15764e03b83745dc90025b' as const,
   // aGnoEURe on Gnosis
   100: '0xEdBC7449a9b594CA4E053D9737EC5Dc4CbCcBfb2' as const,
+  // aAvaEURC on Avalanche
+  43114: '0xc613C3C7FA0DA614E6fa42D7Fc29E7B1d7294E73' as const,
 } as const;
 
 // ============= SUMMER.FI (Lazy Summer Protocol) =============

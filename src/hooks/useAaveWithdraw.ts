@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAccount, useChainId, useWriteContract } from 'wagmi';
 import { parseUnits, maxUint256 } from 'viem';
-import { mainnet, base, gnosis } from 'wagmi/chains';
+import { mainnet, base, gnosis, avalanche } from 'wagmi/chains';
 import {
   EURC_ADDRESSES,
   AAVE_V3_POOL_ADDRESSES,
@@ -14,6 +14,7 @@ const CHAIN_MAP = {
   1: mainnet,
   8453: base,
   100: gnosis,
+  43114: avalanche,
 } as const;
 
 // Token decimals per chain (EURC = 6, EURe on Gnosis = 18)
@@ -21,6 +22,7 @@ const TOKEN_DECIMALS: Record<number, number> = {
   1: 6,
   8453: 6,
   100: 18,
+  43114: 6,
 };
 
 interface UseAaveWithdrawReturn {

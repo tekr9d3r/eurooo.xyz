@@ -1,5 +1,5 @@
 import { createPublicClient, http, fallback } from 'viem';
-import { mainnet, base, gnosis } from 'wagmi/chains';
+import { mainnet, base, gnosis, avalanche } from 'wagmi/chains';
 
 // Public clients for fetching protocol data (APY, TVL) regardless of wallet connection
 export const ethereumClient = createPublicClient({
@@ -32,9 +32,20 @@ export const gnosisClient = createPublicClient({
   ]),
 });
 
+export const avalancheClient = createPublicClient({
+  chain: avalanche,
+  transport: fallback([
+    http('https://api.avax.network/ext/bc/C/rpc'),
+    http('https://avalanche-c-chain-rpc.publicnode.com'),
+    http('https://rpc.ankr.com/avalanche'),
+    http('https://avax.meowrpc.com'),
+  ]),
+});
+
 export function getClientForChain(chainId: number) {
   if (chainId === 1) return ethereumClient;
   if (chainId === 100) return gnosisClient;
+  if (chainId === 43114) return avalancheClient;
   return baseClient;
 }
 

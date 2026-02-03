@@ -14,6 +14,7 @@ const PROTOCOL_DATA = {
   aaveEthereum: { apy: 3.67, tvl: 64_450_000 },
   aaveBase: { apy: 1.41, tvl: 22_290_000 },
   aaveGnosis: { apy: 3.34, tvl: 16_110_000 },
+  aaveAvalanche: { apy: 2.71, tvl: 1_350_000 },
   
   // Other protocols
   yoBase: { apy: 18.07, tvl: 2_000_000 },
@@ -42,6 +43,7 @@ export function useDefiLlamaData() {
     aaveEthereum: PROTOCOL_DATA.aaveEthereum,
     aaveBase: PROTOCOL_DATA.aaveBase,
     aaveGnosis: PROTOCOL_DATA.aaveGnosis,
+    aaveAvalanche: PROTOCOL_DATA.aaveAvalanche,
     
     // Other protocols
     yoBase: PROTOCOL_DATA.yoBase,

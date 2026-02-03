@@ -122,8 +122,29 @@ export function useProtocolData() {
     safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
   };
 
+  const aaveAvalanche: ProtocolData = {
+    id: 'aave-avalanche',
+    name: 'Aave',
+    description: 'Leading lending protocol',
+    apy: aaveData.avalancheData.apy,
+    tvl: aaveData.avalancheData.tvl,
+    tvlFormatted: formatTVL(aaveData.avalancheData.tvl),
+    chains: ['Avalanche'],
+    chainId: 43114,
+    color: 'aave',
+    userDeposit: aaveData.avalancheUserDeposit,
+    isLoading: aaveData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURC',
+    logo: aaveLogo,
+    learnMoreUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0xc891eb4cbdeff6e073e859e987815ed1505c2acd&marketName=proto_avalanche_v3',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
+  };
+
   // Calculate aggregated Aave metrics
-  const aaveSubProtocols = [aaveEthereum, aaveBase, aaveGnosis];
+  const aaveSubProtocols = [aaveEthereum, aaveBase, aaveGnosis, aaveAvalanche];
   const aaveTotalTvl = aaveSubProtocols.reduce((sum, p) => sum + p.tvl, 0);
   const aaveTotalDeposit = aaveSubProtocols.reduce((sum, p) => sum + p.userDeposit, 0);
   
@@ -140,7 +161,7 @@ export function useProtocolData() {
     apy: aaveWeightedApy,
     tvl: aaveTotalTvl,
     tvlFormatted: formatTVL(aaveTotalTvl),
-    chains: ['Ethereum', 'Base', 'Gnosis'],
+    chains: ['Ethereum', 'Base', 'Gnosis', 'Avalanche'],
     chainId: 1, // Default to Ethereum for the group
     color: 'aave',
     userDeposit: aaveTotalDeposit,
