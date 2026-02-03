@@ -24,12 +24,14 @@ const BLOCK_EXPLORERS: Record<number, string> = {
   1: 'https://etherscan.io',
   8453: 'https://basescan.org',
   100: 'https://gnosisscan.io',
+  43114: 'https://snowtrace.io',
 };
 
 const CHAIN_NAMES: Record<number, string> = {
   1: 'Ethereum',
   8453: 'Base',
   100: 'Gnosis',
+  43114: 'Avalanche',
 };
 
 interface DepositModalProps {
@@ -135,6 +137,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       case 'aave-ethereum':
       case 'aave-base':
       case 'aave-gnosis':
+      case 'aave-avalanche':
         return { ...aaveDeposit, step: mapAaveStep(aaveDeposit.step), txHash: aaveDeposit.supplyTxHash };
       case 'summer': return { ...summerDeposit, step: mapSummerStep(summerDeposit.step) };
       case 'yo': return { ...yoDeposit, step: mapYoStep(yoDeposit.step) };
@@ -193,6 +196,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
         case 'aave-ethereum':
         case 'aave-base':
         case 'aave-gnosis':
+        case 'aave-avalanche':
           await aaveDeposit.deposit(numericAmount);
           break;
         case 'summer':
