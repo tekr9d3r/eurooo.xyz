@@ -148,17 +148,15 @@ export function useProtocolData() {
   const aaveTotalTvl = aaveSubProtocols.reduce((sum, p) => sum + p.tvl, 0);
   const aaveTotalDeposit = aaveSubProtocols.reduce((sum, p) => sum + p.userDeposit, 0);
   
-  // TVL-weighted average APY
-  const aaveWeightedApy = aaveTotalTvl > 0
-    ? aaveSubProtocols.reduce((sum, p) => sum + (p.apy * p.tvl), 0) / aaveTotalTvl
-    : 0;
+  // Highest APY among sub-protocols (for display in collapsed view)
+  const aaveHighestApy = Math.max(...aaveSubProtocols.map(p => p.apy));
 
   // Aggregated Aave entry
   const aaveGrouped: ProtocolData = {
     id: 'aave',
     name: 'Aave',
     description: 'Leading lending protocol',
-    apy: aaveWeightedApy,
+    apy: aaveHighestApy,
     tvl: aaveTotalTvl,
     tvlFormatted: formatTVL(aaveTotalTvl),
     chains: ['Ethereum', 'Base', 'Gnosis', 'Avalanche'],
@@ -310,17 +308,15 @@ export function useProtocolData() {
   const morphoTotalTvl = morphoSubProtocols.reduce((sum, p) => sum + p.tvl, 0);
   const morphoTotalDeposit = morphoSubProtocols.reduce((sum, p) => sum + p.userDeposit, 0);
   
-  // TVL-weighted average APY
-  const morphoWeightedApy = morphoTotalTvl > 0
-    ? morphoSubProtocols.reduce((sum, p) => sum + (p.apy * p.tvl), 0) / morphoTotalTvl
-    : morphoSubProtocols.reduce((sum, p) => sum + p.apy, 0) / morphoSubProtocols.length;
+  // Highest APY among sub-protocols (for display in collapsed view)
+  const morphoHighestApy = Math.max(...morphoSubProtocols.map(p => p.apy));
 
   // Aggregated Morpho entry
   const morphoGrouped: ProtocolData = {
     id: 'morpho',
     name: 'Morpho',
     description: 'Optimized lending vaults',
-    apy: morphoWeightedApy,
+    apy: morphoHighestApy,
     tvl: morphoTotalTvl,
     tvlFormatted: formatTVL(morphoTotalTvl),
     chains: ['Ethereum', 'Base'],
