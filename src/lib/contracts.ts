@@ -7,8 +7,8 @@ export const EURC_ADDRESSES = {
   8453: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42' as const,
   // Gnosis (EURe)
   100: '0xcB444e90D8198415266c6a2724b7900fb12FC56E' as const,
-  // Avalanche (EURC)
-  43114: '0xc891EB4CbdEFf6e073e859e987815Ed1505c2ACD' as const,
+  // Avalanche (EURC) - checksummed
+  43114: '0xC891EB4CbdEFf6e073e859e987815Ed1505c2ACD' as const,
 } as const;
 
 // EURCV token address (Ethereum only - used by Morpho Prime vault)
@@ -42,11 +42,11 @@ export const AAVE_AEURC_ADDRESSES = {
   // aEURC on Ethereum Mainnet
   1: '0xAA6e91C82942aeAE040303Bf96c15a6dBcB82CA0' as const,
   // aBasEURC on Base
-  8453: '0x90da57e0a6c0d166bf15764e03b83745dc90025b' as const,
+  8453: '0x90Da57E0a6C0D166Bf15764E03B83745dC90025B' as const,
   // aGnoEURe on Gnosis
   100: '0xEdBC7449a9b594CA4E053D9737EC5Dc4CbCcBfb2' as const,
-  // aAvaEURC on Avalanche
-  43114: '0xc613C3C7FA0DA614E6fa42D7Fc29E7B1d7294E73' as const,
+  // aAvaEURC on Avalanche - checksummed
+  43114: '0xC613C3C7FA0DA614E6fA42D7fC29E7b1D7294E73' as const,
 } as const;
 
 // ============= SUMMER.FI (Lazy Summer Protocol) =============
