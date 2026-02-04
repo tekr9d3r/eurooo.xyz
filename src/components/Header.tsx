@@ -45,13 +45,14 @@ export function Header() {
           ) : (
             <>
               {/* Home/other pages: show navigation buttons */}
+              <ThemeToggle />
               <Link 
                 to="/stats" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
+                className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
               >
+                <span>📊</span>
                 Market Stats
               </Link>
-              <ThemeToggle />
               <Button asChild size="sm" className="gap-1 bg-primary hover:bg-primary/90 shadow-md shadow-primary/20">
                 <Link to="/app">
                   Earn
