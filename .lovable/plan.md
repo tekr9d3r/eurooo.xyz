@@ -1,91 +1,213 @@
 
-## Fix: Balance Not Displaying When Switching Chains
 
-### Problem Analysis
+# EUR Stablecoin Stats Page
 
-When you switch chains in your wallet, the total portfolio balance disappears because:
+## Overview
 
-| Issue | Location | Impact |
-|-------|----------|--------|
-| `useChainId()` dependency | `useEURCBalance.ts` line 8 | Returns connected chain, not a fixed chain |
-| Chain-dependent address lookup | `useEURCBalance.ts` line 13 | `EURC_ADDRESSES[chainId]` returns `undefined` for unsupported chains |
-| Loading state cascades | `useProtocolData.ts` line 334 | `isLoadingEurc` blocks all data display |
+A new `/stats` page that displays comprehensive data about EUR stablecoins, their issuers, supply, and market breakdown. The page will pull data directly from Roinevirta's public GitHub CSV repository, providing a clean, fast, and simple interface that matches the existing eurooo.xyz design language.
 
-### Data Flow Diagram
+## Scope Definition
+
+**Included:**
+- Total EUR stablecoin supply overview
+- Top stablecoins by supply (ranked list)
+- Supply breakdown by backing type, regulatory status, and blockchain
+- Issuer directory with key metadata
+- Data attribution to source
+
+**Excluded (per request):**
+- DeFi opportunities section (handled on `/app`)
+- Market Map tab
+- Complex filtering/toggle options
+
+---
+
+## Page Structure
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                     User Switches Chain                          │
-└─────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ useChainId() → New chain ID (e.g., 100 for Gnosis)              │
-└─────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ EURC_ADDRESSES[100] → undefined (if not mapped) or new address │
-│ → Query disabled OR refetching                                   │
-│ → isLoading becomes true                                         │
-└─────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ useProtocolData.isLoading = isLoadingEurc || protocols.some()   │
-│ → isLoading = true                                               │
-│ → Total balance not displayed                                    │
-└─────────────────────────────────────────────────────────────────┘
++------------------------------------------+
+|              Header (existing)           |
++------------------------------------------+
+|                                          |
+|     Euro Stablecoin Stats                |
+|     Simple headline + data source note   |
+|                                          |
++------------------------------------------+
+|                                          |
+|  [Total Supply Card]                     |
+|  Large number with "Last updated" note   |
+|                                          |
++------------------------------------------+
+|                                          |
+|  Top Stablecoins by Supply               |
+|  Ranked list with ticker, issuer,        |
+|  supply amount, and market share %       |
+|                                          |
++------------------------------------------+
+|                                          |
+|  Supply Breakdown (3-column grid)        |
+|  - By Backing Type                       |
+|  - By Regulatory Status                  |
+|  - By Blockchain                         |
+|                                          |
++------------------------------------------+
+|                                          |
+|  Issuer Directory                        |
+|  Simple table: Issuer, Ticker, HQ,       |
+|  Regulation, Backing, Status             |
+|                                          |
++------------------------------------------+
+|              Footer (existing)           |
++------------------------------------------+
 ```
 
-### Key Insight
+---
 
-The EURC wallet balance is only used for the deposit modal's max amount - it should NOT affect the portfolio display. Protocol deposits are fetched from their respective chains with hardcoded `chainId` parameters, independent of the connected chain.
+## Data Strategy
 
-### Solution
+### Source
+Fetch CSV files directly from Roinevirta's public GitHub repository at runtime:
+- `MarketCapitalisationData.csv` - Supply by blockchain
+- `TokenInformation.csv` - Token metadata (type, regulation, status)
+- `IssuerData.csv` - Issuer information
 
-Decouple the EURC wallet balance loading state from the protocol data loading state.
+### Fetching Approach
+1. Create a single hook (`useStablecoinStats`) that fetches all three CSVs in parallel
+2. Parse CSV data client-side (lightweight, no dependencies needed)
+3. Cache results in React state with 5-minute stale time
+4. Show loading skeletons during fetch
+5. Handle errors gracefully with fallback messaging
 
-### Technical Changes
+### Performance Considerations
+- Raw GitHub URLs are CORS-enabled and fast
+- CSV files are small (under 20KB total)
+- Single network request per CSV
+- No heavy charting libraries - use simple progress bars for breakdowns
 
-#### 1. `src/hooks/useProtocolData.ts`
+---
 
-Remove `isLoadingEurc` from the main loading state calculation:
+## Components to Create
+
+### 1. Stats Page (`src/pages/Stats.tsx`)
+Main page component with layout structure
+
+### 2. StatsHero Section
+- Page title: "Euro Stablecoin Stats"
+- Subtitle explaining the data source
+- Total supply card with large formatted number
+- Last updated timestamp
+
+### 3. TopStablecoins Component
+- Ranked list (top 10) of stablecoins
+- Each row shows: rank, ticker, issuer name, supply (EUR), market share %
+- Clean card-based design matching existing UI
+
+### 4. SupplyBreakdown Component
+- Three-column grid (stacks on mobile)
+- Simple horizontal progress bars for percentages
+- Categories: Backing Type, Regulatory Status, Blockchain Distribution
+
+### 5. IssuerDirectory Component
+- Responsive table/card layout
+- Columns: Issuer, Ticker, HQ Country, Regulation Type, Backing, Status
+- Status indicators using colored dots (Live, Wind down, Unknown)
+
+### 6. Data Hook (`src/hooks/useStablecoinStats.ts`)
+- Fetches and parses all three CSV files
+- Calculates derived metrics (totals, percentages, rankings)
+- Returns structured data for components
+
+---
+
+## Technical Details
+
+### CSV Parsing
+Simple custom parser (no external dependency):
 
 ```typescript
-// Before (line 334)
-isLoading: isLoadingEurc || protocols.some(p => p.isLoading)
-
-// After
-isLoading: protocols.some(p => p.isLoading)
+function parseCSV(text: string): Record<string, string>[] {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',');
+  return lines.slice(3).map(line => {
+    const values = line.split(',');
+    return headers.reduce((obj, h, i) => ({ ...obj, [h]: values[i] }), {});
+  });
+}
 ```
 
-The EURC balance is passed as `eurcBalance` for the deposit modal, but it doesn't need to block protocol data rendering.
+### Data Calculations
+- Total supply: Sum all non-empty numeric values from MarketCap CSV
+- Market share: (token supply / total supply) * 100
+- Backing breakdown: Group by StablecoinType from TokenInfo CSV
+- Regulatory breakdown: Group by RegulatoryFramework from TokenInfo CSV
+- Blockchain breakdown: Sum columns from MarketCap CSV
 
-#### 2. `src/hooks/useEURCBalance.ts`
+### URL Structure
+GitHub raw URLs pattern:
+`https://raw.githubusercontent.com/roinevirta/euro-stablecoin-research/main/[filename].csv`
 
-Improve resilience when chain changes:
-- Return `0` balance gracefully when on an unsupported chain
-- Ensure `isLoading` is `false` when query is disabled (unsupported chain)
+---
+
+## UI/UX Considerations
+
+### Matching Existing Design
+- Use existing card component with consistent border/shadow
+- EU Blue primary color for headings
+- Success green for positive metrics
+- Muted text for secondary information
+- Same responsive breakpoints (md: for desktop)
+
+### Mobile-First
+- Single column layout on mobile
+- Cards stack vertically
+- Table converts to card list on small screens
+
+### Loading States
+- Skeleton components for each section
+- Animate-pulse effect matching current patterns
+
+### Error Handling
+- Graceful fallback message if GitHub is unreachable
+- "Data temporarily unavailable" state
+- Retry button option
+
+---
+
+## Routing Updates
+
+Add new route in `src/App.tsx`:
 
 ```typescript
-// Add fallback for unsupported chains
-const { data: balance, isLoading: isQueryLoading, ... } = useReadContract({...});
+const Stats = lazy(() => import("./pages/Stats"));
 
-// isLoading should be false if the query is disabled (unsupported chain)
-const isLoading = isReady && !!address && !!eurcAddress && isQueryLoading;
+// In Routes:
+<Route path="/stats" element={<Stats />} />
 ```
 
-### Expected Behavior After Fix
+### Navigation
+Add "Stats" link to header navigation (visible on all pages)
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| Page load | ✅ Shows total | ✅ Shows total |
-| Switch to supported chain | ❌ Loading... | ✅ Shows total instantly |
-| Switch to unsupported chain | ❌ Loading forever | ✅ Shows total (wallet balance = 0) |
-| Protocol deposits | ✅ Independent | ✅ Independent |
+---
 
-### Files to Modify
+## File Changes Summary
 
-1. **`src/hooks/useEURCBalance.ts`** - Fix isLoading logic for unsupported chains
-2. **`src/hooks/useProtocolData.ts`** - Remove EURC loading from main loading state
+| File | Action |
+|------|--------|
+| `src/pages/Stats.tsx` | Create |
+| `src/hooks/useStablecoinStats.ts` | Create |
+| `src/components/stats/StatsHero.tsx` | Create |
+| `src/components/stats/TopStablecoins.tsx` | Create |
+| `src/components/stats/SupplyBreakdown.tsx` | Create |
+| `src/components/stats/IssuerDirectory.tsx` | Create |
+| `src/App.tsx` | Update (add route) |
+| `src/components/Header.tsx` | Update (add nav link) |
+
+---
+
+## Attribution
+
+The page will include visible attribution to the data source:
+> "Data sourced from roinevirta/euro-stablecoin-research - an open research dataset on euro stablecoins."
+
+With a link to the GitHub repository.
+
