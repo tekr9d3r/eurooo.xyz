@@ -101,6 +101,19 @@ export const FLUID_VAULT_ADDRESSES = {
   8453: '0x1943FA26360f038230442525Cf1B9125b5DCB401' as const,
 } as const;
 
+// ============= ANGLE =============
+// EURA stablecoin (previously agEUR)
+export const EURA_ADDRESSES = {
+  // EURA on Arbitrum
+  42161: '0xFA5Ed56A203466CbBC2430a43c66b9D8723528E7' as const,
+} as const;
+
+// stEUR savings vault (ERC-4626)
+export const ANGLE_VAULT_ADDRESSES = {
+  // stEUR on Arbitrum
+  42161: '0x004626A008B1aCdC4c74ab51644093b155e59A23' as const,
+} as const;
+
 // ERC20 ABI (includes approve for deposits)
 export const ERC20_ABI = [
   {

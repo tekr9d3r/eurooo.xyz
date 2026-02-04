@@ -8,7 +8,7 @@ import {
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
-import { mainnet, base, gnosis, avalanche } from 'wagmi/chains';
+import { mainnet, base, gnosis, avalanche, arbitrum } from 'wagmi/chains';
 
 // WalletConnect Cloud project ID (32 characters, no hyphens)
 const projectId = 'febe70ce29e7ee3a9ffd15e3b6cb90dd';
@@ -40,12 +40,13 @@ const connectors = connectorsForWallets(
 
 export const config = createConfig({
   connectors,
-  chains: [mainnet, base, gnosis, avalanche],
+  chains: [mainnet, base, gnosis, avalanche, arbitrum],
   transports: {
     [mainnet.id]: http(),
     [base.id]: http(),
     [gnosis.id]: http(),
     [avalanche.id]: http(),
+    [arbitrum.id]: http(),
   },
 });
 
