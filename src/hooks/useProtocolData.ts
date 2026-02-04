@@ -3,10 +3,12 @@ import { useSummerData } from './useSummerData';
 import { useYoData } from './useYoData';
 import { useMorphoData } from './useMorphoData';
 import { useFluidData } from './useFluidData';
+import { useAngleData } from './useAngleData';
 import { useEURCBalance } from './useEURCBalance';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import fluidLogo from '@/assets/fluid-logo.png';
+import angleLogo from '@/assets/angle-logo.svg';
 
 export interface ProtocolData {
   id: string;
@@ -21,7 +23,7 @@ export interface ProtocolData {
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
-  stablecoin: 'EURC' | 'EURe' | 'EURCV' | 'EURC/EURe';
+  stablecoin: 'EURC' | 'EURe' | 'EURCV' | 'EURC/EURe' | 'EURA';
   logo?: string;
   learnMoreUrl?: string;
   safetyScore?: number;
@@ -57,6 +59,7 @@ export function useProtocolData() {
   const morphoSteakhouseData = useMorphoData('morpho-steakhouse');
   const morphoSteakhousePrimeData = useMorphoData('morpho-steakhouse-prime');
   const fluidData = useFluidData();
+  const angleData = useAngleData();
 
   // Individual Aave chain entries (used as sub-protocols)
   const aaveEthereum: ProtocolData = {
@@ -395,6 +398,26 @@ export function useProtocolData() {
       auditUrl: 'https://fluid.guides.instadapp.io/liquidity-layer/risks',
       auditProvider: 'Instadapp Docs',
     },
+    {
+      id: 'angle',
+      name: 'Angle',
+      description: 'EUR savings protocol',
+      apy: angleData.apy,
+      tvl: angleData.tvl,
+      tvlFormatted: angleData.tvl > 0 ? formatTVL(angleData.tvl) : '—',
+      chains: ['Arbitrum'],
+      chainId: 42161,
+      color: 'morpho', // Using morpho color as a fallback since it's similar
+      userDeposit: angleData.userDeposit,
+      isLoading: angleData.isLoading,
+      isSupported: true,
+      stablecoin: 'EURA',
+      logo: angleLogo,
+      learnMoreUrl: 'https://app.angle.money/savings/eur',
+      safetyScore: 97,
+      safetyProvider: 'DeFiSafety',
+      safetyReportUrl: 'https://www.defisafety.com/app/pqrs/482',
+    },
   ];
 
   const totalDeposits = protocols.reduce((sum, p) => sum + p.userDeposit, 0);
@@ -416,6 +439,7 @@ export function useProtocolData() {
     morphoSteakhouseData.refetch();
     morphoSteakhousePrimeData.refetch();
     fluidData.refetch();
+    angleData.refetch();
   };
 
   return {

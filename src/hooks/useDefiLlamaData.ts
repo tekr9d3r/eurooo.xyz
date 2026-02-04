@@ -32,6 +32,9 @@ const PROTOCOL_DATA = {
   
   // Fluid
   fluidBase: { apy: 3.06, tvl: 3_005_000 },
+  
+  // Angle
+  angleArbitrum: { apy: 3.69, tvl: 11_300_000 },
 } as const;
 
 export function useDefiLlamaData() {
@@ -61,6 +64,9 @@ export function useDefiLlamaData() {
     
     // Fluid
     fluidBase: PROTOCOL_DATA.fluidBase,
+    
+    // Angle
+    angleArbitrum: PROTOCOL_DATA.angleArbitrum,
     
     isLoading: false,
     refetch,
