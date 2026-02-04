@@ -45,30 +45,40 @@ interface CacheEntry {
 
 let cache: CacheEntry | null = null;
 
+function parseCSVLine(line: string): string[] {
+  const values: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (const char of line) {
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim());
+  return values;
+}
+
 function parseCSV(text: string): Record<string, string>[] {
   const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
+  // CSV has 3 metadata rows: headers (row 0), descriptions (row 1), types (row 2)
+  // Data starts at row 3
+  if (lines.length < 4) return [];
   
-  const headers = lines[0].split(',').map(h => h.trim());
+  // Parse headers, strip underscore prefix from first column (_Ticker -> Ticker)
+  const headers = parseCSVLine(lines[0]).map((h, i) => {
+    const cleaned = h.trim();
+    return i === 0 && cleaned.startsWith('_') ? cleaned.substring(1) : cleaned;
+  });
   
-  return lines.slice(1).filter(line => line.trim()).map(line => {
-    // Handle quoted values with commas inside
-    const values: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (const char of line) {
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim());
-    
+  // Skip metadata rows (0, 1, 2), data starts at row 3
+  return lines.slice(3).filter(line => line.trim()).map(line => {
+    const values = parseCSVLine(line);
     return headers.reduce((obj, h, i) => ({ ...obj, [h]: values[i] || '' }), {} as Record<string, string>);
   });
 }
