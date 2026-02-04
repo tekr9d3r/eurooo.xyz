@@ -1,40 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/roinevirta/euro-stablecoin-research/main';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const DEFILLAMA_API = 'https://stablecoins.llama.fi/stablecoins';
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
-export interface TokenData {
-  ticker: string;
-  issuer: string;
-  supply: number;
-  marketShare: number;
-  stablecoinType: string;
-  regulatoryFramework: string;
-  status: string;
-}
-
-export interface IssuerData {
-  issuer: string;
-  ticker: string;
-  headquarters: string;
-  regulation: string;
-  backing: string;
-  status: string;
-}
-
-export interface BreakdownItem {
+export interface EURStablecoin {
+  id: string;
   name: string;
-  value: number;
+  symbol: string;
+  circulating: number;
+  marketShare: number;
+  chains: string[];
+  pegMechanism: string;
+}
+
+export interface ChainBreakdown {
+  chain: string;
+  supply: number;
   percentage: number;
 }
 
 export interface StablecoinStats {
   totalSupply: number;
-  topStablecoins: TokenData[];
-  byBackingType: BreakdownItem[];
-  byRegulatoryStatus: BreakdownItem[];
-  byBlockchain: BreakdownItem[];
-  issuers: IssuerData[];
+  stablecoins: EURStablecoin[];
+  byChain: ChainBreakdown[];
   lastUpdated: Date | null;
 }
 
@@ -43,52 +31,20 @@ interface CacheEntry {
   timestamp: number;
 }
 
+interface DefiLlamaAsset {
+  id: string;
+  name: string;
+  symbol: string;
+  pegType: string;
+  pegMechanism: string;
+  circulating: {
+    peggedEUR?: number;
+  };
+  chains: string[];
+  chainCirculating: Record<string, { current: { peggedEUR?: number } }>;
+}
+
 let cache: CacheEntry | null = null;
-
-function parseCSVLine(line: string): string[] {
-  const values: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  
-  for (const char of line) {
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      values.push(current.trim());
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  values.push(current.trim());
-  return values;
-}
-
-function parseCSV(text: string): Record<string, string>[] {
-  const lines = text.trim().split('\n');
-  // CSV has 3 metadata rows: headers (row 0), descriptions (row 1), types (row 2)
-  // Data starts at row 3
-  if (lines.length < 4) return [];
-  
-  // Parse headers, strip underscore prefix from first column (_Ticker -> Ticker)
-  const headers = parseCSVLine(lines[0]).map((h, i) => {
-    const cleaned = h.trim();
-    return i === 0 && cleaned.startsWith('_') ? cleaned.substring(1) : cleaned;
-  });
-  
-  // Skip metadata rows (0, 1, 2), data starts at row 3
-  return lines.slice(3).filter(line => line.trim()).map(line => {
-    const values = parseCSVLine(line);
-    return headers.reduce((obj, h, i) => ({ ...obj, [h]: values[i] || '' }), {} as Record<string, string>);
-  });
-}
-
-function parseNumber(value: string): number {
-  if (!value || value === '-' || value === 'NA' || value === 'N/A') return 0;
-  const cleaned = value.replace(/[^0-9.-]/g, '');
-  const num = parseFloat(cleaned);
-  return isNaN(num) ? 0 : num;
-}
 
 export function useStablecoinStats() {
   const [data, setData] = useState<StablecoinStats | null>(null);
@@ -107,131 +63,67 @@ export function useStablecoinStats() {
     setError(null);
 
     try {
-      const [marketCapRes, tokenInfoRes, issuerRes] = await Promise.all([
-        fetch(`${GITHUB_BASE_URL}/MarketCapitalisationData.csv`),
-        fetch(`${GITHUB_BASE_URL}/TokenInformation.csv`),
-        fetch(`${GITHUB_BASE_URL}/IssuerData.csv`),
-      ]);
-
-      if (!marketCapRes.ok || !tokenInfoRes.ok || !issuerRes.ok) {
-        throw new Error('Failed to fetch data from GitHub');
+      const response = await fetch(DEFILLAMA_API);
+      if (!response.ok) {
+        throw new Error('Failed to fetch data from DefiLlama');
       }
 
-      const [marketCapText, tokenInfoText, issuerText] = await Promise.all([
-        marketCapRes.text(),
-        tokenInfoRes.text(),
-        issuerRes.text(),
-      ]);
+      const json = await response.json();
+      const peggedAssets: DefiLlamaAsset[] = json.peggedAssets || [];
 
-      const marketCapData = parseCSV(marketCapText);
-      const tokenInfoData = parseCSV(tokenInfoText);
-      const issuerData = parseCSV(issuerText);
+      // Filter for EUR stablecoins only
+      const eurAssets = peggedAssets.filter(
+        (asset) => asset.pegType === 'peggedEUR'
+      );
 
-      // Create a map of token info for quick lookup
-      const tokenInfoMap = new Map<string, Record<string, string>>();
-      tokenInfoData.forEach(token => {
-        const ticker = token.Ticker || token.ticker || '';
-        if (ticker) tokenInfoMap.set(ticker.toUpperCase(), token);
-      });
+      // Calculate total supply
+      const totalSupply = eurAssets.reduce((sum, asset) => {
+        const circulating = asset.circulating?.peggedEUR || 0;
+        return sum + circulating;
+      }, 0);
 
-      // Calculate total supply per token from market cap data
-      const tokenSupplies = new Map<string, number>();
-      const blockchainTotals = new Map<string, number>();
-
-      // Get blockchain columns (all columns except Ticker)
-      const blockchainColumns = marketCapData.length > 0 
-        ? Object.keys(marketCapData[0]).filter(k => k !== 'Ticker' && k !== 'ticker')
-        : [];
-
-      marketCapData.forEach(row => {
-        const ticker = (row.Ticker || row.ticker || '').toUpperCase();
-        if (!ticker) return;
-
-        let tokenTotal = 0;
-        blockchainColumns.forEach(chain => {
-          const value = parseNumber(row[chain]);
-          tokenTotal += value;
-          blockchainTotals.set(chain, (blockchainTotals.get(chain) || 0) + value);
-        });
-
-        tokenSupplies.set(ticker, tokenTotal);
-      });
-
-      const totalSupply = Array.from(tokenSupplies.values()).reduce((sum, val) => sum + val, 0);
-
-      // Build top stablecoins list
-      const topStablecoins: TokenData[] = Array.from(tokenSupplies.entries())
-        .map(([ticker, supply]) => {
-          const info = tokenInfoMap.get(ticker) || {};
+      // Build stablecoins list with market share
+      const stablecoins: EURStablecoin[] = eurAssets
+        .map((asset) => {
+          const circulating = asset.circulating?.peggedEUR || 0;
           return {
-            ticker,
-            issuer: info.Issuer || info.issuer || 'Unknown',
-            supply,
-            marketShare: totalSupply > 0 ? (supply / totalSupply) * 100 : 0,
-            stablecoinType: info.StablecoinType || info['Stablecoin Type'] || info.Type || 'Unknown',
-            regulatoryFramework: info.RegulatoryFramework || info['Regulatory Framework'] || info.Regulation || 'Unknown',
-            status: info.Status || info.status || 'Unknown',
+            id: asset.id,
+            name: asset.name,
+            symbol: asset.symbol,
+            circulating,
+            marketShare: totalSupply > 0 ? (circulating / totalSupply) * 100 : 0,
+            chains: asset.chains || [],
+            pegMechanism: asset.pegMechanism || 'Unknown',
           };
         })
-        .filter(t => t.supply > 0)
-        .sort((a, b) => b.supply - a.supply);
+        .filter((s) => s.circulating > 0)
+        .sort((a, b) => b.circulating - a.circulating);
 
-      // Calculate breakdowns
-      const backingGroups = new Map<string, number>();
-      const regulatoryGroups = new Map<string, number>();
-
-      topStablecoins.forEach(token => {
-        const backing = token.stablecoinType || 'Unknown';
-        const regulatory = token.regulatoryFramework || 'Unknown';
-        
-        backingGroups.set(backing, (backingGroups.get(backing) || 0) + token.supply);
-        regulatoryGroups.set(regulatory, (regulatoryGroups.get(regulatory) || 0) + token.supply);
+      // Aggregate supply by chain
+      const chainTotals = new Map<string, number>();
+      eurAssets.forEach((asset) => {
+        if (asset.chainCirculating) {
+          Object.entries(asset.chainCirculating).forEach(([chain, data]) => {
+            const supply = data?.current?.peggedEUR || 0;
+            if (supply > 0) {
+              chainTotals.set(chain, (chainTotals.get(chain) || 0) + supply);
+            }
+          });
+        }
       });
 
-      const byBackingType: BreakdownItem[] = Array.from(backingGroups.entries())
-        .map(([name, value]) => ({
-          name,
-          value,
-          percentage: totalSupply > 0 ? (value / totalSupply) * 100 : 0,
+      const byChain: ChainBreakdown[] = Array.from(chainTotals.entries())
+        .map(([chain, supply]) => ({
+          chain,
+          supply,
+          percentage: totalSupply > 0 ? (supply / totalSupply) * 100 : 0,
         }))
-        .sort((a, b) => b.value - a.value);
-
-      const byRegulatoryStatus: BreakdownItem[] = Array.from(regulatoryGroups.entries())
-        .map(([name, value]) => ({
-          name,
-          value,
-          percentage: totalSupply > 0 ? (value / totalSupply) * 100 : 0,
-        }))
-        .sort((a, b) => b.value - a.value);
-
-      const byBlockchain: BreakdownItem[] = Array.from(blockchainTotals.entries())
-        .map(([name, value]) => ({
-          name,
-          value,
-          percentage: totalSupply > 0 ? (value / totalSupply) * 100 : 0,
-        }))
-        .filter(item => item.value > 0)
-        .sort((a, b) => b.value - a.value);
-
-      // Parse issuers
-      const issuers: IssuerData[] = issuerData
-        .filter(row => row.Issuer || row.issuer)
-        .map(row => ({
-          issuer: row.Issuer || row.issuer || '',
-          ticker: row.Ticker || row.ticker || '',
-          headquarters: row.Headquarters || row.HQ || row.headquarters || '',
-          regulation: row.Regulation || row.RegulatoryFramework || row['Regulatory Framework'] || '',
-          backing: row.Backing || row.StablecoinType || row['Stablecoin Type'] || '',
-          status: row.Status || row.status || '',
-        }));
+        .sort((a, b) => b.supply - a.supply);
 
       const stats: StablecoinStats = {
         totalSupply,
-        topStablecoins: topStablecoins.slice(0, 15),
-        byBackingType,
-        byRegulatoryStatus,
-        byBlockchain,
-        issuers,
+        stablecoins,
+        byChain,
         lastUpdated: new Date(),
       };
 

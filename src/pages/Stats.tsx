@@ -2,8 +2,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { StatsHero } from '@/components/stats/StatsHero';
 import { TopStablecoins } from '@/components/stats/TopStablecoins';
-import { SupplyBreakdown } from '@/components/stats/SupplyBreakdown';
-import { IssuerDirectory } from '@/components/stats/IssuerDirectory';
+import { MarketShareChart } from '@/components/stats/MarketShareChart';
+import { ChainDistributionChart } from '@/components/stats/ChainDistributionChart';
 import { useStablecoinStats } from '@/hooks/useStablecoinStats';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
@@ -35,19 +35,24 @@ const StatsPage = () => {
               isLoading={isLoading}
             />
             <TopStablecoins
-              tokens={data?.topStablecoins ?? []}
+              stablecoins={data?.stablecoins ?? []}
               isLoading={isLoading}
             />
-            <SupplyBreakdown
-              byBackingType={data?.byBackingType ?? []}
-              byRegulatoryStatus={data?.byRegulatoryStatus ?? []}
-              byBlockchain={data?.byBlockchain ?? []}
-              isLoading={isLoading}
-            />
-            <IssuerDirectory
-              issuers={data?.issuers ?? []}
-              isLoading={isLoading}
-            />
+            <section className="py-8">
+              <div className="container px-4">
+                <h2 className="text-2xl font-semibold mb-6">Supply Breakdown</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <MarketShareChart
+                    stablecoins={data?.stablecoins ?? []}
+                    isLoading={isLoading}
+                  />
+                  <ChainDistributionChart
+                    chains={data?.byChain ?? []}
+                    isLoading={isLoading}
+                  />
+                </div>
+              </div>
+            </section>
           </>
         )}
       </main>
