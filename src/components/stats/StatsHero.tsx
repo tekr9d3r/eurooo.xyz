@@ -27,7 +27,7 @@ export function StatsHero({ totalSupply, lastUpdated, isLoading }: StatsHeroProp
             Euro Stablecoin Stats
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Comprehensive data on EUR-denominated stablecoins, their issuers, and market distribution.
+            Real-time data on EUR-denominated stablecoins, their market cap, and chain distribution.
           </p>
         </div>
 
@@ -51,12 +51,12 @@ export function StatsHero({ totalSupply, lastUpdated, isLoading }: StatsHeroProp
 
         <div className="text-center mt-6">
           <a
-            href="https://github.com/roinevirta/euro-stablecoin-research"
+            href="https://defillama.com/stablecoins?pegtype=PEGGEDEUR"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Data: roinevirta/euro-stablecoin-research
+            Data: DefiLlama Stablecoins
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </div>
