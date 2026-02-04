@@ -1,5 +1,6 @@
 import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
+import { StatsPreview } from '@/components/StatsPreview';
 import { Footer } from '@/components/Footer';
 import { SEO } from '@/components/SEO';
 
@@ -27,6 +28,7 @@ const Home = () => {
       <Header />
       <main>
         <Hero />
+        <StatsPreview />
       </main>
       <Footer />
     </div>
