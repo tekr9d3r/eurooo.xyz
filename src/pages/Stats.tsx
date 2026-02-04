@@ -4,15 +4,51 @@ import { StatsHero } from '@/components/stats/StatsHero';
 import { TopStablecoins } from '@/components/stats/TopStablecoins';
 import { MarketShareChart } from '@/components/stats/MarketShareChart';
 import { ChainDistributionChart } from '@/components/stats/ChainDistributionChart';
+import { QuotableStats } from '@/components/stats/QuotableStats';
+import { StatsFAQ, generateFAQSchema } from '@/components/stats/StatsFAQ';
+import { SEO } from '@/components/SEO';
 import { useStablecoinStats } from '@/hooks/useStablecoinStats';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
+const datasetSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Dataset',
+  name: 'EUR Stablecoin Market Data',
+  description: 'Real-time circulating supply and market share data for Euro-denominated stablecoins including EURC, EURS, and more.',
+  url: 'https://eurooo.xyz/stats',
+  temporalCoverage: '2024/..',
+  creator: {
+    '@type': 'Organization',
+    name: 'eurooo.xyz',
+    url: 'https://eurooo.xyz',
+  },
+  distribution: {
+    '@type': 'DataDownload',
+    contentUrl: 'https://eurooo.xyz/stats',
+    encodingFormat: 'text/html',
+  },
+  keywords: ['EUR stablecoin', 'Euro stablecoin', 'EURC', 'EURS', 'stablecoin market cap', 'DeFi'],
+};
+
 const StatsPage = () => {
   const { data, isLoading, error, refetch } = useStablecoinStats();
 
+  // Generate dynamic FAQ schema with real data
+  const faqSchema = data 
+    ? generateFAQSchema(data.totalSupply, data.stablecoins, data.byChain)
+    : null;
+
+  const jsonLdSchemas = faqSchema ? [datasetSchema, faqSchema] : [datasetSchema];
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="EUR Stablecoin Market Stats"
+        description="Real-time data on Euro stablecoin supply, market share, and blockchain distribution. Track EURC, EURS, and more."
+        path="/stats"
+        jsonLd={jsonLdSchemas}
+      />
       <Header />
       <main>
         {error ? (
@@ -35,6 +71,13 @@ const StatsPage = () => {
               lastUpdated={data?.lastUpdated ?? null}
               isLoading={isLoading}
             />
+            <QuotableStats
+              totalSupply={data?.totalSupply ?? null}
+              stablecoins={data?.stablecoins ?? []}
+              chains={data?.byChain ?? []}
+              lastUpdated={data?.lastUpdated ?? null}
+              isLoading={isLoading}
+            />
             <TopStablecoins
               stablecoins={data?.stablecoins ?? []}
               isLoading={isLoading}
@@ -54,6 +97,12 @@ const StatsPage = () => {
                 </div>
               </div>
             </section>
+            <StatsFAQ
+              totalSupply={data?.totalSupply ?? null}
+              stablecoins={data?.stablecoins ?? []}
+              chains={data?.byChain ?? []}
+              isLoading={isLoading}
+            />
           </>
         )}
       </main>
