@@ -31,6 +31,7 @@ const StatsPage = () => {
           <>
             <StatsHero
               totalSupply={data?.totalSupply ?? null}
+              change30d={data?.change30d ?? null}
               lastUpdated={data?.lastUpdated ?? null}
               isLoading={isLoading}
             />
