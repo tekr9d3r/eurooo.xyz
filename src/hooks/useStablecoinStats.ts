@@ -21,6 +21,8 @@ export interface ChainBreakdown {
 
 export interface StablecoinStats {
   totalSupply: number;
+  totalSupplyPrevMonth: number;
+  change30d: number;
   stablecoins: EURStablecoin[];
   byChain: ChainBreakdown[];
   lastUpdated: Date | null;
@@ -38,6 +40,9 @@ interface DefiLlamaAsset {
   pegType: string;
   pegMechanism: string;
   circulating: {
+    peggedEUR?: number;
+  };
+  circulatingPrevMonth?: {
     peggedEUR?: number;
   };
   chains: string[];
@@ -82,6 +87,17 @@ export function useStablecoinStats() {
         return sum + circulating;
       }, 0);
 
+      // Calculate total supply from previous month
+      const totalSupplyPrevMonth = eurAssets.reduce((sum, asset) => {
+        const circulatingPrev = asset.circulatingPrevMonth?.peggedEUR || 0;
+        return sum + circulatingPrev;
+      }, 0);
+
+      // Calculate 30-day change percentage
+      const change30d = totalSupplyPrevMonth > 0 
+        ? ((totalSupply - totalSupplyPrevMonth) / totalSupplyPrevMonth) * 100 
+        : 0;
+
       // Build stablecoins list with market share
       const stablecoins: EURStablecoin[] = eurAssets
         .map((asset) => {
@@ -122,6 +138,8 @@ export function useStablecoinStats() {
 
       const stats: StablecoinStats = {
         totalSupply,
+        totalSupplyPrevMonth,
+        change30d,
         stablecoins,
         byChain,
         lastUpdated: new Date(),
