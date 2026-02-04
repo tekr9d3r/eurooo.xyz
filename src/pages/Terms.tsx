@@ -2,10 +2,16 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { SEO } from '@/components/SEO';
 
 const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Terms of Service"
+        description="Terms and conditions for using eurooo.xyz DeFi aggregator."
+        path="/terms"
+      />
       <div className="container max-w-3xl py-12">
         <Button variant="ghost" asChild className="mb-8">
           <Link to="/">
