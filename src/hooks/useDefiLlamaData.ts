@@ -32,6 +32,10 @@ const PROTOCOL_DATA = {
   
   // Fluid
   fluidBase: { apy: 3.06, tvl: 3_005_000 },
+  
+  // Solana protocols (external)
+  jupiterSolana: { apy: 3.15, tvl: 16_500_000 },
+  driftSolana: { apy: 2.03, tvl: 782_000 },
 } as const;
 
 export function useDefiLlamaData() {
@@ -61,6 +65,10 @@ export function useDefiLlamaData() {
     
     // Fluid
     fluidBase: PROTOCOL_DATA.fluidBase,
+    
+    // Solana (external)
+    jupiterSolana: PROTOCOL_DATA.jupiterSolana,
+    driftSolana: PROTOCOL_DATA.driftSolana,
     
     isLoading: false,
     refetch,

@@ -60,6 +60,8 @@ export default {
         yo: "hsl(var(--yo))",
         morpho: "hsl(var(--morpho))",
         fluid: "hsl(var(--fluid))",
+        jupiter: "hsl(var(--jupiter))",
+        drift: "hsl(var(--drift))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

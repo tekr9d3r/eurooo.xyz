@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronUp, ChevronDown, ChevronRight, TrendingUp, ArrowUpRight } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronRight, TrendingUp, ArrowUpRight, ExternalLink, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProtocolData } from '@/hooks/useProtocolData';
 import { SafetyScoreBadge } from '@/components/SafetyScoreBadge';
@@ -11,6 +11,9 @@ import aaveLogo from '@/assets/aave-logo.png';
 import summerLogo from '@/assets/summer-logo.png';
 import yoLogo from '@/assets/yo-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
+import jupiterLogo from '@/assets/jupiter-logo.png';
+import driftLogo from '@/assets/drift-logo.png';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ProtocolTableProps {
   protocols: ProtocolData[];
@@ -32,7 +35,9 @@ const protocolLogos: Record<string, string> = {
   'morpho-kpk': morphoLogo,
   summer: summerLogo,
   yo: yoLogo,
-  fluid: summerLogo, // Using summer logo as placeholder - can be replaced with Fluid logo later
+  fluid: summerLogo,
+  jupiter: jupiterLogo,
+  drift: driftLogo,
 };
 
 const colorClasses = {
@@ -41,6 +46,8 @@ const colorClasses = {
   yo: 'bg-yo/10 border-yo/30',
   morpho: 'bg-morpho/10 border-morpho/30',
   fluid: 'bg-fluid/10 border-fluid/30',
+  jupiter: 'bg-jupiter/10 border-jupiter/30',
+  drift: 'bg-drift/10 border-drift/30',
 };
 
 export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTableProps) {
@@ -192,6 +199,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
   const hasData = protocol.apy > 0 || protocol.tvl > 0;
   const dailyYield = (protocol.userDeposit * (protocol.apy / 100)) / 365;
   const isGrouped = protocol.isGrouped && protocol.subProtocols;
+  const isExternal = protocol.isExternal;
 
   const logoSrc = protocol.logo || protocolLogos[protocol.id];
 
@@ -291,7 +299,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
           </div>
         </div>
 
-        {/* Row 2: User Deposit Info (if deposited) */}
+        {/* Row 2: User Deposit Info (if deposited) or External notice */}
         {hasDeposit && !protocol.isLoading && (
           <div className="flex items-center justify-between bg-success/10 rounded-lg px-3 py-2">
             <div>
@@ -308,27 +316,61 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             </div>
           </div>
         )}
+        
+        {/* External protocol deposit notice */}
+        {isExternal && !hasDeposit && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 cursor-help">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Check balance on {protocol.name}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-sm">This is a Solana protocol. View your deposits directly on {protocol.name}.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
 
         {/* Row 3: Action Buttons - Only show for non-grouped or sub-rows */}
         {(!isGrouped || isSubRow) && (
           <div className="flex gap-2">
-            <Button 
-              size="sm"
-              className="flex-1 bg-primary hover:bg-primary/90"
-              onClick={() => onDeposit(protocol)}
-              disabled={!hasData}
-            >
-              Deposit
-            </Button>
-            {hasDeposit && (
+            {isExternal ? (
               <Button 
                 size="sm"
-                variant="outline"
-                className="flex-1"
-                onClick={() => onWithdraw(protocol)}
+                className="flex-1 bg-primary hover:bg-primary/90 gap-1"
+                asChild
               >
-                Withdraw
+                <a href={protocol.externalDepositUrl} target="_blank" rel="noopener noreferrer">
+                  Deposit
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               </Button>
+            ) : (
+              <>
+                <Button 
+                  size="sm"
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                  onClick={() => onDeposit(protocol)}
+                  disabled={!hasData}
+                >
+                  Deposit
+                </Button>
+                {hasDeposit && (
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => onWithdraw(protocol)}
+                  >
+                    Withdraw
+                  </Button>
+                )}
+              </>
             )}
           </div>
         )}
@@ -469,6 +511,25 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
         <div className="col-span-2">
           {protocol.isLoading ? (
             <Skeleton className="h-6 w-20" />
+          ) : isExternal ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a 
+                    href={protocol.externalDepositUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Info className="h-3 w-3" />
+                    Check on {protocol.name}
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-sm">This is a Solana protocol. View your deposits directly on {protocol.name}.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : hasDeposit ? (
             <div>
               <div className="font-bold">
@@ -493,6 +554,17 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
               onClick={onToggleExpand}
             >
               {isExpanded ? 'Hide' : 'Expand'}
+            </Button>
+          ) : isExternal ? (
+            <Button 
+              size="sm"
+              className="bg-primary hover:bg-primary/90 gap-1"
+              asChild
+            >
+              <a href={protocol.externalDepositUrl} target="_blank" rel="noopener noreferrer">
+                Deposit
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </Button>
           ) : (
             <>
