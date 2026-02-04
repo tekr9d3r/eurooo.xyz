@@ -8,6 +8,8 @@ import summerLogo from '@/assets/summer-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
 import fluidLogo from '@/assets/fluid-logo.png';
+import jupiterLogo from '@/assets/jupiter-logo.png';
+import driftLogo from '@/assets/drift-logo.png';
 
 // Animated EU-style gold stars component with parallax
 function AnimatedStars() {
@@ -86,7 +88,7 @@ export function Hero() {
   const navigate = useNavigate();
   const defiLlamaData = useDefiLlamaData();
   
-  // Get highest APY from all protocols
+  // Get highest APY from all protocols (including Solana)
   const highestApy = useMemo(() => {
     const allApys = [
       defiLlamaData.aaveEthereum.apy,
@@ -101,6 +103,8 @@ export function Hero() {
       defiLlamaData.morphoSteakhouse.apy,
       defiLlamaData.morphoSteakhousePrime.apy,
       defiLlamaData.fluidBase.apy,
+      defiLlamaData.jupiterSolana.apy,
+      defiLlamaData.driftSolana.apy,
     ];
     return Math.max(...allApys);
   }, [defiLlamaData]);
@@ -123,6 +127,12 @@ export function Hero() {
   }, {
     name: 'Fluid',
     logo: fluidLogo
+  }, {
+    name: 'Jupiter',
+    logo: jupiterLogo
+  }, {
+    name: 'Drift',
+    logo: driftLogo
   }];
   return <section className="relative overflow-hidden py-24 lg:py-40">
       {/* Animated background */}
@@ -186,7 +196,7 @@ export function Hero() {
               </div>
               <h3 className="font-semibold">Trusted Protocols</h3>
               <p className="text-sm text-muted-foreground">
-                Aave, Summer.fi, Morpho, YO & Fluid — battle-tested DeFi platforms
+                Aave, Morpho, Jupiter, Drift & more — battle-tested DeFi platforms
               </p>
             </div>
             <div className="group flex flex-col items-center gap-3 text-center p-6 rounded-2xl transition-all duration-300 hover:bg-secondary/50 hover:shadow-lg">
@@ -204,7 +214,7 @@ export function Hero() {
               </div>
               <h3 className="font-semibold">Multi-chain</h3>
               <p className="text-sm text-muted-foreground">
-                Deposit on Ethereum, Gnosis or Base — your choice
+                Deposit on Ethereum, Base, Gnosis or Solana
               </p>
             </div>
           </div>

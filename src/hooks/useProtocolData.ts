@@ -3,10 +3,13 @@ import { useSummerData } from './useSummerData';
 import { useYoData } from './useYoData';
 import { useMorphoData } from './useMorphoData';
 import { useFluidData } from './useFluidData';
+import { useDefiLlamaData } from './useDefiLlamaData';
 import { useEURCBalance } from './useEURCBalance';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import fluidLogo from '@/assets/fluid-logo.png';
+import jupiterLogo from '@/assets/jupiter-logo.png';
+import driftLogo from '@/assets/drift-logo.png';
 
 export interface ProtocolData {
   id: string;
@@ -16,7 +19,7 @@ export interface ProtocolData {
   tvl: number;
   tvlFormatted: string;
   chains: string[];
-  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid';
+  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'drift';
   chainId: number; // Required chain ID for protocol-specific actions
   userDeposit: number;
   isLoading: boolean;
@@ -33,6 +36,9 @@ export interface ProtocolData {
   // Grouped protocol fields
   isGrouped?: boolean;
   subProtocols?: ProtocolData[];
+  // External protocols (e.g., Solana) - deposits happen on external site
+  isExternal?: boolean;
+  externalDepositUrl?: string;
 }
 
 function formatTVL(tvl: number): string {
@@ -47,6 +53,7 @@ function formatTVL(tvl: number): string {
 
 export function useProtocolData() {
   const { balance: eurcBalance, isLoading: isLoadingEurc, refetch: refetchEurc } = useEURCBalance();
+  const defiLlamaData = useDefiLlamaData();
   const aaveData = useAaveData();
   const summerData = useSummerData();
   const yoData = useYoData();
@@ -394,6 +401,45 @@ export function useProtocolData() {
       learnMoreUrl: 'https://fluid.io/lending/8453/EURC',
       auditUrl: 'https://fluid.guides.instadapp.io/liquidity-layer/risks',
       auditProvider: 'Instadapp Docs',
+    },
+    // External Solana protocols
+    {
+      id: 'jupiter',
+      name: 'Jupiter',
+      description: 'Solana lending protocol',
+      apy: defiLlamaData.jupiterSolana.apy,
+      tvl: defiLlamaData.jupiterSolana.tvl,
+      tvlFormatted: formatTVL(defiLlamaData.jupiterSolana.tvl),
+      chains: ['Solana'],
+      chainId: 0, // Solana - not EVM
+      color: 'jupiter',
+      userDeposit: 0, // External - no on-chain tracking
+      isLoading: false,
+      isSupported: true,
+      stablecoin: 'EURC',
+      logo: jupiterLogo,
+      learnMoreUrl: 'https://jup.ag/lend',
+      isExternal: true,
+      externalDepositUrl: 'https://jup.ag/lend/earn/EURC/deposit',
+    },
+    {
+      id: 'drift',
+      name: 'Drift',
+      description: 'Solana perpetuals & lending',
+      apy: defiLlamaData.driftSolana.apy,
+      tvl: defiLlamaData.driftSolana.tvl,
+      tvlFormatted: formatTVL(defiLlamaData.driftSolana.tvl),
+      chains: ['Solana'],
+      chainId: 0, // Solana - not EVM
+      color: 'drift',
+      userDeposit: 0, // External - no on-chain tracking
+      isLoading: false,
+      isSupported: true,
+      stablecoin: 'EURC',
+      logo: driftLogo,
+      learnMoreUrl: 'https://app.drift.trade/earn/borrow-lend',
+      isExternal: true,
+      externalDepositUrl: 'https://app.drift.trade/earn/borrow-lend',
     },
   ];
 
