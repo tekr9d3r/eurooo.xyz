@@ -2,21 +2,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import type { ChainBreakdown } from '@/hooks/useStablecoinStats';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ChainDistributionChartProps {
   chains: ChainBreakdown[];
   isLoading: boolean;
 }
 
+// Brighter colors that work well in both light and dark modes
 const COLORS = [
-  'hsl(220, 100%, 30%)', // EU Blue
-  'hsl(160, 84%, 39%)',  // Success Green
+  'hsl(220, 100%, 55%)', // EU Blue (brighter)
+  'hsl(160, 84%, 50%)',  // Success Green
   'hsl(258, 90%, 66%)',  // Purple
-  'hsl(25, 95%, 53%)',   // Orange
-  'hsl(330, 81%, 60%)',  // Pink
-  'hsl(187, 92%, 43%)',  // Cyan
-  'hsl(48, 96%, 53%)',   // Yellow
-  'hsl(220, 9%, 46%)',   // Gray
+  'hsl(25, 95%, 58%)',   // Orange
+  'hsl(330, 81%, 65%)',  // Pink
+  'hsl(187, 92%, 50%)',  // Cyan
+  'hsl(48, 96%, 55%)',   // Yellow
+  'hsl(220, 20%, 60%)',  // Gray (lighter)
 ];
 
 function formatEuro(value: number): string {
@@ -30,6 +32,8 @@ function formatEuro(value: number): string {
 }
 
 export function ChainDistributionChart({ chains, isLoading }: ChainDistributionChartProps) {
+  const isMobile = useIsMobile();
+  
   if (isLoading) {
     return (
       <Card>
@@ -63,19 +67,20 @@ export function ChainDistributionChart({ chains, isLoading }: ChainDistributionC
         <CardTitle className="text-lg">Chain Distribution</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={isMobile ? 280 : 300}>
           <PieChart>
             <Pie
               data={chartData}
               dataKey="value"
               nameKey="name"
               cx="50%"
-              cy="50%"
-              outerRadius={100}
-              label={({ name, percent }) =>
-                percent > 0.03 ? `${name} ${(percent * 100).toFixed(1)}%` : ''
+              cy={isMobile ? "45%" : "50%"}
+              outerRadius={isMobile ? 70 : 100}
+              label={isMobile ? false : ({ name, percent }) =>
+                percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : ''
               }
               labelLine={false}
+              style={{ fontSize: isMobile ? 10 : 12 }}
             >
               {chartData.map((_, index) => (
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
@@ -96,7 +101,10 @@ export function ChainDistributionChart({ chains, isLoading }: ChainDistributionC
                 color: 'hsl(var(--card-foreground))',
               }}
             />
-            <Legend />
+            <Legend 
+              wrapperStyle={{ fontSize: isMobile ? 10 : 12 }}
+              iconSize={isMobile ? 8 : 14}
+            />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>
