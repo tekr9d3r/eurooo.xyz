@@ -18,7 +18,6 @@ import { useSummerWithdraw, SummerWithdrawStep } from '@/hooks/useSummerWithdraw
 import { useYoWithdraw, YoWithdrawStep } from '@/hooks/useYoWithdraw';
 import { useMorphoWithdraw, MorphoWithdrawStep } from '@/hooks/useMorphoWithdraw';
 import { useFluidWithdraw, FluidWithdrawStep } from '@/hooks/useFluidWithdraw';
-import { useAngleWithdraw, AngleWithdrawStep } from '@/hooks/useAngleWithdraw';
 import { AlertCircle, Loader2, CheckCircle2, XCircle, ArrowRightLeft } from 'lucide-react';
 
 interface WithdrawModalProps {
@@ -33,10 +32,9 @@ type UnifiedStep = 'idle' | 'withdrawing' | 'waitingWithdraw' | 'success' | 'err
 // Get the token name based on protocol
 function getTokenName(protocol: ProtocolData | null): string {
   if (!protocol) return 'EURC';
-  // Use the stablecoin field directly - supports EURC, EURe, EURCV, EURA
+  // Use the stablecoin field directly - supports EURC, EURe, EURCV
   if (protocol.stablecoin === 'EURe') return 'EURe';
   if (protocol.stablecoin === 'EURCV') return 'EURCV';
-  if (protocol.stablecoin === 'EURA') return 'EURA';
   return 'EURC';
 }
 
@@ -53,7 +51,6 @@ const BLOCK_EXPLORERS: Record<number, string> = {
   8453: 'https://basescan.org',
   100: 'https://gnosisscan.io',
   43114: 'https://snowtrace.io',
-  42161: 'https://arbiscan.io',
 };
 
 const CHAIN_NAMES: Record<number, string> = {
@@ -61,7 +58,6 @@ const CHAIN_NAMES: Record<number, string> = {
   8453: 'Base',
   100: 'Gnosis',
   43114: 'Avalanche',
-  42161: 'Arbitrum',
 };
 
 export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: WithdrawModalProps) {
@@ -80,7 +76,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
   const morphoSteakhouseWithdraw = useMorphoWithdraw('morpho-steakhouse');
   const morphoSteakhousePrimeWithdraw = useMorphoWithdraw('morpho-steakhouse-prime');
   const fluidWithdraw = useFluidWithdraw();
-  const angleWithdraw = useAngleWithdraw();
   
   // Determine token name for this protocol
   const tokenName = getTokenName(protocol);
@@ -149,11 +144,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
           ...fluidWithdraw, 
           step: fluidWithdraw.step as UnifiedStep 
         };
-      case 'angle': 
-        return { 
-          ...angleWithdraw, 
-          step: angleWithdraw.step as UnifiedStep 
-        };
       default: return null;
     }
   };
@@ -185,7 +175,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
 
   const handleSwitchNetwork = () => {
     if (protocol?.chainId) {
-      switchChain({ chainId: protocol.chainId as 1 | 8453 | 100 | 43114 | 42161 });
+      switchChain({ chainId: protocol.chainId as 1 | 8453 | 100 });
     }
   };
 
@@ -228,11 +218,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
           // For Fluid we need to pass the user's shares, not assets
           await fluidWithdraw.withdraw(amountInUnits);
           break;
-        case 'angle':
-          // For Angle, EURA has 18 decimals
-          const amountIn18Decimals = parseUnits(numericAmount.toString(), 18);
-          await angleWithdraw.withdraw(amountIn18Decimals);
-          break;
         default:
           onComplete();
           handleClose(false);
@@ -251,7 +236,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
       morphoPrimeWithdraw.reset();
       morphoKpkWithdraw.reset();
       fluidWithdraw.reset();
-      angleWithdraw.reset();
     }
     onOpenChange(isOpen);
   };
@@ -264,7 +248,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     morphoPrimeWithdraw.reset();
     morphoKpkWithdraw.reset();
     fluidWithdraw.reset();
-    angleWithdraw.reset();
     setUiStep('confirm');
   };
 

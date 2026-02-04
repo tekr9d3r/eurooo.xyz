@@ -17,7 +17,6 @@ import { useSummerDeposit, SummerDepositStep } from '@/hooks/useSummerDeposit';
 import { useYoDeposit, YoDepositStep } from '@/hooks/useYoDeposit';
 import { useMorphoDeposit, MorphoDepositStep } from '@/hooks/useMorphoDeposit';
 import { useFluidDeposit, FluidDepositStep } from '@/hooks/useFluidDeposit';
-import { useAngleDeposit, AngleDepositStep } from '@/hooks/useAngleDeposit';
 import { MorphoVaultId } from '@/hooks/useMorphoData';
 import { AlertCircle, TrendingUp, Loader2, CheckCircle2, XCircle, ArrowRightLeft } from 'lucide-react';
 
@@ -26,7 +25,6 @@ const BLOCK_EXPLORERS: Record<number, string> = {
   8453: 'https://basescan.org',
   100: 'https://gnosisscan.io',
   43114: 'https://snowtrace.io',
-  42161: 'https://arbiscan.io',
 };
 
 const CHAIN_NAMES: Record<number, string> = {
@@ -34,7 +32,6 @@ const CHAIN_NAMES: Record<number, string> = {
   8453: 'Base',
   100: 'Gnosis',
   43114: 'Avalanche',
-  42161: 'Arbitrum',
 };
 
 interface DepositModalProps {
@@ -87,17 +84,12 @@ function mapFluidStep(step: FluidDepositStep): UnifiedStep {
   return mapSummerStep(step as SummerDepositStep);
 }
 
-function mapAngleStep(step: AngleDepositStep): UnifiedStep {
-  return mapSummerStep(step as SummerDepositStep);
-}
-
 // Get the token name based on protocol
 function getTokenName(protocol: ProtocolData | null): string {
   if (!protocol) return 'EURC';
-  // Use the stablecoin field directly - supports EURC, EURe, EURCV, EURA
+  // Use the stablecoin field directly - supports EURC, EURe, EURCV
   if (protocol.stablecoin === 'EURe') return 'EURe';
   if (protocol.stablecoin === 'EURCV') return 'EURCV';
-  if (protocol.stablecoin === 'EURA') return 'EURA';
   return 'EURC';
 }
 
@@ -128,7 +120,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const morphoSteakhouseDeposit = useMorphoDeposit('morpho-steakhouse');
   const morphoSteakhousePrimeDeposit = useMorphoDeposit('morpho-steakhouse-prime');
   const fluidDeposit = useFluidDeposit();
-  const angleDeposit = useAngleDeposit();
   
   // Determine token name for this protocol
   const tokenName = getTokenName(protocol);
@@ -157,7 +148,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       case 'morpho-steakhouse': return { ...morphoSteakhouseDeposit, step: mapMorphoStep(morphoSteakhouseDeposit.step) };
       case 'morpho-steakhouse-prime': return { ...morphoSteakhousePrimeDeposit, step: mapMorphoStep(morphoSteakhousePrimeDeposit.step) };
       case 'fluid': return { ...fluidDeposit, step: mapFluidStep(fluidDeposit.step) };
-      case 'angle': return { ...angleDeposit, step: mapAngleStep(angleDeposit.step) };
       default: return null;
     }
   };
@@ -190,7 +180,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
 
   const handleSwitchNetwork = () => {
     if (protocol?.chainId) {
-      switchChain({ chainId: protocol.chainId as 1 | 8453 | 100 | 43114 | 42161 });
+      switchChain({ chainId: protocol.chainId as 1 | 8453 | 100 });
     }
   };
 
@@ -236,9 +226,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
         case 'fluid':
           await fluidDeposit.deposit(numericAmount);
           break;
-        case 'angle':
-          await angleDeposit.deposit(numericAmount);
-          break;
         default:
           onConfirm();
           handleClose(false);
@@ -260,7 +247,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       morphoSteakhouseDeposit.reset();
       morphoSteakhousePrimeDeposit.reset();
       fluidDeposit.reset();
-      angleDeposit.reset();
     }
     onOpenChange(isOpen);
   };
@@ -276,7 +262,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     morphoSteakhouseDeposit.reset();
     morphoSteakhousePrimeDeposit.reset();
     fluidDeposit.reset();
-    angleDeposit.reset();
     setUiStep('confirm');
   };
 

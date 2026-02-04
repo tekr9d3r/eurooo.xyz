@@ -17,7 +17,6 @@ const chains = [
   { id: 'base', name: 'Base' },
   { id: 'gnosis', name: 'Gnosis' },
   { id: 'avalanche', name: 'Avalanche' },
-  { id: 'arbitrum', name: 'Arbitrum' },
 ];
 
 export function ChainSelector({ value, onChange }: ChainSelectorProps) {

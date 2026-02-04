@@ -1,5 +1,5 @@
 import { createPublicClient, http, fallback } from 'viem';
-import { mainnet, base, gnosis, avalanche, arbitrum } from 'wagmi/chains';
+import { mainnet, base, gnosis, avalanche } from 'wagmi/chains';
 
 // Public clients for fetching protocol data (APY, TVL) regardless of wallet connection
 export const ethereumClient = createPublicClient({
@@ -42,21 +42,10 @@ export const avalancheClient = createPublicClient({
   ]),
 });
 
-export const arbitrumClient = createPublicClient({
-  chain: arbitrum,
-  transport: fallback([
-    http('https://arb1.arbitrum.io/rpc'),
-    http('https://arbitrum-one-rpc.publicnode.com'),
-    http('https://rpc.ankr.com/arbitrum'),
-    http('https://arbitrum.meowrpc.com'),
-  ]),
-});
-
 export function getClientForChain(chainId: number) {
   if (chainId === 1) return ethereumClient;
   if (chainId === 100) return gnosisClient;
   if (chainId === 43114) return avalancheClient;
-  if (chainId === 42161) return arbitrumClient;
   return baseClient;
 }
 
