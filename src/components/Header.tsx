@@ -20,6 +20,12 @@ export function Header() {
 
         <div className="flex items-center gap-1 sm:gap-2">
           {/* Navigation */}
+          <Link 
+            to="/stats" 
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
+          >
+            Stats
+          </Link>
           {isConnected && !isAppPage && (
             <Link 
               to="/app" 

@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/react";
 // Lazy load route components for code splitting
 const Home = lazy(() => import("./pages/Home"));
 const AppPage = lazy(() => import("./pages/App"));
+const Stats = lazy(() => import("./pages/Stats"));
 const Terms = lazy(() => import("./pages/Terms"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -30,6 +31,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/app" element={<AppPage />} />
+              <Route path="/stats" element={<Stats />} />
               <Route path="/terms" element={<Terms />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
