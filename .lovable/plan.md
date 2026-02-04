@@ -1,264 +1,231 @@
 
-
-# Stats Page Overhaul: DefiLlama Data + Pie Charts
+# GEO/SEO Infrastructure Implementation
 
 ## Overview
 
-This plan replaces the current GitHub CSV-based data source with the DefiLlama Stablecoins API and adds pie chart visualizations for market share comparison. The DefiLlama API is a reliable, well-maintained data source that provides real-time circulating supply data for EUR stablecoins.
+This plan implements comprehensive GEO (Generative Engine Optimization) and SEO improvements to make eurooo.xyz a quotable, authoritative source for EUR stablecoin data. The goal is to make the site easily discoverable and quotable by search engines and AI systems.
 
-## Data Source Change
+---
 
-### Current Approach (Problems)
-- Fetching CSV files from GitHub repository
-- Inconsistent column naming and metadata rows causing parsing issues
-- Data may not be updated frequently
-- Complex parsing logic prone to errors
+## Implementation Scope
 
-### New Approach (DefiLlama API)
-- **Endpoint**: `https://stablecoins.llama.fi/stablecoins`
-- **Filter**: Only include stablecoins where `pegType === "peggedEUR"`
-- **Data includes**: name, symbol, circulating supply, chains, peg mechanism
-- **Benefits**: Real-time data, consistent JSON format, well-maintained, free API
+### Phase 1: Core SEO Infrastructure
+1. **Page-specific meta tags** using react-helmet-async
+2. **JSON-LD structured data** for Dataset, WebSite, and FAQPage schemas
+3. **Sitemap.xml** for search engine crawling
 
-## API Response Structure
+### Phase 2: Content Optimization
+4. **Quotable statistics summary** section on the Stats page
+5. **FAQ section** with common EUR stablecoin questions
+6. **Enhanced "last updated" timestamps** for freshness signals
 
-The DefiLlama stablecoins API returns a `peggedAssets` array where each stablecoin includes:
-
-| Field | Description |
-|-------|-------------|
-| `id` | Unique identifier (e.g., "euro-tether") |
-| `name` | Full name (e.g., "Euro Tether") |
-| `symbol` | Ticker symbol (e.g., "EURT") |
-| `pegType` | "peggedEUR" for Euro stablecoins |
-| `pegMechanism` | "fiat-backed", "crypto-backed", etc. |
-| `circulating` | Object with `peggedEUR` amount |
-| `chains` | Array of supported blockchain names |
-| `chainCirculating` | Supply per chain breakdown |
-
-## Data Fetching Strategy
-
-### Periodic Caching (As Requested)
-Rather than fetching on every page load, data will be cached for **30 minutes** to reduce API calls while keeping data reasonably fresh:
-
-```text
-User visits /stats
-  |
-  v
-Check cache (30-min TTL)
-  |
-  +--> Cache valid? --> Return cached data
-  |
-  +--> Cache stale? --> Fetch from DefiLlama API
-                          |
-                          v
-                       Filter peggedEUR
-                          |
-                          v
-                       Cache result
-                          |
-                          v
-                       Return data
-```
-
-## Page Structure (Updated)
-
-```text
-+------------------------------------------+
-|              Header (existing)           |
-+------------------------------------------+
-|                                          |
-|     Euro Stablecoin Stats                |
-|     "Data from DefiLlama" link           |
-|                                          |
-+------------------------------------------+
-|                                          |
-|  [Total Supply Card] - Large € amount    |
-|                                          |
-+------------------------------------------+
-|                                          |
-|  Top Stablecoins by Market Cap           |
-|  Ranked table: #, Symbol, Name, Supply,  |
-|  Market Share %, Chains                  |
-|                                          |
-+------------------------------------------+
-|                                          |
-|  Market Share Distribution (PIE CHART)   |
-|  Visual breakdown of top 10 stablecoins  |
-|                                          |
-+------------------------------------------+
-|                                          |
-|  Chain Distribution (PIE CHART)          |
-|  Supply breakdown by blockchain          |
-|                                          |
-+------------------------------------------+
-|              Footer (existing)           |
-+------------------------------------------+
-```
-
-## Pie Chart Implementation
-
-### Using Recharts (Already Installed)
-The project already has `recharts` as a dependency, which provides `PieChart`, `Pie`, `Cell`, and `ResponsiveContainer` components.
-
-### Market Share Pie Chart
-- Shows top 10 EUR stablecoins by circulating supply
-- Groups smaller coins as "Other"
-- Interactive tooltips showing exact values
-- Clean, simple color palette matching site theme
-
-### Chain Distribution Pie Chart
-- Aggregates all EUR stablecoin supply by blockchain
-- Shows Ethereum, Base, Polygon, Arbitrum, etc.
-- Helps users understand where EUR stablecoins live
-
-### Color Palette
-```text
-Primary colors (8 distinct):
-- EU Blue (#003399) - Primary
-- Success Green (#10B981)
-- Purple (#8B5CF6)
-- Orange (#F97316)
-- Pink (#EC4899)
-- Cyan (#06B6D4)
-- Yellow (#EAB308)
-- Gray (#6B7280) - "Other"
-```
-
-## Component Changes
-
-### 1. Data Hook (`src/hooks/useStablecoinStats.ts`)
-**Complete rewrite** to:
-- Fetch from DefiLlama API instead of GitHub CSV
-- Filter for `pegType === "peggedEUR"` only
-- Cache results for 30 minutes
-- Calculate derived metrics (totals, percentages, chain breakdown)
-- Return structured data for components
-
-### 2. Remove Issuer Directory
-The DefiLlama API doesn't provide issuer metadata (headquarters, regulation status). Since this data would require a second source and adds complexity, we'll simplify by removing the `IssuerDirectory` component.
-
-### 3. Update Stats Page (`src/pages/Stats.tsx`)
-- Remove IssuerDirectory section
-- Add MarketShareChart component
-- Add ChainDistributionChart component
-- Update data attribution link to DefiLlama
-
-### 4. Update StatsHero (`src/components/stats/StatsHero.tsx`)
-- Change attribution link from GitHub to DefiLlama
-- Keep total supply display
-
-### 5. Update TopStablecoins (`src/components/stats/TopStablecoins.tsx`)
-- Add "Chains" column showing supported blockchains
-- Update data types for new structure
-- Keep existing table/mobile card layout
-
-### 6. Replace SupplyBreakdown (`src/components/stats/SupplyBreakdown.tsx`)
-- Replace progress bar cards with pie charts
-- Create `MarketShareChart` component
-- Create `ChainDistributionChart` component
-
-### 7. Delete IssuerDirectory (`src/components/stats/IssuerDirectory.tsx`)
-- Remove component entirely (data not available from DefiLlama)
+---
 
 ## Technical Details
 
-### New Data Types
-```typescript
-interface EURStablecoin {
-  id: string;
-  name: string;
-  symbol: string;
-  circulating: number;
-  marketShare: number;
-  chains: string[];
-  pegMechanism: string;
-}
+### 1. Install react-helmet-async
 
-interface ChainBreakdown {
-  chain: string;
-  supply: number;
-  percentage: number;
-}
+Add dependency to enable per-page meta tag management:
+- Package: `react-helmet-async`
+- Used for dynamic title, description, Open Graph, and Twitter Card tags
 
-interface StablecoinStats {
-  totalSupply: number;
-  stablecoins: EURStablecoin[];
-  byChain: ChainBreakdown[];
-  lastUpdated: Date | null;
+### 2. Create SEO Component (`src/components/SEO.tsx`)
+
+A reusable component that handles:
+- Page title (with site name suffix)
+- Meta description
+- Canonical URL
+- Open Graph tags (title, description, image, type)
+- Twitter Card tags
+- JSON-LD structured data injection
+
+```text
+Props:
+- title: string
+- description: string
+- path: string (for canonical URL)
+- type?: "website" | "article"
+- jsonLd?: object (optional structured data)
+```
+
+### 3. JSON-LD Structured Data
+
+#### WebSite Schema (Home page)
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "eurooo.xyz",
+  "url": "https://eurooo.xyz",
+  "description": "Compare EUR stablecoins...",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://eurooo.xyz/stats"
+  }
 }
 ```
 
-### Pie Chart Component Structure
-```typescript
-// Simple recharts pie chart
-<ResponsiveContainer width="100%" height={300}>
-  <PieChart>
-    <Pie
-      data={data}
-      dataKey="value"
-      nameKey="name"
-      cx="50%"
-      cy="50%"
-      outerRadius={100}
-      label={({ name, percent }) => 
-        `${name} ${(percent * 100).toFixed(1)}%`
+#### Dataset Schema (Stats page)
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "EUR Stablecoin Market Data",
+  "description": "Real-time circulating supply and market share data for Euro-denominated stablecoins",
+  "url": "https://eurooo.xyz/stats",
+  "temporalCoverage": "2024/..",
+  "creator": {
+    "@type": "Organization",
+    "name": "eurooo.xyz"
+  },
+  "distribution": {
+    "@type": "DataDownload",
+    "contentUrl": "https://eurooo.xyz/stats"
+  }
+}
+```
+
+#### FAQPage Schema (Stats page)
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the total EUR stablecoin market cap?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The total EUR stablecoin supply is €[dynamic]..."
       }
-    >
-      {data.map((entry, index) => (
-        <Cell key={index} fill={COLORS[index % COLORS.length]} />
-      ))}
-    </Pie>
-    <Tooltip formatter={(value) => formatEuro(value)} />
-    <Legend />
-  </PieChart>
-</ResponsiveContainer>
+    }
+  ]
+}
 ```
 
-### API Call Example
-```typescript
-const response = await fetch('https://stablecoins.llama.fi/stablecoins');
-const data = await response.json();
+### 4. Page-Specific SEO Configuration
 
-// Filter for EUR stablecoins only
-const eurStablecoins = data.peggedAssets.filter(
-  (asset) => asset.pegType === 'peggedEUR'
-);
+| Page | Title | Description |
+|------|-------|-------------|
+| Home | eurooo.xyz - Grow Your Euros in DeFi | Compare and deposit EURC stablecoins across trusted DeFi protocols. Simple, transparent yield for Europeans. |
+| Stats | EUR Stablecoin Market Stats - eurooo.xyz | Real-time data on Euro stablecoin supply, market share, and blockchain distribution. Track EURC, EURS, and more. |
+| App | DeFi Yields Dashboard - eurooo.xyz | Compare live APY rates and deposit EUR stablecoins across Aave, Morpho, Summer.fi, and more. |
+| Terms | Terms of Service - eurooo.xyz | Terms and conditions for using eurooo.xyz DeFi aggregator. |
+
+### 5. Quotable Statistics Section
+
+Add a new component to the Stats page that displays key figures in a format optimized for quoting:
+
+```text
++--------------------------------------------------+
+|  Key EUR Stablecoin Statistics                   |
+|                                                  |
+|  • Total EUR stablecoin supply: €[X.XX]B         |
+|  • Market leader: [Symbol] with [X]% share       |
+|  • Number of EUR stablecoins tracked: [N]        |
+|  • Available on [N] blockchains                  |
+|                                                  |
+|  Updated: [Date] • Data: DefiLlama               |
++--------------------------------------------------+
 ```
+
+### 6. FAQ Section
+
+Add an FAQ component with common questions:
+
+**Questions to include:**
+1. "What is the total EUR stablecoin market cap?"
+2. "Which EUR stablecoin has the largest market share?"
+3. "What blockchains support EUR stablecoins?"
+4. "How often is this data updated?"
+
+Each answer dynamically populated from the API data.
+
+### 7. Sitemap.xml
+
+Create a static sitemap at `public/sitemap.xml`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://eurooo.xyz/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://eurooo.xyz/stats</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://eurooo.xyz/app</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://eurooo.xyz/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>
+```
+
+### 8. Update robots.txt
+
+Add sitemap reference:
+```
+Sitemap: https://eurooo.xyz/sitemap.xml
+```
+
+---
 
 ## File Changes Summary
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/hooks/useStablecoinStats.ts` | Rewrite | Switch to DefiLlama API |
-| `src/pages/Stats.tsx` | Update | Add pie charts, remove issuer directory |
-| `src/components/stats/StatsHero.tsx` | Update | Change attribution to DefiLlama |
-| `src/components/stats/TopStablecoins.tsx` | Update | Add chains column, update types |
-| `src/components/stats/SupplyBreakdown.tsx` | Rename/Rewrite | Replace with pie chart components |
-| `src/components/stats/MarketShareChart.tsx` | Create | Pie chart for top stablecoins |
-| `src/components/stats/ChainDistributionChart.tsx` | Create | Pie chart for chain breakdown |
-| `src/components/stats/IssuerDirectory.tsx` | Delete | Data not available from DefiLlama |
+| `package.json` | Update | Add react-helmet-async dependency |
+| `src/components/SEO.tsx` | Create | Reusable SEO component with meta tags + JSON-LD |
+| `src/App.tsx` | Update | Wrap app with HelmetProvider |
+| `src/pages/Home.tsx` | Update | Add SEO component with home page meta |
+| `src/pages/Stats.tsx` | Update | Add SEO component with Dataset schema |
+| `src/pages/App.tsx` | Update | Add SEO component with app page meta |
+| `src/pages/Terms.tsx` | Update | Add SEO component with terms page meta |
+| `src/components/stats/QuotableStats.tsx` | Create | Key figures summary component |
+| `src/components/stats/StatsFAQ.tsx` | Create | FAQ section with schema |
+| `public/sitemap.xml` | Create | XML sitemap |
+| `public/robots.txt` | Update | Add sitemap reference |
 
-## UX Improvements
+---
 
-### Faster Loading
-- DefiLlama API returns JSON (faster parsing than CSV)
-- 30-minute cache reduces redundant API calls
-- Single endpoint vs. three CSV files
+## Page Layout After Changes
 
-### Better Visualizations
-- Pie charts provide instant visual comparison
-- Interactive tooltips for exact values
-- Responsive charts work on all screen sizes
+```text
+Stats Page:
++------------------------------------------+
+|              Header                       |
++------------------------------------------+
+|  StatsHero (Total Supply + 30d Change)   |
++------------------------------------------+
+|  QuotableStats (Key Figures Summary)     |  <- NEW
++------------------------------------------+
+|  TopStablecoins (Ranked Table)           |
++------------------------------------------+
+|  Charts (Market Share + Chain Dist)      |
++------------------------------------------+
+|  StatsFAQ (Common Questions)             |  <- NEW
++------------------------------------------+
+|              Footer                       |
++------------------------------------------+
+```
 
-### Cleaner Page
-- Removed issuer directory (incomplete data)
-- Focus on key metrics: total supply, market share, chain distribution
-- Matches the "simple, clean, good UX" requirement
+---
 
-## Error Handling
+## SEO Benefits
 
-- Show loading skeletons during fetch
-- Display "Data temporarily unavailable" if API fails
-- Keep "Retry" button for manual refresh
-- Fallback to empty state (no cached stale data)
-
+1. **Rich snippets** - FAQ schema enables rich search results
+2. **Data attribution** - Dataset schema helps AI cite eurooo.xyz
+3. **Crawlability** - Sitemap ensures all pages are indexed
+4. **Freshness signals** - Visible timestamps show data currency
+5. **Quotable text** - Key figures section provides citation-ready content
+6. **Page-specific meta** - Each page has targeted keywords and descriptions
