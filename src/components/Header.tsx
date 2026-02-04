@@ -1,12 +1,13 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Link, useLocation } from 'react-router-dom';
-import { useAccount } from 'wagmi';
 import { ThemeToggle } from './ThemeToggle';
+import { Button } from './ui/button';
+import { ArrowRight } from 'lucide-react';
+
 const euroooLogo = "https://ifeyhwfcvgxkiwatorje.supabase.co/storage/v1/object/public/images/logo%20random.png";
 
 export function Header() {
   const location = useLocation();
-  const { isConnected } = useAccount();
   const isAppPage = location.pathname === '/app';
 
   return (
@@ -19,37 +20,46 @@ export function Header() {
         </Link>
 
         <div className="flex items-center gap-1 sm:gap-2">
-          {/* Navigation */}
-          <Link 
-            to="/stats" 
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
-          >
-            Stats
-          </Link>
-          {isConnected && !isAppPage && (
-            <Link 
-              to="/app" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
-            >
-              Open App
-            </Link>
+          {isAppPage ? (
+            <>
+              {/* App page: show wallet connection */}
+              <Link 
+                to="/stats" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
+              >
+                Stats
+              </Link>
+              <ThemeToggle />
+              <ConnectButton 
+                showBalance={false}
+                accountStatus={{
+                  smallScreen: 'avatar',
+                  largeScreen: 'full',
+                }}
+                chainStatus={{
+                  smallScreen: 'icon',
+                  largeScreen: 'full',
+                }}
+              />
+            </>
+          ) : (
+            <>
+              {/* Home/other pages: show navigation buttons */}
+              <Link 
+                to="/stats" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
+              >
+                Market Stats
+              </Link>
+              <ThemeToggle />
+              <Button asChild size="sm" className="gap-1 bg-primary hover:bg-primary/90 shadow-md shadow-primary/20">
+                <Link to="/app">
+                  Earn
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </>
           )}
-          
-          {/* Theme Toggle */}
-          <ThemeToggle />
-          
-          {/* RainbowKit Connect Button - Compact on mobile */}
-          <ConnectButton 
-            showBalance={false}
-            accountStatus={{
-              smallScreen: 'avatar',
-              largeScreen: 'full',
-            }}
-            chainStatus={{
-              smallScreen: 'icon',
-              largeScreen: 'full',
-            }}
-          />
         </div>
       </div>
     </header>
