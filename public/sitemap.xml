@@ -36,6 +36,21 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://eurooo.xyz/blog/eur-stablecoin-vs-digital-euro</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://eurooo.xyz/blog/eurc-vs-eurs-vs-eurcv-comparison</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://eurooo.xyz/blog/is-eurc-mica-compliant</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://eurooo.xyz/terms</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>

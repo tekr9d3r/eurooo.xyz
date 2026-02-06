@@ -33,6 +33,15 @@ export default function BlogArticle() {
           case 'defi-yield-strategies-europe':
             module = await import('@/content/blog/defi-yield-strategies-europe.md');
             break;
+          case 'eur-stablecoin-vs-digital-euro':
+            module = await import('@/content/blog/eur-stablecoin-vs-digital-euro.md');
+            break;
+          case 'eurc-vs-eurs-vs-eurcv-comparison':
+            module = await import('@/content/blog/eurc-vs-eurs-vs-eurcv-comparison.md');
+            break;
+          case 'is-eurc-mica-compliant':
+            module = await import('@/content/blog/is-eurc-mica-compliant.md');
+            break;
           default:
             throw new Error('Post not found');
         }

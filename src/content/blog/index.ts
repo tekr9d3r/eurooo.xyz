@@ -37,6 +37,33 @@ export const blogPosts: BlogPost[] = [
     tags: ['DeFi', 'yield', 'strategies', 'EUR'],
     readingTime: '7 min read',
   },
+  {
+    slug: 'eur-stablecoin-vs-digital-euro',
+    title: 'EUR Stablecoin vs Digital Euro (CBDC): What\'s the Difference?',
+    description: 'Understand the key differences between private Euro stablecoins like EURC and the European Central Bank\'s upcoming digital euro.',
+    publishedAt: '2026-02-06',
+    author: 'eurooo.xyz',
+    tags: ['comparison', 'CBDC', 'digital euro', 'regulation'],
+    readingTime: '6 min read',
+  },
+  {
+    slug: 'eurc-vs-eurs-vs-eurcv-comparison',
+    title: 'EURC vs EURS vs EURCV: Which Euro Stablecoin is Best?',
+    description: 'Compare the top three Euro stablecoins—Circle\'s EURC, Stasis EURS, and SG Forge\'s EURCV—by liquidity, regulation, and DeFi integration.',
+    publishedAt: '2026-02-06',
+    author: 'eurooo.xyz',
+    tags: ['comparison', 'EURC', 'EURS', 'EURCV', 'stablecoins'],
+    readingTime: '7 min read',
+  },
+  {
+    slug: 'is-eurc-mica-compliant',
+    title: 'Is EURC MiCA Compliant? A Guide for EU Users',
+    description: 'Understand Circle\'s EURC regulatory status under MiCA, what it means for European users, and why compliance matters for stablecoin safety.',
+    publishedAt: '2026-02-06',
+    author: 'eurooo.xyz',
+    tags: ['regulation', 'MiCA', 'EURC', 'compliance'],
+    readingTime: '5 min read',
+  },
 ];
 
 export function getPostBySlug(slug: string): BlogPost | undefined {
