@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, TrendingUp, Zap } from 'lucide-react';
 import { useDefiLlamaData } from '@/hooks/useDefiLlamaData';
+import { KnowledgeHubPreview } from '@/components/KnowledgeHubPreview';
 import aaveLogo from '@/assets/aave-logo.png';
 import summerLogo from '@/assets/summer-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
@@ -218,6 +219,9 @@ export function Hero() {
               </p>
             </div>
           </div>
+
+          {/* Knowledge Hub Preview Section */}
+          <KnowledgeHubPreview />
 
           {/* Telegram Community Invite Section */}
           <div className="mt-24 opacity-0 animate-fade-in-up animation-delay-600">
