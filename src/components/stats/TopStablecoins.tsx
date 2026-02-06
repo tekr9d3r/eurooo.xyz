@@ -8,17 +8,21 @@ interface TopStablecoinsProps {
   isLoading: boolean;
 }
 
-function formatSupply(value: number): string {
-  if (value >= 1_000_000_000) {
-    return `€${(value / 1_000_000_000).toFixed(2)}B`;
+// EUR/USD exchange rate for converting DefiLlama USD values to EUR
+const USD_TO_EUR_RATE = 0.92;
+
+function formatMarketCap(valueInUsd: number): string {
+  const valueInEur = valueInUsd * USD_TO_EUR_RATE;
+  if (valueInEur >= 1_000_000_000) {
+    return `€${(valueInEur / 1_000_000_000).toFixed(2)}B`;
   }
-  if (value >= 1_000_000) {
-    return `€${(value / 1_000_000).toFixed(1)}M`;
+  if (valueInEur >= 1_000_000) {
+    return `€${(valueInEur / 1_000_000).toFixed(1)}M`;
   }
-  if (value >= 1_000) {
-    return `€${(value / 1_000).toFixed(0)}K`;
+  if (valueInEur >= 1_000) {
+    return `€${(valueInEur / 1_000).toFixed(0)}K`;
   }
-  return `€${value.toLocaleString()}`;
+  return `€${valueInEur.toLocaleString()}`;
 }
 
 export function TopStablecoins({ stablecoins, isLoading }: TopStablecoinsProps) {
@@ -54,7 +58,7 @@ export function TopStablecoins({ stablecoins, isLoading }: TopStablecoinsProps) 
                     <th className="text-left p-4 text-sm font-medium text-muted-foreground">#</th>
                     <th className="text-left p-4 text-sm font-medium text-muted-foreground">Symbol</th>
                     <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
-                    <th className="text-right p-4 text-sm font-medium text-muted-foreground">Supply</th>
+                    <th className="text-right p-4 text-sm font-medium text-muted-foreground">Market Cap</th>
                     <th className="text-right p-4 text-sm font-medium text-muted-foreground">Share</th>
                     <th className="text-left p-4 text-sm font-medium text-muted-foreground">Chains</th>
                   </tr>
@@ -65,7 +69,7 @@ export function TopStablecoins({ stablecoins, isLoading }: TopStablecoinsProps) 
                       <td className="p-4 text-sm text-muted-foreground">{index + 1}</td>
                       <td className="p-4 font-medium">{token.symbol}</td>
                       <td className="p-4 text-muted-foreground">{token.name}</td>
-                      <td className="p-4 text-right font-medium">{formatSupply(token.circulating)}</td>
+                      <td className="p-4 text-right font-medium">{formatMarketCap(token.circulating)}</td>
                       <td className="p-4 text-right">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                           {token.marketShare.toFixed(1)}%
@@ -104,7 +108,7 @@ export function TopStablecoins({ stablecoins, isLoading }: TopStablecoinsProps) 
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">{formatSupply(token.circulating)}</p>
+                      <p className="font-medium">{formatMarketCap(token.circulating)}</p>
                       <span className="text-xs text-primary">{token.marketShare.toFixed(1)}%</span>
                     </div>
                   </div>
