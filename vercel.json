@@ -1,29 +1,17 @@
 {
+  "redirects": [
+    {
+      "source": "/blog/:slug",
+      "destination": "https://blog.eurooo.xyz/:slug",
+      "permanent": true
+    },
+    {
+      "source": "/blog",
+      "destination": "https://blog.eurooo.xyz",
+      "permanent": true
+    }
+  ],
   "rewrites": [
-    {
-      "source": "/blog/what-are-eur-stablecoins",
-      "destination": "/blog/what-are-eur-stablecoins.html"
-    },
-    {
-      "source": "/blog/eurc-vs-eurs-comparison",
-      "destination": "/blog/eurc-vs-eurs-comparison.html"
-    },
-    {
-      "source": "/blog/defi-yield-strategies-europe",
-      "destination": "/blog/defi-yield-strategies-europe.html"
-    },
-    {
-      "source": "/blog/eur-stablecoin-vs-digital-euro",
-      "destination": "/blog/eur-stablecoin-vs-digital-euro.html"
-    },
-    {
-      "source": "/blog/eurc-vs-eurs-vs-eurcv-comparison",
-      "destination": "/blog/eurc-vs-eurs-vs-eurcv-comparison.html"
-    },
-    {
-      "source": "/blog/is-eurc-mica-compliant",
-      "destination": "/blog/is-eurc-mica-compliant.html"
-    },
     {
       "source": "/app",
       "destination": "/app.html"
@@ -31,10 +19,6 @@
     {
       "source": "/stats",
       "destination": "/stats.html"
-    },
-    {
-      "source": "/blog",
-      "destination": "/blog.html"
     },
     {
       "source": "/terms",
