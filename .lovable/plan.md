@@ -1,172 +1,260 @@
 
-# Pre-rendering Plan for Knowledge Hub SEO
 
-## Problem Summary
+# Separate Static Blog on blog.eurooo.xyz
 
-Currently, your blog articles use client-side rendering with `react-helmet-async`. When crawlers (Google, social media, AI engines) request a blog URL like `/blog/what-are-eur-stablecoins`, they receive the generic `index.html` with default meta tags, not the article-specific SEO data.
+## Overview
 
-## Solution: Build-Time Pre-rendering
+Create a dedicated static blog site at `blog.eurooo.xyz` using **Astro** - a modern static site generator specifically designed for content-heavy sites with excellent SEO out of the box.
 
-Generate static HTML files for each blog route during `vite build`. Each file will contain:
-- Article-specific `<title>`, `<meta description>`, Open Graph, and Twitter Card tags
-- JSON-LD structured data embedded in the HTML
-- Full article content pre-rendered (no JavaScript required to see it)
+## Why a Separate Blog?
 
-## What Will Change
+| Current Setup | New Setup |
+|---------------|-----------|
+| Blog is part of React SPA | Blog is a standalone static site |
+| JavaScript required to render | Pure HTML, zero JavaScript |
+| SEO depends on pre-rendering scripts | SEO built-in from the start |
+| Heavy bundle (wagmi, viem, wallet code) | Ultra-lightweight (~50KB total) |
+| Complex hydration | No hydration needed |
 
-```text
-Before (current):
-  dist/
-    index.html          <-- serves ALL routes with generic meta tags
-    assets/
+## Why Astro?
 
-After (with pre-rendering):
-  dist/
-    index.html                              <-- homepage with its own meta
-    app.html                                <-- app page
-    stats.html                              <-- stats page
-    blog.html                               <-- blog listing
-    blog/
-      what-are-eur-stablecoins.html        <-- full SEO for this article
-      eurc-vs-eurs-comparison.html         <-- full SEO for this article
-      defi-yield-strategies-europe.html    <-- ...
-      eur-stablecoin-vs-digital-euro.html
-      eurc-vs-eurs-vs-eurcv-comparison.html
-      is-eurc-mica-compliant.html
-    terms.html
-    assets/
-```
+Based on research, Astro is the best choice for this use case:
 
-## Implementation Steps
-
-### Step 1: Add vite-plugin-ssr-ssg Package
-
-Install `vite-plugin-ssg` or a similar pre-rendering solution compatible with React and Vite.
-
-### Step 2: Create Pre-render Script
-
-Build a Node.js script (`scripts/prerender.ts`) that:
-1. Reads all blog posts from `src/content/blog/index.ts`
-2. For each route (including `/`, `/app`, `/stats`, `/blog`, `/terms`, and each blog article)
-3. Renders the React app to HTML string using `react-dom/server`
-4. Injects the correct meta tags into the HTML `<head>`
-5. Writes the output to `dist/` with proper folder structure
-
-### Step 3: Create SEO Template Generator
-
-Build a utility that generates complete HTML `<head>` content for each page:
-- Title and description
-- Canonical URL
-- Open Graph tags (og:title, og:description, og:image, etc.)
-- Twitter Card tags
-- JSON-LD structured data
-
-### Step 4: Update Vite Config
-
-Configure Vite to:
-- Support the pre-rendering build step
-- Handle the multi-page output structure
-
-### Step 5: Update Vercel Config
-
-Modify `vercel.json` to serve the pre-rendered static HTML files instead of always falling back to `index.html`:
+- **Zero JavaScript by default** - Pages are pure HTML unless you explicitly add interactivity
+- **Built for content** - Native Markdown support with frontmatter
+- **Perfect Lighthouse scores** - Typically 95-100 on all metrics
+- **Native SEO features** - Sitemap, RSS, meta tags, JSON-LD all built-in
+- **Easy migration** - Your existing Markdown files work with minimal changes
 
 ```text
-/blog/what-are-eur-stablecoins  -->  /blog/what-are-eur-stablecoins.html
-/blog/eurc-vs-eurs-comparison   -->  /blog/eurc-vs-eurs-comparison.html
-(all other routes)              -->  /index.html (SPA fallback)
+Performance comparison:
++----------------+------------------+-------------------+
+| Framework      | Build Time       | Runtime JS        |
++----------------+------------------+-------------------+
+| Hugo           | Fastest (2s/10k) | Zero              |
+| Astro          | Fast             | Zero (by default) |
+| React SPA      | Slow             | 200KB+ bundle     |
++----------------+------------------+-------------------+
 ```
 
-### Step 6: Update Build Script
-
-Modify `package.json` to run pre-rendering after the main Vite build:
-
-```
-"build": "vite build && node scripts/prerender.js"
-```
-
-## Files to Create/Modify
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `scripts/prerender.ts` | Create | Node script to generate static HTML for each route |
-| `src/lib/seo-templates.ts` | Create | Generates complete HTML head content for each page |
-| `vite.config.ts` | Modify | Add SSR build configuration |
-| `package.json` | Modify | Update build script to include pre-rendering step |
-| `vercel.json` | Modify | Add routing rules for pre-rendered HTML files |
-
-## Result
-
-After implementation:
-- Social media previews will show correct article titles, descriptions, and images
-- Search engines will index full article content immediately
-- AI engines (ChatGPT, Perplexity) will see rich structured data
-- No changes to user experience (React still hydrates and handles navigation)
-
----
-
-## Technical Details
-
-### Pre-render Script Logic
+## New Project Structure
 
 ```text
-1. Import blogPosts from content/blog/index.ts
-2. Import markdown content for each post
-3. Define all routes to pre-render:
-   - Static pages: /, /app, /stats, /blog, /terms
-   - Dynamic pages: /blog/[slug] for each blog post
-4. For each route:
-   a. Generate complete HTML document with:
-      - Correct <title> and meta tags in <head>
-      - JSON-LD script tag
-      - <div id="root"> with pre-rendered React content
-      - Script tags for hydration
-   b. Write to dist/[route].html
+blog.eurooo.xyz/
+├── src/
+│   ├── content/
+│   │   └── blog/                    <- Your existing .md files
+│   │       ├── what-are-eur-stablecoins.md
+│   │       ├── eurc-vs-eurs-comparison.md
+│   │       └── ...
+│   ├── layouts/
+│   │   ├── BaseLayout.astro         <- HTML shell, meta tags
+│   │   └── BlogPost.astro           <- Article template
+│   ├── pages/
+│   │   ├── index.astro              <- Blog home (list all posts)
+│   │   └── [slug].astro             <- Dynamic article pages
+│   └── components/
+│       ├── Header.astro
+│       ├── Footer.astro
+│       └── SEO.astro                <- Meta tags component
+├── public/
+│   ├── favicon.png
+│   ├── og-image.png
+│   └── robots.txt
+├── astro.config.mjs
+└── package.json
 ```
 
-### SEO Meta Template Structure
+## SEO Features (Built-in)
 
-For each blog article, the generated HTML will include:
+### 1. Static HTML Output
+
+Every page is pre-rendered at build time:
+
+```text
+dist/
+├── index.html                           <- Blog listing
+├── what-are-eur-stablecoins/
+│   └── index.html                       <- Full article HTML
+├── eurc-vs-eurs-comparison/
+│   └── index.html
+├── sitemap.xml                          <- Auto-generated
+├── rss.xml                              <- Auto-generated
+└── robots.txt
+```
+
+### 2. Per-Page Meta Tags
+
+Each article gets its own complete `<head>` section baked into the HTML:
 
 ```text
 <head>
-  <title>Article Title - eurooo.xyz</title>
-  <meta name="description" content="Article description..." />
-  <link rel="canonical" href="https://eurooo.xyz/blog/slug" />
+  <title>What Are EUR Stablecoins? - eurooo.xyz</title>
+  <meta name="description" content="Learn what Euro stablecoins are..." />
+  <link rel="canonical" href="https://blog.eurooo.xyz/what-are-eur-stablecoins" />
   
   <!-- Open Graph -->
-  <meta property="og:title" content="Article Title - eurooo.xyz" />
-  <meta property="og:description" content="Article description..." />
+  <meta property="og:title" content="What Are EUR Stablecoins?" />
   <meta property="og:type" content="article" />
-  <meta property="og:url" content="https://eurooo.xyz/blog/slug" />
-  <meta property="og:image" content="https://eurooo.lovable.app/og-image.png" />
-  
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Article Title - eurooo.xyz" />
-  <meta name="twitter:description" content="Article description..." />
+  ...
   
   <!-- JSON-LD -->
   <script type="application/ld+json">
-    { "@context": "https://schema.org", "@type": "Article", ... }
+    {"@context":"https://schema.org","@type":"Article",...}
   </script>
 </head>
 ```
 
-### Vercel Routing Updates
+### 3. Auto-Generated Sitemap & RSS
 
-```text
-vercel.json changes:
-- Add specific rewrites for each pre-rendered blog article
-- Keep SPA fallback for dynamic routes (like /app with wallet interactions)
-- Static files served directly without rewriting
+Astro plugins automatically create:
+- `/sitemap.xml` - for search engines
+- `/rss.xml` - for feed readers
+
+### 4. Optimized Images
+
+Astro's built-in image component automatically:
+- Converts to WebP/AVIF
+- Generates responsive sizes
+- Adds proper alt text
+- Lazy loads below-the-fold images
+
+## Migration Steps
+
+### Step 1: Migrate Markdown Files
+
+Your existing files need minimal changes. Add frontmatter:
+
+**Before** (current):
+```markdown
+# What Are EUR Stablecoins?
+
+Euro stablecoins are cryptocurrencies...
 ```
 
-## Benefits
+**After** (Astro format):
+```markdown
+---
+title: "What Are EUR Stablecoins? A Complete Guide"
+description: "Learn what Euro stablecoins are, how they work..."
+publishedAt: 2026-02-06
+author: "eurooo.xyz"
+tags: ["education", "stablecoins", "EUR"]
+---
 
-- Zero runtime cost (all rendering happens at build time)
-- Perfect SEO scores for blog content
-- Social sharing works correctly
-- AI engines can quote your content
-- No server required (still fully static hosting)
-- Existing React functionality unchanged
+# What Are EUR Stablecoins?
+
+Euro stablecoins are cryptocurrencies...
+```
+
+### Step 2: Update Internal Links
+
+Change links from `/app` to `https://eurooo.xyz/app`:
+
+```markdown
+<!-- Before -->
+[Compare yields](/app)
+
+<!-- After -->
+[Compare yields](https://eurooo.xyz/app)
+```
+
+### Step 3: Connect Domain
+
+Set up `blog.eurooo.xyz` subdomain:
+- In your DNS: Add CNAME record for `blog` pointing to your Vercel deployment
+- In Vercel: Add `blog.eurooo.xyz` as a custom domain for the new project
+
+## Design Approach
+
+### Lightweight & Fast
+
+```text
+Target metrics:
+- Total page weight: < 50KB
+- Time to First Byte: < 100ms
+- Largest Contentful Paint: < 1s
+- Zero layout shifts (CLS = 0)
+```
+
+### Minimal Styling
+
+Use CSS only (no Tailwind if we want maximum lightness), or Tailwind with purge:
+
+```text
+Option A: Pure CSS (~5KB)
+Option B: Tailwind (purged) (~10KB)
+```
+
+### Cross-Site Navigation
+
+Header includes link back to main app:
+
+```text
++----------------------------------------------------------+
+|  📚 eurooo.xyz/blog              [Earn Yields →]  [🌙]  |
++----------------------------------------------------------+
+```
+
+## Integration with Main Site
+
+### From Main Site (eurooo.xyz)
+
+Update "Knowledge Hub" links to point to the new subdomain:
+- Header nav: `/blog` → `https://blog.eurooo.xyz`
+- Home page preview section: Links to `https://blog.eurooo.xyz/[slug]`
+- Footer: Update blog link
+
+### From Blog Site (blog.eurooo.xyz)
+
+- "Earn Yields" CTA buttons link to `https://eurooo.xyz/app`
+- Internal article links like `/app` become `https://eurooo.xyz/app`
+
+## Hosting Options
+
+Since this is a separate project, you have flexibility:
+
+| Platform | Pros | Setup Effort |
+|----------|------|--------------|
+| Vercel | Same as main site, easy subdomain | Low |
+| Cloudflare Pages | Fastest CDN, free tier | Medium |
+| GitHub Pages | Free, reliable | Medium |
+| Netlify | Easy, good free tier | Low |
+
+## Implementation Timeline
+
+1. **Create new Astro project** - Set up basic structure
+2. **Build layouts** - Header, Footer, SEO component
+3. **Migrate content** - Copy .md files, add frontmatter
+4. **Style pages** - Minimal CSS for reading experience
+5. **Configure SEO** - Sitemap, RSS, meta tags
+6. **Deploy** - Set up subdomain routing
+7. **Update main site** - Point blog links to new subdomain
+
+## What Happens to Current Blog?
+
+After migration:
+- Remove `/blog` routes from main React app
+- Remove blog components and pages
+- Remove markdown files from main repo
+- Redirect `/blog/*` to `blog.eurooo.xyz/*` (via Vercel)
+
+## Summary
+
+```text
++------------------+        +--------------------+
+|  eurooo.xyz      |        |  blog.eurooo.xyz   |
+|  (React SPA)     |  <-->  |  (Astro Static)    |
++------------------+        +--------------------+
+| - /              |        | - / (article list) |
+| - /app           |        | - /[slug] articles |
+| - /stats         |        | - /sitemap.xml     |
+| - /terms         |        | - /rss.xml         |
++------------------+        +--------------------+
+     Heavy bundle               Ultra-light
+     Wallet interactions        Pure reading
+     Dynamic data               Static content
+```
+
+**Result**: Blog articles will be pure HTML, instantly readable by any crawler, with perfect SEO scores and sub-second load times.
+
