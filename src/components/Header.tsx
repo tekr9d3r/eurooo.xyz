@@ -24,16 +24,18 @@ export function Header() {
             <>
               {/* App page: show wallet connection */}
               <Link 
-                to="/stats" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
+                to="/blog" 
+                className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
               >
-                Stats
+                <span>📚</span>
+                <span className="hidden sm:inline">Knowledge Hub</span>
               </Link>
               <Link 
-                to="/blog" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
+                to="/stats" 
+                className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
               >
-                Knowledge Hub
+                <span>📊</span>
+                Stats
               </Link>
               <ThemeToggle />
               <ConnectButton 
