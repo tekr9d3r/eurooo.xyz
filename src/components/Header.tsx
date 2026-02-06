@@ -23,13 +23,13 @@ export function Header() {
           {isAppPage ? (
             <>
               {/* App page: show wallet connection */}
-              <a 
-                href="https://blog.eurooo.xyz" 
+              <Link 
+                to="/blog" 
                 className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
               >
                 <span>📚</span>
                 <span className="hidden sm:inline">Knowledge Hub</span>
-              </a>
+              </Link>
               <Link 
                 to="/stats" 
                 className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
@@ -54,14 +54,14 @@ export function Header() {
             <>
               {/* Home/other pages: show navigation buttons */}
               <ThemeToggle />
-              <a 
-                href="https://blog.eurooo.xyz" 
+              <Link 
+                to="/blog" 
                 className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
               >
                 <span>📚</span>
                 <span className="hidden sm:inline">Knowledge Hub</span>
                 <span className="sm:hidden">Learn</span>
-              </a>
+              </Link>
               <Link 
                 to="/stats" 
                 className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"

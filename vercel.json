@@ -1,29 +1,5 @@
 {
-  "redirects": [
-    {
-      "source": "/blog/:slug",
-      "destination": "https://blog.eurooo.xyz/:slug",
-      "permanent": true
-    },
-    {
-      "source": "/blog",
-      "destination": "https://blog.eurooo.xyz",
-      "permanent": true
-    }
-  ],
   "rewrites": [
-    {
-      "source": "/app",
-      "destination": "/app.html"
-    },
-    {
-      "source": "/stats",
-      "destination": "/stats.html"
-    },
-    {
-      "source": "/terms",
-      "destination": "/terms.html"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

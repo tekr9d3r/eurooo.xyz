@@ -12,6 +12,8 @@ import { Analytics } from "@vercel/analytics/react";
 const Home = lazy(() => import("./pages/Home"));
 const AppPage = lazy(() => import("./pages/App"));
 const Stats = lazy(() => import("./pages/Stats"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogArticle = lazy(() => import("./pages/BlogArticle"));
 const Terms = lazy(() => import("./pages/Terms"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -34,8 +36,10 @@ const App = () => (
                 <Route path="/" element={<Home />} />
                 <Route path="/app" element={<AppPage />} />
                 <Route path="/stats" element={<Stats />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogArticle />} />
                 <Route path="/terms" element={<Terms />} />
-                {/* Blog routes removed - now served from blog.eurooo.xyz */}
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
