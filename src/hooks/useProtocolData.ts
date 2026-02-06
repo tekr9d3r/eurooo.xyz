@@ -363,6 +363,8 @@ export function useProtocolData() {
       safetyScore: 71,
       safetyProvider: 'DeFiSafety',
       safetyReportUrl: 'https://defisafety.com/app/pqrs/578',
+      isExternal: true,
+      externalDepositUrl: 'https://pro.summer.fi/referrals/0x5FfD23B1B0350debB17A2cB668929aC5f76d0E18',
     },
     {
       id: 'yo',
@@ -443,7 +445,7 @@ export function useProtocolData() {
       auditUrl: 'https://docs.drift.trade/protocol/risk-and-safety/audits',
       auditProvider: 'Drift Docs',
       isExternal: true,
-      externalDepositUrl: 'https://app.drift.trade/earn/borrow-lend',
+      externalDepositUrl: 'https://app.drift.trade/ref/eurooo',
     },
   ];
 
