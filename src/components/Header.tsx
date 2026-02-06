@@ -29,6 +29,12 @@ export function Header() {
               >
                 Stats
               </Link>
+              <Link 
+                to="/blog" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
+              >
+                Knowledge Hub
+              </Link>
               <ThemeToggle />
               <ConnectButton 
                 showBalance={false}
@@ -46,6 +52,14 @@ export function Header() {
             <>
               {/* Home/other pages: show navigation buttons */}
               <ThemeToggle />
+              <Link 
+                to="/blog" 
+                className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
+              >
+                <span>📚</span>
+                <span className="hidden sm:inline">Knowledge Hub</span>
+                <span className="sm:hidden">Learn</span>
+              </Link>
               <Link 
                 to="/stats" 
                 className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
