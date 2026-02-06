@@ -1,231 +1,361 @@
 
-# GEO/SEO Infrastructure Implementation
+
+# Knowledge Hub Implementation Plan
 
 ## Overview
 
-This plan implements comprehensive GEO (Generative Engine Optimization) and SEO improvements to make eurooo.xyz a quotable, authoritative source for EUR stablecoin data. The goal is to make the site easily discoverable and quotable by search engines and AI systems.
+Add a lightweight, GEO-optimized blog/knowledge hub to eurooo.xyz using **static Markdown files**. This approach keeps the site fast, makes content easily crawlable by search engines and AI systems, and enables AI agents to publish posts via GitHub Pull Requests.
 
 ---
 
-## Implementation Scope
-
-### Phase 1: Core SEO Infrastructure
-1. **Page-specific meta tags** using react-helmet-async
-2. **JSON-LD structured data** for Dataset, WebSite, and FAQPage schemas
-3. **Sitemap.xml** for search engine crawling
-
-### Phase 2: Content Optimization
-4. **Quotable statistics summary** section on the Stats page
-5. **FAQ section** with common EUR stablecoin questions
-6. **Enhanced "last updated" timestamps** for freshness signals
-
----
-
-## Technical Details
-
-### 1. Install react-helmet-async
-
-Add dependency to enable per-page meta tag management:
-- Package: `react-helmet-async`
-- Used for dynamic title, description, Open Graph, and Twitter Card tags
-
-### 2. Create SEO Component (`src/components/SEO.tsx`)
-
-A reusable component that handles:
-- Page title (with site name suffix)
-- Meta description
-- Canonical URL
-- Open Graph tags (title, description, image, type)
-- Twitter Card tags
-- JSON-LD structured data injection
+## Architecture
 
 ```text
-Props:
-- title: string
-- description: string
-- path: string (for canonical URL)
-- type?: "website" | "article"
-- jsonLd?: object (optional structured data)
+How Content Flows from Markdown to Browser
+
+[Markdown Files] --> [Vite Build] --> [Static HTML] --> [User Browser]
+      |                    |                                    |
+   src/content/       Build-time            Pre-rendered,
+   blog/*.md          transformation        SEO-ready pages
 ```
 
-### 3. JSON-LD Structured Data
+**Key Benefits:**
+- Zero runtime overhead (content baked into JavaScript bundle)
+- Perfect for bots and AI crawlers (content in HTML, not fetched dynamically)
+- No database needed
+- Version controlled via Git
+- AI agents can add posts via GitHub PRs
 
-#### WebSite Schema (Home page)
+---
+
+## File Structure
+
+```text
+src/
+  content/
+    blog/
+      index.ts                 # Blog post registry + metadata
+      what-are-eur-stablecoins.md
+      eurc-vs-eurs-comparison.md
+      defi-yield-strategies-europe.md
+  components/
+    blog/
+      BlogCard.tsx             # Post preview card
+      BlogList.tsx             # Grid of post cards
+      BlogPost.tsx             # Full article renderer
+      TableOfContents.tsx      # Auto-generated from headings
+  pages/
+    Blog.tsx                   # /blog listing page
+    BlogArticle.tsx            # /blog/:slug article page
+public/
+  sitemap.xml                  # Add blog URLs
+```
+
+---
+
+## Implementation Steps
+
+### 1. Install Markdown Plugin
+
+Add `vite-plugin-markdown` to enable importing `.md` files:
+
 ```json
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "eurooo.xyz",
-  "url": "https://eurooo.xyz",
-  "description": "Compare EUR stablecoins...",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://eurooo.xyz/stats"
-  }
+// package.json (new dev dependency)
+"vite-plugin-markdown": "^2.2.0"
+```
+
+Update Vite config to process Markdown:
+
+```typescript
+// vite.config.ts
+import { Mode, plugin as mdPlugin } from 'vite-plugin-markdown';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    mdPlugin({ mode: [Mode.HTML, Mode.TOC] }),
+  ],
+});
+```
+
+### 2. Create Blog Post Registry
+
+A TypeScript file that lists all posts with metadata (used for listing page and SEO):
+
+```typescript
+// src/content/blog/index.ts
+export interface BlogPost {
+  slug: string;
+  title: string;
+  description: string;  // ~160 chars for meta description
+  publishedAt: string;  // ISO date
+  updatedAt?: string;
+  author: string;
+  tags: string[];
+  readingTime: string;  // "5 min read"
 }
-```
 
-#### Dataset Schema (Stats page)
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "Dataset",
-  "name": "EUR Stablecoin Market Data",
-  "description": "Real-time circulating supply and market share data for Euro-denominated stablecoins",
-  "url": "https://eurooo.xyz/stats",
-  "temporalCoverage": "2024/..",
-  "creator": {
-    "@type": "Organization",
-    "name": "eurooo.xyz"
+export const blogPosts: BlogPost[] = [
+  {
+    slug: 'what-are-eur-stablecoins',
+    title: 'What Are EUR Stablecoins? A Complete Guide',
+    description: 'Learn what Euro stablecoins are, how they work, and why they matter for European DeFi users.',
+    publishedAt: '2026-02-06',
+    author: 'eurooo.xyz',
+    tags: ['education', 'stablecoins', 'EUR'],
+    readingTime: '6 min read',
   },
-  "distribution": {
-    "@type": "DataDownload",
-    "contentUrl": "https://eurooo.xyz/stats"
-  }
+  // More posts...
+];
+```
+
+### 3. Sample Markdown Post Structure
+
+Each post is a standalone `.md` file with frontmatter-style header comment:
+
+```markdown
+<!-- src/content/blog/what-are-eur-stablecoins.md -->
+
+# What Are EUR Stablecoins? A Complete Guide
+
+Euro stablecoins are cryptocurrencies designed to maintain a 1:1 peg with the Euro...
+
+## Why EUR Stablecoins Matter
+
+For European users, EUR stablecoins eliminate currency conversion fees...
+
+## Top EUR Stablecoins by Market Cap
+
+| Stablecoin | Issuer | Market Cap |
+|------------|--------|------------|
+| EURC | Circle | Largest |
+| EURS | Stasis | Second |
+
+## How to Earn Yield on EUR Stablecoins
+
+You can deposit EUR stablecoins into DeFi protocols to earn yield...
+
+## Key Takeaways
+
+- EUR stablecoins are pegged 1:1 to the Euro
+- They enable low-cost transfers and DeFi access
+- eurooo.xyz helps you compare yield opportunities
+```
+
+### 4. Blog Listing Page
+
+```typescript
+// src/pages/Blog.tsx
+import { blogPosts } from '@/content/blog';
+import { BlogCard } from '@/components/blog/BlogCard';
+import { SEO } from '@/components/SEO';
+
+const blogListSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Blog',
+  name: 'eurooo.xyz Knowledge Hub',
+  description: 'Educational content about EUR stablecoins and DeFi',
+  url: 'https://eurooo.xyz/blog',
+};
+
+export default function Blog() {
+  return (
+    <>
+      <SEO
+        title="Knowledge Hub"
+        description="Learn about EUR stablecoins, DeFi yields, and European crypto."
+        path="/blog"
+        jsonLd={blogListSchema}
+      />
+      <Header />
+      <main className="container py-12">
+        <h1>Knowledge Hub</h1>
+        <p>Educational content about EUR stablecoins and DeFi.</p>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {blogPosts.map(post => (
+            <BlogCard key={post.slug} post={post} />
+          ))}
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
 }
 ```
 
-#### FAQPage Schema (Stats page)
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "What is the total EUR stablecoin market cap?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "The total EUR stablecoin supply is €[dynamic]..."
-      }
-    }
-  ]
+### 5. Article Page with JSON-LD Schema
+
+```typescript
+// src/pages/BlogArticle.tsx
+import { useParams } from 'react-router-dom';
+import { blogPosts } from '@/content/blog';
+import { SEO } from '@/components/SEO';
+
+export default function BlogArticle() {
+  const { slug } = useParams();
+  const post = blogPosts.find(p => p.slug === slug);
+  
+  // Dynamic import of markdown content
+  const [content, setContent] = useState('');
+  useEffect(() => {
+    import(`@/content/blog/${slug}.md`).then(module => {
+      setContent(module.html);
+    });
+  }, [slug]);
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.description,
+    datePublished: post.publishedAt,
+    dateModified: post.updatedAt || post.publishedAt,
+    author: {
+      '@type': 'Organization',
+      name: 'eurooo.xyz',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'eurooo.xyz',
+      url: 'https://eurooo.xyz',
+    },
+    mainEntityOfPage: `https://eurooo.xyz/blog/${slug}`,
+  };
+
+  return (
+    <>
+      <SEO
+        title={post.title}
+        description={post.description}
+        path={`/blog/${slug}`}
+        type="article"
+        jsonLd={articleSchema}
+      />
+      <article 
+        className="prose prose-lg dark:prose-invert max-w-3xl mx-auto"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    </>
+  );
 }
 ```
 
-### 4. Page-Specific SEO Configuration
+### 6. Enable Typography Plugin
 
-| Page | Title | Description |
-|------|-------|-------------|
-| Home | eurooo.xyz - Grow Your Euros in DeFi | Compare and deposit EURC stablecoins across trusted DeFi protocols. Simple, transparent yield for Europeans. |
-| Stats | EUR Stablecoin Market Stats - eurooo.xyz | Real-time data on Euro stablecoin supply, market share, and blockchain distribution. Track EURC, EURS, and more. |
-| App | DeFi Yields Dashboard - eurooo.xyz | Compare live APY rates and deposit EUR stablecoins across Aave, Morpho, Summer.fi, and more. |
-| Terms | Terms of Service - eurooo.xyz | Terms and conditions for using eurooo.xyz DeFi aggregator. |
+Already installed (`@tailwindcss/typography`). Add prose classes for article styling:
 
-### 5. Quotable Statistics Section
-
-Add a new component to the Stats page that displays key figures in a format optimized for quoting:
-
-```text
-+--------------------------------------------------+
-|  Key EUR Stablecoin Statistics                   |
-|                                                  |
-|  • Total EUR stablecoin supply: €[X.XX]B         |
-|  • Market leader: [Symbol] with [X]% share       |
-|  • Number of EUR stablecoins tracked: [N]        |
-|  • Available on [N] blockchains                  |
-|                                                  |
-|  Updated: [Date] • Data: DefiLlama               |
-+--------------------------------------------------+
+```typescript
+// tailwind.config.ts - add to plugins
+plugins: [
+  require("tailwindcss-animate"),
+  require("@tailwindcss/typography"),
+]
 ```
 
-### 6. FAQ Section
+### 7. Add Routes
 
-Add an FAQ component with common questions:
+```typescript
+// src/App.tsx - add new routes
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogArticle = lazy(() => import('./pages/BlogArticle'));
 
-**Questions to include:**
-1. "What is the total EUR stablecoin market cap?"
-2. "Which EUR stablecoin has the largest market share?"
-3. "What blockchains support EUR stablecoins?"
-4. "How often is this data updated?"
+<Route path="/blog" element={<Blog />} />
+<Route path="/blog/:slug" element={<BlogArticle />} />
+```
 
-Each answer dynamically populated from the API data.
+### 8. Update Header Navigation
 
-### 7. Sitemap.xml
+Add "Learn" or "Knowledge Hub" link to the header alongside Market Stats.
 
-Create a static sitemap at `public/sitemap.xml`:
+### 9. Update Sitemap
+
+Add blog index and individual article URLs:
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://eurooo.xyz/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://eurooo.xyz/stats</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://eurooo.xyz/app</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://eurooo.xyz/terms</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-</urlset>
+<!-- public/sitemap.xml -->
+<url>
+  <loc>https://eurooo.xyz/blog</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://eurooo.xyz/blog/what-are-eur-stablecoins</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.7</priority>
+</url>
 ```
 
-### 8. Update robots.txt
+---
 
-Add sitemap reference:
+## AI Agent Publishing Workflow
+
+```text
+How AI Agents Publish via GitHub
+
+[AI Agent] --> [Create .md file] --> [Open PR] --> [You Review] --> [Merge] --> [Auto Deploy]
+     |              |                    |              |               |
+  Generates     Adds to           GitHub PR        Approve/Edit     Vercel/Lovable
+  content     src/content/blog/    created          changes        rebuilds site
 ```
-Sitemap: https://eurooo.xyz/sitemap.xml
-```
+
+**Steps for AI Agent:**
+1. Create a new `.md` file in `src/content/blog/`
+2. Add entry to `src/content/blog/index.ts` registry
+3. Open a Pull Request to your repository
+4. You review and merge
+5. Site automatically rebuilds with new content
+
+This workflow ensures:
+- Human review before publishing
+- Full version history
+- Easy rollback if needed
+- No database or CMS required
+
+---
+
+## GEO Optimization Features
+
+| Feature | Implementation | Benefit |
+|---------|----------------|---------|
+| Article Schema | JSON-LD on each post | AI systems can identify author, date, topic |
+| Clean HTML | Markdown to HTML at build time | Bots see content immediately |
+| Meta descriptions | Per-post SEO component | Accurate snippets in search/AI |
+| Semantic headings | H1/H2/H3 in markdown | Clear content hierarchy |
+| Internal linking | Links to /stats and /app | Shows site authority |
+| Last updated dates | In article schema | Freshness signals |
+| FAQ sections | Can add to posts | Rich snippet eligibility |
 
 ---
 
 ## File Changes Summary
 
-| File | Action | Description |
-|------|--------|-------------|
-| `package.json` | Update | Add react-helmet-async dependency |
-| `src/components/SEO.tsx` | Create | Reusable SEO component with meta tags + JSON-LD |
-| `src/App.tsx` | Update | Wrap app with HelmetProvider |
-| `src/pages/Home.tsx` | Update | Add SEO component with home page meta |
-| `src/pages/Stats.tsx` | Update | Add SEO component with Dataset schema |
-| `src/pages/App.tsx` | Update | Add SEO component with app page meta |
-| `src/pages/Terms.tsx` | Update | Add SEO component with terms page meta |
-| `src/components/stats/QuotableStats.tsx` | Create | Key figures summary component |
-| `src/components/stats/StatsFAQ.tsx` | Create | FAQ section with schema |
-| `public/sitemap.xml` | Create | XML sitemap |
-| `public/robots.txt` | Update | Add sitemap reference |
+| File | Action | Purpose |
+|------|--------|---------|
+| `package.json` | Update | Add vite-plugin-markdown |
+| `vite.config.ts` | Update | Configure markdown plugin |
+| `tailwind.config.ts` | Update | Add typography plugin |
+| `src/content/blog/index.ts` | Create | Post registry with metadata |
+| `src/content/blog/*.md` | Create | Markdown content files (3 starter posts) |
+| `src/components/blog/BlogCard.tsx` | Create | Post preview card component |
+| `src/components/blog/BlogList.tsx` | Create | Grid layout for cards |
+| `src/components/blog/BlogPost.tsx` | Create | Article content renderer |
+| `src/pages/Blog.tsx` | Create | /blog listing page |
+| `src/pages/BlogArticle.tsx` | Create | /blog/:slug article page |
+| `src/App.tsx` | Update | Add blog routes |
+| `src/components/Header.tsx` | Update | Add Knowledge Hub link |
+| `public/sitemap.xml` | Update | Add blog URLs |
 
 ---
 
-## Page Layout After Changes
+## Starter Content (3 Posts)
 
-```text
-Stats Page:
-+------------------------------------------+
-|              Header                       |
-+------------------------------------------+
-|  StatsHero (Total Supply + 30d Change)   |
-+------------------------------------------+
-|  QuotableStats (Key Figures Summary)     |  <- NEW
-+------------------------------------------+
-|  TopStablecoins (Ranked Table)           |
-+------------------------------------------+
-|  Charts (Market Share + Chain Dist)      |
-+------------------------------------------+
-|  StatsFAQ (Common Questions)             |  <- NEW
-+------------------------------------------+
-|              Footer                       |
-+------------------------------------------+
-```
+1. **What Are EUR Stablecoins?** - Beginner guide explaining Euro stablecoins
+2. **EURC vs EURS: Which Should You Choose?** - Comparison of top EUR stablecoins
+3. **How to Earn Yield on EUR Stablecoins** - Guide to DeFi yields for Europeans
 
----
+Each post will include:
+- Clear, quotable key facts
+- Links to the /stats and /app pages
+- FAQ section where relevant
+- Proper semantic headings
 
-## SEO Benefits
-
-1. **Rich snippets** - FAQ schema enables rich search results
-2. **Data attribution** - Dataset schema helps AI cite eurooo.xyz
-3. **Crawlability** - Sitemap ensures all pages are indexed
-4. **Freshness signals** - Visible timestamps show data currency
-5. **Quotable text** - Key figures section provides citation-ready content
-6. **Page-specific meta** - Each page has targeted keywords and descriptions
