@@ -1,13 +1,29 @@
-import { Link } from 'react-router-dom';
 import { BookOpen, ArrowRight } from 'lucide-react';
-import { blogPosts } from '@/content/blog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-export function KnowledgeHubPreview() {
-  // Get the 3 most recent articles
-  const featuredPosts = blogPosts.slice(0, 3);
+const featuredPosts = [
+  {
+    slug: 'what-are-eur-stablecoins',
+    title: 'What Are EUR Stablecoins? A Complete Guide',
+    description: 'Learn what Euro stablecoins are, how they work, and why they matter for European DeFi users seeking to avoid USD exposure.',
+    tags: ['education', 'stablecoins'],
+  },
+  {
+    slug: 'eurc-vs-eurs-vs-eurcv-comparison',
+    title: 'EURC vs EURS vs EURCV: Which Euro Stablecoin is Best?',
+    description: "Compare the top three Euro stablecoins—Circle's EURC, Stasis EURS, and SG Forge's EURCV—by liquidity, regulation, and DeFi integration.",
+    tags: ['comparison', 'stablecoins'],
+  },
+  {
+    slug: 'defi-yield-strategies-europe',
+    title: 'How to Earn Yield on EUR Stablecoins in DeFi',
+    description: 'Discover the best DeFi protocols for earning yield on Euro stablecoins like EURC, including Aave, Morpho, and more.',
+    tags: ['DeFi', 'yield'],
+  },
+];
 
+export function KnowledgeHubPreview() {
   return (
     <div className="mt-24 opacity-0 animate-fade-in-up animation-delay-500">
       <div className="text-center mb-8">
@@ -22,11 +38,11 @@ export function KnowledgeHubPreview() {
 
       <div className="grid gap-4 md:grid-cols-3 max-w-4xl mx-auto">
         {featuredPosts.map((post) => (
-          <Link key={post.slug} to={`/blog/${post.slug}`} className="group block">
+          <a key={post.slug} href={`https://hub.eurooo.xyz/blog/${post.slug}`} target="_blank" rel="noopener noreferrer" className="group block">
             <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {post.tags.slice(0, 2).map((tag) => (
+                  {post.tags.map((tag) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
                       {tag}
                     </Badge>
@@ -42,18 +58,20 @@ export function KnowledgeHubPreview() {
                 </p>
               </CardContent>
             </Card>
-          </Link>
+          </a>
         ))}
       </div>
 
       <div className="text-center mt-6">
-        <Link
-          to="/blog"
+        <a
+          href="https://hub.eurooo.xyz/"
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
         >
           View all articles
           <ArrowRight className="h-4 w-4" />
-        </Link>
+        </a>
       </div>
     </div>
   );
