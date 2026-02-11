@@ -25,8 +25,6 @@ export function Header() {
               {/* App page: show wallet connection */}
               <a 
                 href="https://hub.eurooo.xyz/" 
-                target="_blank"
-                rel="noopener noreferrer"
                 className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
               >
                 <span>📚</span>
@@ -58,8 +56,6 @@ export function Header() {
               <ThemeToggle />
               <a 
                 href="https://hub.eurooo.xyz/" 
-                target="_blank"
-                rel="noopener noreferrer"
                 className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
               >
                 <span>📚</span>
