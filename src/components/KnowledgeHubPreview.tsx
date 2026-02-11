@@ -38,7 +38,7 @@ export function KnowledgeHubPreview() {
 
       <div className="grid gap-4 md:grid-cols-3 max-w-4xl mx-auto">
         {featuredPosts.map((post) => (
-          <a key={post.slug} href={`https://hub.eurooo.xyz/blog/${post.slug}`} target="_blank" rel="noopener noreferrer" className="group block">
+          <a key={post.slug} href={`https://hub.eurooo.xyz/blog/${post.slug}`} className="group block">
             <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <div className="flex flex-wrap gap-1.5 mb-2">
@@ -65,8 +65,6 @@ export function KnowledgeHubPreview() {
       <div className="text-center mt-6">
         <a
           href="https://hub.eurooo.xyz/"
-          target="_blank"
-          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
         >
           View all articles
