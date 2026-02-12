@@ -9,6 +9,7 @@ import summerLogo from '@/assets/summer-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
 import fluidLogo from '@/assets/fluid-logo.png';
+import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
 import driftLogo from '@/assets/drift-logo.png';
 
@@ -104,6 +105,7 @@ export function Hero() {
       defiLlamaData.morphoSteakhouse.apy,
       defiLlamaData.morphoSteakhousePrime.apy,
       defiLlamaData.fluidBase.apy,
+      defiLlamaData.moonwellBase.apy,
       defiLlamaData.jupiterSolana.apy,
       defiLlamaData.driftSolana.apy,
     ];
@@ -128,6 +130,9 @@ export function Hero() {
   }, {
     name: 'Fluid',
     logo: fluidLogo
+  }, {
+    name: 'Moonwell',
+    logo: moonwellLogo
   }, {
     name: 'Jupiter',
     logo: jupiterLogo

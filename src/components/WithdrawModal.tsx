@@ -18,6 +18,7 @@ import { useSummerWithdraw, SummerWithdrawStep } from '@/hooks/useSummerWithdraw
 import { useYoWithdraw, YoWithdrawStep } from '@/hooks/useYoWithdraw';
 import { useMorphoWithdraw, MorphoWithdrawStep } from '@/hooks/useMorphoWithdraw';
 import { useFluidWithdraw, FluidWithdrawStep } from '@/hooks/useFluidWithdraw';
+import { useMoonwellWithdraw, MoonwellWithdrawStep } from '@/hooks/useMoonwellWithdraw';
 import { AlertCircle, Loader2, CheckCircle2, XCircle, ArrowRightLeft } from 'lucide-react';
 
 interface WithdrawModalProps {
@@ -76,6 +77,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
   const morphoSteakhouseWithdraw = useMorphoWithdraw('morpho-steakhouse');
   const morphoSteakhousePrimeWithdraw = useMorphoWithdraw('morpho-steakhouse-prime');
   const fluidWithdraw = useFluidWithdraw();
+  const moonwellWithdraw = useMoonwellWithdraw();
   
   // Determine token name for this protocol
   const tokenName = getTokenName(protocol);
@@ -143,6 +145,11 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         return { 
           ...fluidWithdraw, 
           step: fluidWithdraw.step as UnifiedStep 
+        };
+      case 'moonwell': 
+        return { 
+          ...moonwellWithdraw, 
+          step: moonwellWithdraw.step as UnifiedStep 
         };
       default: return null;
     }
@@ -215,8 +222,10 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
           await morphoKpkWithdraw.withdraw(amountInUnits);
           break;
         case 'fluid':
-          // For Fluid we need to pass the user's shares, not assets
           await fluidWithdraw.withdraw(amountInUnits);
+          break;
+        case 'moonwell':
+          await moonwellWithdraw.withdraw(amountInUnits);
           break;
         default:
           onComplete();
@@ -236,6 +245,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
       morphoPrimeWithdraw.reset();
       morphoKpkWithdraw.reset();
       fluidWithdraw.reset();
+      moonwellWithdraw.reset();
     }
     onOpenChange(isOpen);
   };
@@ -248,6 +258,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     morphoPrimeWithdraw.reset();
     morphoKpkWithdraw.reset();
     fluidWithdraw.reset();
+    moonwellWithdraw.reset();
     setUiStep('confirm');
   };
 

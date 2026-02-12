@@ -62,6 +62,7 @@ export default {
         fluid: "hsl(var(--fluid))",
         jupiter: "hsl(var(--jupiter))",
         drift: "hsl(var(--drift))",
+        moonwell: "hsl(var(--moonwell))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
