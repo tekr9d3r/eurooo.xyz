@@ -3,11 +3,13 @@ import { useSummerData } from './useSummerData';
 import { useYoData } from './useYoData';
 import { useMorphoData } from './useMorphoData';
 import { useFluidData } from './useFluidData';
+import { useMoonwellData } from './useMoonwellData';
 import { useDefiLlamaData } from './useDefiLlamaData';
 import { useEURCBalance } from './useEURCBalance';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import fluidLogo from '@/assets/fluid-logo.png';
+import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
 import driftLogo from '@/assets/drift-logo.png';
 
@@ -19,7 +21,7 @@ export interface ProtocolData {
   tvl: number;
   tvlFormatted: string;
   chains: string[];
-  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'drift';
+  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'drift' | 'moonwell';
   chainId: number; // Required chain ID for protocol-specific actions
   userDeposit: number;
   isLoading: boolean;
@@ -64,6 +66,7 @@ export function useProtocolData() {
   const morphoSteakhouseData = useMorphoData('morpho-steakhouse');
   const morphoSteakhousePrimeData = useMorphoData('morpho-steakhouse-prime');
   const fluidData = useFluidData();
+  const moonwellData = useMoonwellData();
 
   // Individual Aave chain entries (used as sub-protocols)
   const aaveEthereum: ProtocolData = {
@@ -404,6 +407,25 @@ export function useProtocolData() {
       auditUrl: 'https://fluid.guides.instadapp.io/liquidity-layer/risks',
       auditProvider: 'Instadapp Docs',
     },
+    {
+      id: 'moonwell',
+      name: 'Moonwell',
+      description: 'Lending protocol on Base',
+      apy: moonwellData.apy,
+      tvl: moonwellData.tvl,
+      tvlFormatted: moonwellData.tvl > 0 ? formatTVL(moonwellData.tvl) : '—',
+      chains: ['Base'],
+      chainId: 8453,
+      color: 'moonwell',
+      userDeposit: moonwellData.userDeposit,
+      isLoading: moonwellData.isLoading,
+      isSupported: true,
+      stablecoin: 'EURC',
+      logo: moonwellLogo,
+      learnMoreUrl: 'https://moonwell.fi/vaults/deposit/base/mweurc',
+      auditUrl: 'https://docs.moonwell.fi/moonwell/protocol-information/audits',
+      auditProvider: 'Moonwell Docs',
+    },
     // External Solana protocols
     {
       id: 'jupiter',
@@ -468,6 +490,7 @@ export function useProtocolData() {
     morphoSteakhouseData.refetch();
     morphoSteakhousePrimeData.refetch();
     fluidData.refetch();
+    moonwellData.refetch();
   };
 
   return {

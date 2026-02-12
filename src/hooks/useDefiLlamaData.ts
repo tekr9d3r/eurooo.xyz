@@ -33,6 +33,9 @@ const PROTOCOL_DATA = {
   // Fluid
   fluidBase: { apy: 2.66, tvl: 2_921_000 },
   
+  // Moonwell
+  moonwellBase: { apy: 1.30, tvl: 6_015_000 },
+  
   // Solana protocols (external)
   jupiterSolana: { apy: 2.76, tvl: 16_500_000 },
   driftSolana: { apy: 2.82, tvl: 593_000 },
@@ -65,6 +68,9 @@ export function useDefiLlamaData() {
     
     // Fluid
     fluidBase: PROTOCOL_DATA.fluidBase,
+    
+    // Moonwell
+    moonwellBase: PROTOCOL_DATA.moonwellBase,
     
     // Solana (external)
     jupiterSolana: PROTOCOL_DATA.jupiterSolana,

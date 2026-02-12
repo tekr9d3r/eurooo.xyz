@@ -17,6 +17,7 @@ import { useSummerDeposit, SummerDepositStep } from '@/hooks/useSummerDeposit';
 import { useYoDeposit, YoDepositStep } from '@/hooks/useYoDeposit';
 import { useMorphoDeposit, MorphoDepositStep } from '@/hooks/useMorphoDeposit';
 import { useFluidDeposit, FluidDepositStep } from '@/hooks/useFluidDeposit';
+import { useMoonwellDeposit, MoonwellDepositStep } from '@/hooks/useMoonwellDeposit';
 import { MorphoVaultId } from '@/hooks/useMorphoData';
 import { AlertCircle, TrendingUp, Loader2, CheckCircle2, XCircle, ArrowRightLeft } from 'lucide-react';
 
@@ -84,6 +85,10 @@ function mapFluidStep(step: FluidDepositStep): UnifiedStep {
   return mapSummerStep(step as SummerDepositStep);
 }
 
+function mapMoonwellStep(step: MoonwellDepositStep): UnifiedStep {
+  return mapSummerStep(step as SummerDepositStep);
+}
+
 // Get the token name based on protocol
 function getTokenName(protocol: ProtocolData | null): string {
   if (!protocol) return 'EURC';
@@ -120,6 +125,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const morphoSteakhouseDeposit = useMorphoDeposit('morpho-steakhouse');
   const morphoSteakhousePrimeDeposit = useMorphoDeposit('morpho-steakhouse-prime');
   const fluidDeposit = useFluidDeposit();
+  const moonwellDeposit = useMoonwellDeposit();
   
   // Determine token name for this protocol
   const tokenName = getTokenName(protocol);
@@ -148,6 +154,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       case 'morpho-steakhouse': return { ...morphoSteakhouseDeposit, step: mapMorphoStep(morphoSteakhouseDeposit.step) };
       case 'morpho-steakhouse-prime': return { ...morphoSteakhousePrimeDeposit, step: mapMorphoStep(morphoSteakhousePrimeDeposit.step) };
       case 'fluid': return { ...fluidDeposit, step: mapFluidStep(fluidDeposit.step) };
+      case 'moonwell': return { ...moonwellDeposit, step: mapMoonwellStep(moonwellDeposit.step) };
       default: return null;
     }
   };
@@ -226,6 +233,9 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
         case 'fluid':
           await fluidDeposit.deposit(numericAmount);
           break;
+        case 'moonwell':
+          await moonwellDeposit.deposit(numericAmount);
+          break;
         default:
           onConfirm();
           handleClose(false);
@@ -247,6 +257,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       morphoSteakhouseDeposit.reset();
       morphoSteakhousePrimeDeposit.reset();
       fluidDeposit.reset();
+      moonwellDeposit.reset();
     }
     onOpenChange(isOpen);
   };
@@ -262,6 +273,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     morphoSteakhouseDeposit.reset();
     morphoSteakhousePrimeDeposit.reset();
     fluidDeposit.reset();
+    moonwellDeposit.reset();
     setUiStep('confirm');
   };
 

@@ -11,6 +11,7 @@ import aaveLogo from '@/assets/aave-logo.png';
 import summerLogo from '@/assets/summer-logo.png';
 import yoLogo from '@/assets/yo-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
+import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
 import driftLogo from '@/assets/drift-logo.png';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -36,6 +37,7 @@ const protocolLogos: Record<string, string> = {
   summer: summerLogo,
   yo: yoLogo,
   fluid: summerLogo,
+  moonwell: moonwellLogo,
   jupiter: jupiterLogo,
   drift: driftLogo,
 };
@@ -46,6 +48,7 @@ const colorClasses = {
   yo: 'bg-yo/10 border-yo/30',
   morpho: 'bg-morpho/10 border-morpho/30',
   fluid: 'bg-fluid/10 border-fluid/30',
+  moonwell: 'bg-moonwell/10 border-moonwell/30',
   jupiter: 'bg-jupiter/10 border-jupiter/30',
   drift: 'bg-drift/10 border-drift/30',
 };

@@ -101,6 +101,51 @@ export const FLUID_VAULT_ADDRESSES = {
   8453: '0x1943FA26360f038230442525Cf1B9125b5DCB401' as const,
 } as const;
 
+// ============= MOONWELL =============
+// Moonwell mToken (Compound-style) for EURC on Base
+export const MOONWELL_MTOKEN_ADDRESSES = {
+  8453: '0xb682c840B5F4FC58B20769E691A6fa1305A501a2' as const,
+} as const;
+
+// Moonwell mToken ABI (Compound v2-style)
+export const MOONWELL_MTOKEN_ABI = [
+  {
+    inputs: [{ name: 'mintAmount', type: 'uint256' }],
+    name: 'mint',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'redeemAmount', type: 'uint256' }],
+    name: 'redeemUnderlying',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'account', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'account', type: 'address' }],
+    name: 'balanceOfUnderlying',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'exchangeRateCurrent',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
 // ERC20 ABI (includes approve for deposits)
 export const ERC20_ABI = [
   {
