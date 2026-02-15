@@ -63,7 +63,7 @@ export function Footer() {
               <TelegramIcon className="h-5 w-5" />
             </a>
             <a
-              href="https://github.com/eurooo-xyz"
+              href="https://github.com/tekr9d3r/eurooo.xyz"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-all duration-300 hover:bg-foreground hover:text-background hover:scale-110"
