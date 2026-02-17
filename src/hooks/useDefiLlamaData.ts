@@ -1,6 +1,6 @@
 /**
  * Hardcoded APY and TVL data - Updated weekly
- * Last updated: 2026-02-13
+ * Last updated: 2026-02-17
  */
 
 export interface PoolData {
@@ -11,34 +11,34 @@ export interface PoolData {
 // Hardcoded values - update these weekly
 const PROTOCOL_DATA = {
   // Aave pools
-  aaveEthereum: { apy: 2.59, tvl: 70_640_000 },
-  aaveBase: { apy: 0.42, tvl: 21_160_000 },
-  aaveGnosis: { apy: 3.13, tvl: 16_370_000 },
-  aaveAvalanche: { apy: 2.29, tvl: 1_220_000 },
+  aaveEthereum: { apy: 2.42, tvl: 75_480_000 },
+  aaveBase: { apy: 0.44, tvl: 20_960_000 },
+  aaveGnosis: { apy: 3.14, tvl: 16_350_000 },
+  aaveAvalanche: { apy: 1.93, tvl: 1_250_000 },
   
   // Other protocols
-  yoBase: { apy: 3.50, tvl: 1_680_000 },
-  summerBase: { apy: 2.63, tvl: 623_000 },
+  yoBase: { apy: 2.26, tvl: 1_710_000 },
+  summerBase: { apy: 2.50, tvl: 582_000 },
   
   // Morpho vaults - Ethereum
-  morphoGauntlet: { apy: 3.54, tvl: 7_320_000 },
-  morphoPrime: { apy: 0.65, tvl: 5_980_000 },
-  morphoKpk: { apy: 3.75, tvl: 2_800_000 },
+  morphoGauntlet: { apy: 3.44, tvl: 5_440_000 },
+  morphoPrime: { apy: 0.78, tvl: 5_780_000 },
+  morphoKpk: { apy: 3.57, tvl: 3_000_000 },
   
   // Morpho vaults - Base
-  morphoMoonwell: { apy: 1.39, tvl: 5_980_000 },
-  morphoSteakhouse: { apy: 0.31, tvl: 5_200_000 },
-  morphoSteakhousePrime: { apy: 2.14, tvl: 4_110_000 },
+  morphoMoonwell: { apy: 1.17, tvl: 5_530_000 },
+  morphoSteakhouse: { apy: 0.57, tvl: 5_190_000 },
+  morphoSteakhousePrime: { apy: 2.78, tvl: 4_190_000 },
   
   // Fluid
-  fluidBase: { apy: 2.74, tvl: 2_780_000 },
+  fluidBase: { apy: 2.77, tvl: 2_768_000 },
   
   // Moonwell
-  moonwellBase: { apy: 1.30, tvl: 5_980_000 },
+  moonwellBase: { apy: 1.10, tvl: 5_533_000 },
   
   // Solana protocols (external)
-  jupiterSolana: { apy: 0.22, tvl: 16_000_000 },
-  driftSolana: { apy: 1.32, tvl: 850_000 },
+  jupiterSolana: { apy: 2.82, tvl: 16_000_000 },
+  driftSolana: { apy: 2.02, tvl: 563_000 },
 } as const;
 
 export function useDefiLlamaData() {
