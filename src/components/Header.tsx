@@ -3,8 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
-
-const euroooLogo = "https://ifeyhwfcvgxkiwatorje.supabase.co/storage/v1/object/public/images/logo%20random.png";
+import euroooLogo from '@/assets/eurooo-logo.png';
 
 export function Header() {
   const location = useLocation();
