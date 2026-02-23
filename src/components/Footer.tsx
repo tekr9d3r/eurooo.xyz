@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
+import euroooLogo from '@/assets/eurooo-logo.png';
 
 // X (Twitter) icon component
 const XIcon = ({ className }: { className?: string }) => (
@@ -30,7 +31,7 @@ export function Footer() {
           {/* Left: Logo and tagline */}
           <div className="flex items-center gap-3">
             <img
-              src="https://ifeyhwfcvgxkiwatorje.supabase.co/storage/v1/object/public/images/logo%20random.png"
+              src={euroooLogo}
               alt="eurooo.xyz"
               className="h-8 w-8 rounded-lg object-cover"
             />
