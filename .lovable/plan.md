@@ -1,83 +1,68 @@
 
 
-## Add Moonwell Protocol to Dashboard
+## Automating APY & TVL Data with Change Tracking
 
-Moonwell is a lending protocol on Base using EURC with Compound-style mToken interactions (not ERC-4626). This plan adds it as a fully interactive protocol with direct deposit/withdraw from wallet.
+### The Core Challenge
 
-### Key Details
-- **Chain**: Base (8453)
-- **mToken (mEURC)**: `0xb682c840B5F4FC58B20769E691A6fa1305A501a2`
-- **Underlying**: EURC on Base (`0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42`)
-- **TVL**: 6,015,000 | **APY**: 1.30%
-- **Audits**: https://docs.moonwell.fi/moonwell/protocol-information/audits
-- **Interface**: Compound-style `mint(uint256)` / `redeemUnderlying(uint256)`
+You asked about doing this **without a database** -- but to show "how much data changed in the last 3 days," you inherently need to store previous snapshots somewhere. There are two realistic approaches:
 
 ---
 
-### Files to Create
+### Option A: Edge Function + Database (Recommended)
 
-1. **Copy logo** `user-uploads://moonwell-logo.png` to `src/assets/moonwell-logo.png`
+Since your project already has Lovable Cloud, you have a database available at no extra cost. This is the clean approach:
 
-2. **`src/hooks/useMoonwellData.ts`** -- Data hook following the Fluid pattern:
-   - Read user's mEURC balance via `balanceOf`
-   - Convert to underlying value via `balanceOfUnderlying` (or exchange rate)
-   - APY/TVL from hardcoded DefiLlama data
+**How it works:**
+1. A **backend function** fetches APY/TVL from DeFi Llama's `/yields/pools` API every 3 days
+2. Each fetch stores a **snapshot** in a `protocol_snapshots` table (pool_id, apy, tvl, timestamp)
+3. The frontend queries the latest snapshot + the one from 3 days ago, calculates % change client-side
+4. A **30-minute client-side cache** (via React Query) prevents hammering the backend
 
-3. **`src/hooks/useMoonwellDeposit.ts`** -- Deposit hook:
-   - Check/approve EURC allowance to mEURC contract
-   - Call `mint(amount)` on the mToken contract
-   - Same step pattern as Fluid (idle, checking, approving, waitingApproval, depositing, waitingDeposit, success, error)
+**What gets built:**
+- `supabase/functions/fetch-protocol-data/` -- edge function that hits DeFi Llama, stores results
+- `protocol_snapshots` table -- (id, pool_id, apy, tvl, fetched_at)
+- Updated `useDefiLlamaData.ts` -- fetches from your own backend instead of hardcoded values, includes `previousApy` and `previousTvl` for change calculation
+- UI badges showing "+5.2% TVL" / "-0.3% APY" next to each protocol
 
-4. **`src/hooks/useMoonwellWithdraw.ts`** -- Withdraw hook:
-   - Call `redeemUnderlying(amount)` to withdraw exact EURC amount
-   - Same step pattern as Fluid withdraw
+**DeFi Llama pools used** (matched to your protocols):
 
-### Files to Modify
+```text
+Protocol              DeFi Llama Pool ID
+─────────────────────────────────────────
+Aave Ethereum         e3f0b7b2-...  (search by project=aave, chain=Ethereum, symbol=EURC)
+Aave Base             (same project, chain=Base)
+Aave Gnosis           (chain=Gnosis, symbol=EURe)
+Aave Avalanche        (chain=Avalanche)
+Morpho vaults         Each vault has its own pool ID
+Fluid, Moonwell       Same pattern
+Jupiter, Drift        Solana pools
+```
 
-5. **`src/hooks/useDefiLlamaData.ts`** -- Add hardcoded entry:
-   ```
-   moonwellBase: { apy: 1.30, tvl: 6_015_000 }
-   ```
+**Scheduling:** The edge function is called via a **pg_cron job** every 3 days, or manually triggered. No external scheduler needed.
 
-6. **`src/lib/contracts.ts`** -- Add:
-   - `MOONWELL_MTOKEN_ADDRESSES` with Base mEURC address
-   - `MOONWELL_MTOKEN_ABI` with mint, redeemUnderlying, balanceOf, balanceOfUnderlying, exchangeRateCurrent
+**Pros:** Reliable, historical data for trends, fast frontend loads (your own API), no rate limiting issues.
+**Cons:** Uses database (but it's already available and free).
 
-7. **`src/index.css`** -- Add `--moonwell` brand color (blue, ~210 70% 50%) in both light and dark themes
+---
 
-8. **`tailwind.config.ts`** -- Add `moonwell: "hsl(var(--moonwell))"` to protocol brand colors
+### Option B: Client-Side Only (No Database)
 
-9. **`src/hooks/useProtocolData.ts`** -- Add Moonwell as a new standalone protocol entry:
-   - Import `useMoonwellData` and `moonwellLogo`
-   - Add `moonwell` to the color union type
-   - Create protocol entry with audit badge linking to docs.moonwell.fi/moonwell/protocol-information/audits
-   - Add to protocols array and refetch function
+Fetch directly from DeFi Llama API on each page load with client caching. Store "previous" values in `localStorage`.
 
-10. **`src/components/ProtocolTable.tsx`** -- Add Moonwell to:
-    - `protocolLogos` map
-    - `colorClasses` map
+**Pros:** No backend needed.
+**Cons:** 
+- Rate limiting (you hit this before -- it's why you switched to hardcoded)
+- Slow initial loads (16+ API calls)
+- localStorage "previous" values are per-device, not shared across users
+- Change percentages would be inaccurate/inconsistent between users
 
-11. **`src/components/DepositModal.tsx`** -- Wire up Moonwell deposit:
-    - Import and instantiate `useMoonwellDeposit`
-    - Add `case 'moonwell'` to `getActiveDeposit` switch
-    - Add deposit call in `handleConfirm`
-    - Add reset in `handleClose` and `handleRetry`
+---
 
-12. **`src/components/WithdrawModal.tsx`** -- Wire up Moonwell withdraw:
-    - Import and instantiate `useMoonwellWithdraw`
-    - Add `case 'moonwell'` to `getActiveWithdraw` switch
-    - Add withdraw call in `handleConfirm`
-    - Add reset in `handleClose` and `handleRetry`
+### Recommendation
 
-13. **`src/components/Hero.tsx`** -- Add Moonwell to:
-    - Logo imports and `protocols` array (for "Supported protocols" strip)
-    - DefiLlama APY list for highest APY calculation
+**Option A is clearly better** for your use case. You already have the backend infrastructure, and the "% change" feature fundamentally requires shared persistent state. The edge function approach also solves the original problems (rate limiting, slow loads) that led to hardcoding in the first place.
 
-### Technical Notes
+The DeFi Llama `/pools` endpoint returns all pools in one call -- we filter server-side by known pool IDs, so it's a single HTTP request every 3 days rather than 16 separate calls.
 
-- Moonwell uses Compound v2-style mTokens, not ERC-4626. The key difference:
-  - **Deposit**: `approve` EURC to mToken, then call `mint(amount)` where amount is in EURC units
-  - **Withdraw**: `redeemUnderlying(amount)` returns exact EURC amount
-  - **Balance**: `balanceOfUnderlying(address)` returns EURC value of user's mToken position
-- EURC has 6 decimals; exchange rate mantissa is scaled by 1e(18 - 6 + underlying decimals) = 1e18
+Shall I proceed with Option A?
 
