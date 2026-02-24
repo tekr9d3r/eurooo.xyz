@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 // Map our internal pool keys to DeFi Llama search criteria
-// We match by project, chain, and symbol since pool UUIDs can change
 const POOL_MATCHERS: Record<
   string,
   { project: string | string[]; chain: string; symbol: string | string[]; poolId?: string }
@@ -18,7 +17,6 @@ const POOL_MATCHERS: Record<
   aaveAvalanche: { project: "aave-v3", chain: "Avalanche", symbol: "EURC" },
   yoBase: { project: "yo-protocol", chain: "Base", symbol: "EURC" },
   summerBase: { project: "lazy-summer-protocol", chain: "Base", symbol: "EURC" },
-  // Morpho vaults - matched by exact pool ID from DeFi Llama
   morphoGauntlet: { project: "morpho-v1", chain: "Ethereum", symbol: "GTEURCC", poolId: "d4ea65f3-b54b-49c4-81ba-56e16eec4fb7" },
   morphoPrime: { project: "morpho-v1", chain: "Ethereum", symbol: "SGFEURCV", poolId: "4c02c11c-2d48-4d5c-b5ed-27f3f354b73c" },
   morphoKpk: { project: "morpho-v1", chain: "Ethereum", symbol: "KPK-EURC-YIELD", poolId: "994a6438-8611-4c5f-84c0-939330dfbdb0" },
@@ -27,7 +25,10 @@ const POOL_MATCHERS: Record<
   morphoSteakhousePrime: { project: "morpho-v1", chain: "Base", symbol: "STEAKEURC", poolId: "e76a40b2-30d5-4b9c-9cf3-41249eeeeb3a" },
   fluidBase: { project: "fluid-lending", chain: "Base", symbol: "EURC" },
   moonwellBase: { project: "moonwell-lending", chain: "Base", symbol: "EURC" },
-  // Jupiter and Drift don't have EURC lending pools on DeFi Llama - keep hardcoded
+  // Jupiter and Drift EURC pools are not available via their APIs or DeFi Llama.
+  // Jupiter Lend only supports SOL/USDC/JupUSD vaults.
+  // Drift's earn page hides EURC behind pagination.
+  // Both remain hardcoded in the frontend fallback data.
 };
 
 interface DefiLlamaPool {
@@ -45,19 +46,15 @@ function matchPool(
   pool: DefiLlamaPool,
   matcher: { project: string | string[]; chain: string; symbol: string | string[]; poolId?: string }
 ): boolean {
-  // If we have an exact pool ID, use that (most reliable)
   if (matcher.poolId) {
     return pool.pool === matcher.poolId;
   }
-
-  // Otherwise match by project + chain + symbol
   const projects = Array.isArray(matcher.project) ? matcher.project : [matcher.project];
   const projectMatch = projects.some(
     (p) => pool.project.toLowerCase() === p.toLowerCase()
   );
   if (!projectMatch) return false;
   if (pool.chain.toLowerCase() !== matcher.chain.toLowerCase()) return false;
-
   const symbols = Array.isArray(matcher.symbol) ? matcher.symbol : [matcher.symbol];
   const symbolMatch = symbols.some(
     (s) => pool.symbol.toUpperCase().includes(s.toUpperCase())
@@ -85,9 +82,6 @@ Deno.serve(async (req) => {
     const data = await response.json();
     const pools: DefiLlamaPool[] = data.data;
     console.log(`Fetched ${pools.length} pools total`);
-
-    // Debug: log all EURC-related pools to help find correct project names
-
 
     // Match pools to our keys
     const results: { pool_key: string; apy: number; tvl: number }[] = [];
