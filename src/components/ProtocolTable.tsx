@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronUp, ChevronDown, ChevronRight, TrendingUp, ArrowUpRight, ExternalLink, Info } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronRight, TrendingUp, TrendingDown, ArrowUpRight, ExternalLink, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProtocolData } from '@/hooks/useProtocolData';
 import { SafetyScoreBadge } from '@/components/SafetyScoreBadge';
@@ -52,6 +52,20 @@ const colorClasses = {
   jupiter: 'bg-jupiter/10 border-jupiter/30',
   drift: 'bg-drift/10 border-drift/30',
 };
+
+function ChangeBadge({ value, suffix = '' }: { value?: number; suffix?: string }) {
+  if (value === undefined || Math.abs(value) < 0.01) return null;
+  const isPositive = value > 0;
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-0.5 text-[10px] font-medium rounded px-1 py-0.5",
+      isPositive ? "text-success bg-success/10" : "text-destructive bg-destructive/10"
+    )}>
+      {isPositive ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+      {isPositive ? '+' : ''}{value.toFixed(1)}{suffix}
+    </span>
+  );
+}
 
 export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTableProps) {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
@@ -292,9 +306,12 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             {protocol.isLoading ? (
               <Skeleton className="h-6 w-16" />
             ) : hasData ? (
-              <div className="flex items-center gap-1 justify-end">
-                <span className="text-xl font-bold text-success">{protocol.apy.toFixed(2)}%</span>
-                <TrendingUp className="h-4 w-4 text-success" />
+              <div>
+                <div className="flex items-center gap-1 justify-end">
+                  <span className="text-xl font-bold text-success">{protocol.apy.toFixed(2)}%</span>
+                  <TrendingUp className="h-4 w-4 text-success" />
+                </div>
+                <div className="flex justify-end"><ChangeBadge value={protocol.apyChange} suffix="pp" /></div>
               </div>
             ) : (
               <span className="text-muted-foreground">—</span>
@@ -479,9 +496,12 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
           {protocol.isLoading ? (
             <Skeleton className="h-6 w-16" />
           ) : hasData ? (
-            <div className="flex items-center gap-1">
-              <span className="text-lg font-bold text-success">{protocol.apy.toFixed(2)}%</span>
-              <TrendingUp className="h-4 w-4 text-success" />
+            <div>
+              <div className="flex items-center gap-1">
+                <span className="text-lg font-bold text-success">{protocol.apy.toFixed(2)}%</span>
+                <TrendingUp className="h-4 w-4 text-success" />
+              </div>
+              <ChangeBadge value={protocol.apyChange} suffix="pp" />
             </div>
           ) : (
             <span className="text-muted-foreground">—</span>
@@ -493,9 +513,14 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
           {protocol.isLoading ? (
             <Skeleton className="h-6 w-16" />
           ) : (
-            <span className="font-medium">{protocol.tvlFormatted}</span>
+            <div>
+              <span className="font-medium">{protocol.tvlFormatted}</span>
+              <div><ChangeBadge value={protocol.tvlChange} suffix="%" /></div>
+            </div>
           )}
         </div>
+
+
 
         {/* Safety Score */}
         <div className="col-span-1">
