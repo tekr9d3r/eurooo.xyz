@@ -1,1 +1,4 @@
 project_id = "ifeyhwfcvgxkiwatorje"
+
+[functions.fetch-protocol-data]
+verify_jwt = false
