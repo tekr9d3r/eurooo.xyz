@@ -22,7 +22,7 @@ export interface ProtocolData {
   tvlFormatted: string;
   chains: string[];
   color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'drift' | 'moonwell';
-  chainId: number; // Required chain ID for protocol-specific actions
+  chainId: number;
   userDeposit: number;
   isLoading: boolean;
   isSupported: boolean;
@@ -32,15 +32,15 @@ export interface ProtocolData {
   safetyScore?: number;
   safetyProvider?: string;
   safetyReportUrl?: string;
-  // For protocols with independent audits but no DeFiSafety score
   auditUrl?: string;
   auditProvider?: string;
-  // Grouped protocol fields
   isGrouped?: boolean;
   subProtocols?: ProtocolData[];
-  // External protocols (e.g., Solana) - deposits happen on external site
   isExternal?: boolean;
   externalDepositUrl?: string;
+  // Change tracking (% change since previous snapshot)
+  tvlChange?: number; // e.g. 5.2 means +5.2%
+  apyChange?: number; // e.g. -0.3 means -0.3 percentage points
 }
 
 function formatTVL(tvl: number): string {
@@ -51,6 +51,16 @@ function formatTVL(tvl: number): string {
     return `€${(tvl / 1_000).toFixed(1)}K`;
   }
   return `€${tvl.toFixed(0)}`;
+}
+
+function calcChange(current: number, previous?: number): number | undefined {
+  if (previous === undefined || previous === 0) return undefined;
+  return ((current - previous) / previous) * 100;
+}
+
+function calcApyDiff(current: number, previous?: number): number | undefined {
+  if (previous === undefined) return undefined;
+  return current - previous;
 }
 
 export function useProtocolData() {
@@ -88,6 +98,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
+    tvlChange: calcChange(aaveData.ethereumData.tvl, defiLlamaData.aaveEthereum.previousTvl),
+    apyChange: calcApyDiff(aaveData.ethereumData.apy, defiLlamaData.aaveEthereum.previousApy),
   };
 
   const aaveBase: ProtocolData = {
@@ -109,6 +121,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
+    tvlChange: calcChange(aaveData.baseData.tvl, defiLlamaData.aaveBase.previousTvl),
+    apyChange: calcApyDiff(aaveData.baseData.apy, defiLlamaData.aaveBase.previousApy),
   };
 
   const aaveGnosis: ProtocolData = {
@@ -130,6 +144,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
+    tvlChange: calcChange(aaveData.gnosisData.tvl, defiLlamaData.aaveGnosis.previousTvl),
+    apyChange: calcApyDiff(aaveData.gnosisData.apy, defiLlamaData.aaveGnosis.previousApy),
   };
 
   const aaveAvalanche: ProtocolData = {
@@ -151,6 +167,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/597',
+    tvlChange: calcChange(aaveData.avalancheData.tvl, defiLlamaData.aaveAvalanche.previousTvl),
+    apyChange: calcApyDiff(aaveData.avalancheData.apy, defiLlamaData.aaveAvalanche.previousApy),
   };
 
   // Calculate aggregated Aave metrics
@@ -205,6 +223,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+    tvlChange: calcChange(morphoGauntletData.tvl, defiLlamaData.morphoGauntlet.previousTvl),
+    apyChange: calcApyDiff(morphoGauntletData.apy, defiLlamaData.morphoGauntlet.previousApy),
   };
 
   const morphoPrime: ProtocolData = {
@@ -226,6 +246,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+    tvlChange: calcChange(morphoPrimeData.tvl, defiLlamaData.morphoPrime.previousTvl),
+    apyChange: calcApyDiff(morphoPrimeData.apy, defiLlamaData.morphoPrime.previousApy),
   };
 
   const morphoKpk: ProtocolData = {
@@ -247,6 +269,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+    tvlChange: calcChange(morphoKpkData.tvl, defiLlamaData.morphoKpk.previousTvl),
+    apyChange: calcApyDiff(morphoKpkData.apy, defiLlamaData.morphoKpk.previousApy),
   };
 
   // Base Morpho vault entries
@@ -269,6 +293,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+    tvlChange: calcChange(morphoMoonwellData.tvl, defiLlamaData.morphoMoonwell.previousTvl),
+    apyChange: calcApyDiff(morphoMoonwellData.apy, defiLlamaData.morphoMoonwell.previousApy),
   };
 
   const morphoSteakhouse: ProtocolData = {
@@ -290,6 +316,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+    tvlChange: calcChange(morphoSteakhouseData.tvl, defiLlamaData.morphoSteakhouse.previousTvl),
+    apyChange: calcApyDiff(morphoSteakhouseData.apy, defiLlamaData.morphoSteakhouse.previousApy),
   };
 
   const morphoSteakhousePrime: ProtocolData = {
@@ -311,6 +339,8 @@ export function useProtocolData() {
     safetyScore: 93,
     safetyProvider: 'DeFiSafety',
     safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+    tvlChange: calcChange(morphoSteakhousePrimeData.tvl, defiLlamaData.morphoSteakhousePrime.previousTvl),
+    apyChange: calcApyDiff(morphoSteakhousePrimeData.apy, defiLlamaData.morphoSteakhousePrime.previousApy),
   };
 
   // Calculate aggregated Morpho metrics
@@ -366,6 +396,8 @@ export function useProtocolData() {
       safetyScore: 71,
       safetyProvider: 'DeFiSafety',
       safetyReportUrl: 'https://defisafety.com/app/pqrs/578',
+      tvlChange: calcChange(summerData.tvl, defiLlamaData.summerBase.previousTvl),
+      apyChange: calcApyDiff(summerData.apy, defiLlamaData.summerBase.previousApy),
       isExternal: true,
       externalDepositUrl: 'https://pro.summer.fi/referrals/0x5FfD23B1B0350debB17A2cB668929aC5f76d0E18',
     },
@@ -386,6 +418,8 @@ export function useProtocolData() {
       learnMoreUrl: 'https://app.yo.xyz/vault/base/0x50c749aE210D3977ADC824AE11F3c7fd10c871e9',
       auditUrl: 'https://docs.yo.xyz/protocol/security-audits',
       auditProvider: 'YO Docs',
+      tvlChange: calcChange(yoData.tvl, defiLlamaData.yoBase.previousTvl),
+      apyChange: calcApyDiff(yoData.apy, defiLlamaData.yoBase.previousApy),
     },
     morphoGrouped,
     {
@@ -406,6 +440,8 @@ export function useProtocolData() {
       learnMoreUrl: 'https://fluid.io/lending/8453/EURC',
       auditUrl: 'https://fluid.guides.instadapp.io/liquidity-layer/risks',
       auditProvider: 'Instadapp Docs',
+      tvlChange: calcChange(fluidData.tvl, defiLlamaData.fluidBase.previousTvl),
+      apyChange: calcApyDiff(fluidData.apy, defiLlamaData.fluidBase.previousApy),
     },
     {
       id: 'moonwell',
@@ -425,6 +461,8 @@ export function useProtocolData() {
       learnMoreUrl: 'https://moonwell.fi/vaults/deposit/base/mweurc',
       auditUrl: 'https://docs.moonwell.fi/moonwell/protocol-information/audits',
       auditProvider: 'Moonwell Docs',
+      tvlChange: calcChange(moonwellData.tvl, defiLlamaData.moonwellBase.previousTvl),
+      apyChange: calcApyDiff(moonwellData.apy, defiLlamaData.moonwellBase.previousApy),
     },
     // External Solana protocols
     {
