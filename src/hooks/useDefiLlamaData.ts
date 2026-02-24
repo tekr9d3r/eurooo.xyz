@@ -30,7 +30,7 @@ const FALLBACK_DATA: Record<string, { apy: number; tvl: number }> = {
   morphoSteakhousePrime: { apy: 2.78, tvl: 4_190_000 },
   fluidBase: { apy: 2.77, tvl: 2_768_000 },
   moonwellBase: { apy: 1.10, tvl: 5_533_000 },
-  // Jupiter and Drift are not on DeFi Llama for EURC - always hardcoded
+  // Jupiter and Drift EURC not available via their APIs - hardcoded
   jupiterSolana: { apy: 2.82, tvl: 16_000_000 },
   driftSolana: { apy: 2.02, tvl: 563_000 },
 };
@@ -149,7 +149,7 @@ export function useDefiLlamaData() {
     // Moonwell
     moonwellBase: get('moonwellBase'),
     
-    // Solana (hardcoded - not on DeFi Llama)
+    // Solana (hardcoded - not available via APIs)
     jupiterSolana: get('jupiterSolana'),
     driftSolana: get('driftSolana'),
     
