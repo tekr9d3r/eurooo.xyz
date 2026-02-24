@@ -14,7 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      protocol_snapshots: {
+        Row: {
+          apy: number
+          fetched_at: string
+          id: string
+          pool_key: string
+          tvl: number
+        }
+        Insert: {
+          apy: number
+          fetched_at?: string
+          id?: string
+          pool_key: string
+          tvl: number
+        }
+        Update: {
+          apy?: number
+          fetched_at?: string
+          id?: string
+          pool_key?: string
+          tvl?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
