@@ -27,7 +27,6 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Separate heavy vendor chunks
           'vendor-wagmi': ['wagmi', 'viem'],
           'vendor-rainbowkit': ['@rainbow-me/rainbowkit'],
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],

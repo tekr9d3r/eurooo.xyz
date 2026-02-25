@@ -2,3 +2,6 @@ project_id = "ifeyhwfcvgxkiwatorje"
 
 [functions.fetch-protocol-data]
 verify_jwt = false
+
+[functions.get-lifi-key]
+verify_jwt = false
