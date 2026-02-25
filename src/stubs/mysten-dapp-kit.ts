@@ -1,3 +1,5 @@
-// Stub for @mysten/dapp-kit — unused in this EVM-only app.
-// Vite resolve.alias redirects imports here to avoid pulling in heavy Sui SDK deps.
+// Stub for @mysten/dapp-kit
+export const useCurrentWallet = () => ({ currentWallet: null, connectionStatus: 'disconnected' });
+export const useDisconnectWallet = () => ({ mutate: () => {} });
+export const useWallets = () => [];
 export default {};
