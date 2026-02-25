@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Stub out unused non-EVM ecosystems to prevent heavy transitive deps
+      "@mysten/dapp-kit": path.resolve(__dirname, "./src/stubs/mysten-dapp-kit.ts"),
+      "@solana/wallet-adapter-react": path.resolve(__dirname, "./src/stubs/solana-wallet-adapter.ts"),
     },
   },
   build: {

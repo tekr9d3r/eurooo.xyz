@@ -3,11 +3,32 @@ import { Footer } from '@/components/Footer';
 import { SEO } from '@/components/SEO';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { LiFiWidget, type WidgetConfig } from '@lifi/widget';
 
 const EURC_BASE_ADDRESS = '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42';
 const BASE_CHAIN_ID = 8453;
 
-const JUMPER_EMBED_URL = `https://jumper.exchange/widget?toChain=${BASE_CHAIN_ID}&toToken=${EURC_BASE_ADDRESS}&integrator=eurooo`;
+const widgetConfig: WidgetConfig = {
+  integrator: 'eurooo',
+  toChain: BASE_CHAIN_ID,
+  toToken: EURC_BASE_ADDRESS,
+  appearance: 'system',
+  theme: {
+    container: {
+      border: '1px solid hsl(220, 15%, 90%)',
+      borderRadius: '16px',
+      boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)',
+    },
+    palette: {
+      primary: { main: 'hsl(220, 100%, 30%)' },
+      secondary: { main: 'hsl(48, 100%, 50%)' },
+    },
+    shape: {
+      borderRadius: 12,
+      borderRadiusSecondary: 8,
+    },
+  },
+};
 
 const GetEurStablecoins = () => {
   return (
@@ -23,20 +44,11 @@ const GetEurStablecoins = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
             Get EUR Stablecoins
           </h1>
-          <p className="text-muted-foreground text-sm md:text-base mb-6">
+          <p className="text-muted-foreground text-sm md:text-base mb-8">
             Swap any token to EURC on Base — cross-chain, in one step. Powered by LI.FI.
           </p>
 
-          <div className="rounded-xl border border-border overflow-hidden shadow-sm bg-card">
-            <iframe
-              src={JUMPER_EMBED_URL}
-              width="100%"
-              height="680"
-              style={{ border: 'none' }}
-              allow="clipboard-write"
-              title="Swap to EURC"
-            />
-          </div>
+          <LiFiWidget integrator="eurooo" config={widgetConfig} />
 
           <div className="mt-8 p-4 rounded-lg bg-secondary">
             <p className="text-sm text-muted-foreground mb-2">
