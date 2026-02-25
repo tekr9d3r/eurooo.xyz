@@ -1,68 +1,47 @@
 
 
-## Automating APY & TVL Data with Change Tracking
+## Plan: Store LI.FI API Key Securely and Build the Swap Page
 
-### The Core Challenge
+### Step 1: Store the API Key as a Backend Secret
+Store the LI.FI API key as `LIFI_API_KEY` (no `VITE_` prefix) so it is only accessible server-side, never bundled into frontend JavaScript.
 
-You asked about doing this **without a database** -- but to show "how much data changed in the last 3 days," you inherently need to store previous snapshots somewhere. There are two realistic approaches:
+### Step 2: Create a Backend Function to Serve the Key
+Create `supabase/functions/get-lifi-key/index.ts` — a simple endpoint that reads `LIFI_API_KEY` from environment and returns it. This keeps the key out of the client bundle while allowing the widget to use it at runtime.
 
----
+- CORS headers included
+- JWT verification disabled (public endpoint, key is not highly sensitive — it's a rate-limiting key, not a payment key)
+- Returns `{ apiKey: "..." }`
 
-### Option A: Edge Function + Database (Recommended)
+### Step 3: Create the Swap Page
+**`src/pages/GetEurStablecoins.tsx`** — New page containing:
+- Header + Footer (reusing existing components)
+- SEO metadata
+- On mount, fetches the API key from the backend function
+- Renders the `<LiFiWidget>` with:
+  - `apiKey` from the backend
+  - `integrator: "eurooo"`
+  - `toChain: 8453` (Base)
+  - `toToken: 0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42` (EURC on Base)
+  - Theme matching the app's design
 
-Since your project already has Lovable Cloud, you have a database available at no extra cost. This is the clean approach:
+### Step 4: Install Dependency
+- Install `@lifi/widget`
 
-**How it works:**
-1. A **backend function** fetches APY/TVL from DeFi Llama's `/yields/pools` API every 3 days
-2. Each fetch stores a **snapshot** in a `protocol_snapshots` table (pool_id, apy, tvl, timestamp)
-3. The frontend queries the latest snapshot + the one from 3 days ago, calculates % change client-side
-4. A **30-minute client-side cache** (via React Query) prevents hammering the backend
+### Step 5: Add Route and Navigation
+- **`src/App.tsx`**: Add lazy-loaded route for `/get-eur-stablecoins`
+- **`src/components/Header.tsx`**: Add navigation link to the swap page
 
-**What gets built:**
-- `supabase/functions/fetch-protocol-data/` -- edge function that hits DeFi Llama, stores results
-- `protocol_snapshots` table -- (id, pool_id, apy, tvl, fetched_at)
-- Updated `useDefiLlamaData.ts` -- fetches from your own backend instead of hardcoded values, includes `previousApy` and `previousTvl` for change calculation
-- UI badges showing "+5.2% TVL" / "-0.3% APY" next to each protocol
+### Files Summary
 
-**DeFi Llama pools used** (matched to your protocols):
+| File | Action |
+|------|--------|
+| Secret: `LIFI_API_KEY` | Store securely |
+| `supabase/functions/get-lifi-key/index.ts` | Create — serves key to frontend |
+| `supabase/config.toml` | Update — disable JWT for new function |
+| `src/pages/GetEurStablecoins.tsx` | Create — swap page with LI.FI widget |
+| `src/App.tsx` | Edit — add route |
+| `src/components/Header.tsx` | Edit — add nav link |
 
-```text
-Protocol              DeFi Llama Pool ID
-─────────────────────────────────────────
-Aave Ethereum         e3f0b7b2-...  (search by project=aave, chain=Ethereum, symbol=EURC)
-Aave Base             (same project, chain=Base)
-Aave Gnosis           (chain=Gnosis, symbol=EURe)
-Aave Avalanche        (chain=Avalanche)
-Morpho vaults         Each vault has its own pool ID
-Fluid, Moonwell       Same pattern
-Jupiter, Drift        Solana pools
-```
-
-**Scheduling:** The edge function is called via a **pg_cron job** every 3 days, or manually triggered. No external scheduler needed.
-
-**Pros:** Reliable, historical data for trends, fast frontend loads (your own API), no rate limiting issues.
-**Cons:** Uses database (but it's already available and free).
-
----
-
-### Option B: Client-Side Only (No Database)
-
-Fetch directly from DeFi Llama API on each page load with client caching. Store "previous" values in `localStorage`.
-
-**Pros:** No backend needed.
-**Cons:** 
-- Rate limiting (you hit this before -- it's why you switched to hardcoded)
-- Slow initial loads (16+ API calls)
-- localStorage "previous" values are per-device, not shared across users
-- Change percentages would be inaccurate/inconsistent between users
-
----
-
-### Recommendation
-
-**Option A is clearly better** for your use case. You already have the backend infrastructure, and the "% change" feature fundamentally requires shared persistent state. The edge function approach also solves the original problems (rate limiting, slow loads) that led to hardcoding in the first place.
-
-The DeFi Llama `/pools` endpoint returns all pools in one call -- we filter server-side by known pool IDs, so it's a single HTTP request every 3 days rather than 16 separate calls.
-
-Shall I proceed with Option A?
+### Security Note
+The API key never appears in the JavaScript bundle. It is fetched at runtime from the backend function. While it will be visible in network requests to the backend function, this is acceptable for a rate-limiting API key and is far more secure than embedding it in the build.
 
