@@ -1,42 +1,37 @@
 
 
-## Plan: Integrate LI.FI Widget Properly (Native React Component)
+## Plan: Fix LI.FI Widget Build — Export Named Stubs
 
 ### Problem
-The current implementation uses an iframe embed, which is not the correct integration. The LI.FI Widget is a React component (`@lifi/widget`) that should be embedded natively.
-
-The previous attempt failed because `@lifi/widget` requires peer dependencies like `@mysten/dapp-kit` and `@solana/wallet-adapter-react` which caused build failures (the Sui SDK has heavy/incompatible transitive deps).
-
-### Key Discovery
-From the LI.FI docs: **"If you're using the LI.FI Widget, you do not need to pass an API key."** So the backend proxy (`get-lifi-key`) is not needed for the widget approach.
+The build fails because the stub files only export `default {}`, but `@lifi/wallet-management` imports **specific named exports** from `@solana/wallet-adapter-react`, `@mysten/dapp-kit`, and `@bigmi/react`. Rollup rightfully complains that `useWallet` is not exported.
 
 ### Solution
-Install the widget with all required peer deps, but **stub out** the Sui and Solana packages in Vite's `resolve.alias` so they don't pull in heavy/incompatible transitive dependencies. The app is EVM-only (RainbowKit + wagmi), so those ecosystems are unused.
+Update the stub files to export all the named hooks/functions that the widget's wallet-management internals import. These stubs return no-op values so Solana/Sui/Bitcoin code paths are inert but don't break the build.
+
+Additionally, add a stub for `@bigmi/react` and `@bigmi/client` since those are also imported.
 
 ### Files to Change
 
 | File | Action |
 |------|--------|
-| `package.json` | Add `@lifi/widget`, `@bigmi/react`, `@solana/wallet-adapter-react`, `@mysten/dapp-kit` |
-| `src/stubs/solana-wallet-adapter.ts` | Create — empty export stub |
-| `src/stubs/mysten-dapp-kit.ts` | Create — empty export stub |
-| `vite.config.ts` | Add resolve aliases to point Sui/Solana imports to stubs |
-| `src/pages/GetEurStablecoins.tsx` | Rewrite — use `<LiFiWidget>` component with `integrator: "eurooo"`, `toChain: 8453`, `toToken: EURC address` |
+| `src/stubs/solana-wallet-adapter.ts` | Rewrite — export `useWallet` returning empty wallet state |
+| `src/stubs/mysten-dapp-kit.ts` | Rewrite — export `useCurrentWallet`, `useDisconnectWallet`, `useWallets` as no-ops |
+| `src/stubs/bigmi-react.ts` | Create — export `useAccount`, `useConnect`, `useConfig` as no-ops |
+| `src/stubs/bigmi-client.ts` | Create — export `disconnect`, `getAccount` as no-ops |
+| `src/stubs/solana-wallet-adapter-base.ts` | Create — export `WalletReadyState` enum |
+| `vite.config.ts` | Add aliases for `@bigmi/react`, `@bigmi/client`, `@solana/wallet-adapter-base` |
 
 ### Technical Details
 
-**Stub approach for unused ecosystems:**
-Vite aliases will redirect `@mysten/dapp-kit` and `@solana/wallet-adapter-react` imports to minimal stub files that export empty objects/functions. This prevents the heavy Sui SDK from being bundled while satisfying the widget's imports at build time.
+**Required named exports per stub (from `@lifi/wallet-management` source):**
 
-**Widget configuration:**
 ```text
-LiFiWidget
-├── integrator: "eurooo"
-├── config.toChain: 8453 (Base)
-├── config.toToken: 0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42 (EURC)
-├── config.appearance: "auto" (follows app theme)
-└── config.theme: custom colors matching app design
+@solana/wallet-adapter-react → useWallet()
+@solana/wallet-adapter-base  → WalletReadyState enum
+@mysten/dapp-kit             → useCurrentWallet(), useDisconnectWallet(), useWallets()
+@bigmi/react                 → useAccount(), useConnect(), useConfig()
+@bigmi/client                → disconnect(), getAccount()
 ```
 
-**No API key needed** — the widget handles authentication internally. The existing `get-lifi-key` edge function can remain for potential future API/SDK use but is not called by this page.
+Each stub returns safe defaults (empty arrays, disconnected status, no-op functions) so the widget's multi-chain wallet logic gracefully skips non-EVM ecosystems without crashing.
 
