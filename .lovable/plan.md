@@ -1,47 +1,42 @@
 
 
-## Plan: Store LI.FI API Key Securely and Build the Swap Page
+## Plan: Integrate LI.FI Widget Properly (Native React Component)
 
-### Step 1: Store the API Key as a Backend Secret
-Store the LI.FI API key as `LIFI_API_KEY` (no `VITE_` prefix) so it is only accessible server-side, never bundled into frontend JavaScript.
+### Problem
+The current implementation uses an iframe embed, which is not the correct integration. The LI.FI Widget is a React component (`@lifi/widget`) that should be embedded natively.
 
-### Step 2: Create a Backend Function to Serve the Key
-Create `supabase/functions/get-lifi-key/index.ts` — a simple endpoint that reads `LIFI_API_KEY` from environment and returns it. This keeps the key out of the client bundle while allowing the widget to use it at runtime.
+The previous attempt failed because `@lifi/widget` requires peer dependencies like `@mysten/dapp-kit` and `@solana/wallet-adapter-react` which caused build failures (the Sui SDK has heavy/incompatible transitive deps).
 
-- CORS headers included
-- JWT verification disabled (public endpoint, key is not highly sensitive — it's a rate-limiting key, not a payment key)
-- Returns `{ apiKey: "..." }`
+### Key Discovery
+From the LI.FI docs: **"If you're using the LI.FI Widget, you do not need to pass an API key."** So the backend proxy (`get-lifi-key`) is not needed for the widget approach.
 
-### Step 3: Create the Swap Page
-**`src/pages/GetEurStablecoins.tsx`** — New page containing:
-- Header + Footer (reusing existing components)
-- SEO metadata
-- On mount, fetches the API key from the backend function
-- Renders the `<LiFiWidget>` with:
-  - `apiKey` from the backend
-  - `integrator: "eurooo"`
-  - `toChain: 8453` (Base)
-  - `toToken: 0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42` (EURC on Base)
-  - Theme matching the app's design
+### Solution
+Install the widget with all required peer deps, but **stub out** the Sui and Solana packages in Vite's `resolve.alias` so they don't pull in heavy/incompatible transitive dependencies. The app is EVM-only (RainbowKit + wagmi), so those ecosystems are unused.
 
-### Step 4: Install Dependency
-- Install `@lifi/widget`
-
-### Step 5: Add Route and Navigation
-- **`src/App.tsx`**: Add lazy-loaded route for `/get-eur-stablecoins`
-- **`src/components/Header.tsx`**: Add navigation link to the swap page
-
-### Files Summary
+### Files to Change
 
 | File | Action |
 |------|--------|
-| Secret: `LIFI_API_KEY` | Store securely |
-| `supabase/functions/get-lifi-key/index.ts` | Create — serves key to frontend |
-| `supabase/config.toml` | Update — disable JWT for new function |
-| `src/pages/GetEurStablecoins.tsx` | Create — swap page with LI.FI widget |
-| `src/App.tsx` | Edit — add route |
-| `src/components/Header.tsx` | Edit — add nav link |
+| `package.json` | Add `@lifi/widget`, `@bigmi/react`, `@solana/wallet-adapter-react`, `@mysten/dapp-kit` |
+| `src/stubs/solana-wallet-adapter.ts` | Create — empty export stub |
+| `src/stubs/mysten-dapp-kit.ts` | Create — empty export stub |
+| `vite.config.ts` | Add resolve aliases to point Sui/Solana imports to stubs |
+| `src/pages/GetEurStablecoins.tsx` | Rewrite — use `<LiFiWidget>` component with `integrator: "eurooo"`, `toChain: 8453`, `toToken: EURC address` |
 
-### Security Note
-The API key never appears in the JavaScript bundle. It is fetched at runtime from the backend function. While it will be visible in network requests to the backend function, this is acceptable for a rate-limiting API key and is far more secure than embedding it in the build.
+### Technical Details
+
+**Stub approach for unused ecosystems:**
+Vite aliases will redirect `@mysten/dapp-kit` and `@solana/wallet-adapter-react` imports to minimal stub files that export empty objects/functions. This prevents the heavy Sui SDK from being bundled while satisfying the widget's imports at build time.
+
+**Widget configuration:**
+```text
+LiFiWidget
+├── integrator: "eurooo"
+├── config.toChain: 8453 (Base)
+├── config.toToken: 0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42 (EURC)
+├── config.appearance: "auto" (follows app theme)
+└── config.theme: custom colors matching app design
+```
+
+**No API key needed** — the widget handles authentication internally. The existing `get-lifi-key` edge function can remain for potential future API/SDK use but is not called by this page.
 
