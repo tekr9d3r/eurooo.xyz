@@ -1,55 +1,15 @@
-import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { SEO } from '@/components/SEO';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { LiFiWidget, type WidgetConfig } from '@lifi/widget';
-import { supabase } from '@/integrations/supabase/client';
 
 const EURC_BASE_ADDRESS = '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42';
 const BASE_CHAIN_ID = 8453;
 
+const JUMPER_EMBED_URL = `https://jumper.exchange/widget?toChain=${BASE_CHAIN_ID}&toToken=${EURC_BASE_ADDRESS}&integrator=eurooo`;
+
 const GetEurStablecoins = () => {
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchKey = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-lifi-key');
-        if (error) throw error;
-        setApiKey(data.apiKey);
-      } catch (err) {
-        console.error('Failed to fetch LI.FI key:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchKey();
-  }, []);
-
-  const widgetConfig: WidgetConfig = {
-    integrator: 'eurooo',
-    toChain: BASE_CHAIN_ID,
-    toToken: EURC_BASE_ADDRESS,
-    theme: {
-      container: {
-        border: '1px solid hsl(220, 15%, 90%)',
-        borderRadius: '16px',
-        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)',
-      },
-      palette: {
-        primary: { main: 'hsl(220, 100%, 30%)' },
-        secondary: { main: 'hsl(48, 100%, 50%)' },
-      },
-      shape: {
-        borderRadius: 12,
-        borderRadiusSecondary: 8,
-      },
-    },
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <SEO
@@ -63,21 +23,20 @@ const GetEurStablecoins = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
             Get EUR Stablecoins
           </h1>
-          <p className="text-muted-foreground text-sm md:text-base mb-8">
+          <p className="text-muted-foreground text-sm md:text-base mb-6">
             Swap any token to EURC on Base — cross-chain, in one step. Powered by LI.FI.
           </p>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
-          ) : apiKey ? (
-            <LiFiWidget integrator="eurooo" config={widgetConfig} apiKey={apiKey} />
-          ) : (
-            <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
-              <p className="text-muted-foreground">Failed to load widget. Please try again later.</p>
-            </div>
-          )}
+          <div className="rounded-xl border border-border overflow-hidden shadow-sm bg-card">
+            <iframe
+              src={JUMPER_EMBED_URL}
+              width="100%"
+              height="680"
+              style={{ border: 'none' }}
+              allow="clipboard-write"
+              title="Swap to EURC"
+            />
+          </div>
 
           <div className="mt-8 p-4 rounded-lg bg-secondary">
             <p className="text-sm text-muted-foreground mb-2">
