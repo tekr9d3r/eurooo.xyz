@@ -9,13 +9,13 @@ const corsHeaders = {
 // Map our internal pool keys to DeFi Llama search criteria
 const POOL_MATCHERS: Record<
   string,
-  { project: string | string[]; chain: string; symbol: string | string[]; poolId?: string }
+  { project: string | string[]; chain: string; symbol: string | string[]; poolId?: string; useBaseApy?: boolean }
 > = {
   aaveEthereum: { project: "aave-v3", chain: "Ethereum", symbol: "EURC" },
   aaveBase: { project: "aave-v3", chain: "Base", symbol: "EURC" },
   aaveGnosis: { project: "aave-v3", chain: "Gnosis", symbol: ["EURE", "EURe"] },
   aaveAvalanche: { project: "aave-v3", chain: "Avalanche", symbol: "EURC" },
-  yoBase: { project: "yo-protocol", chain: "Base", symbol: "EURC" },
+  yoBase: { project: "yo-protocol", chain: "Base", symbol: "EURC", useBaseApy: true },
   summerBase: { project: "lazy-summer-protocol", chain: "Base", symbol: "EURC" },
   morphoGauntlet: { project: "morpho-v1", chain: "Ethereum", symbol: "GTEURCC", poolId: "d4ea65f3-b54b-49c4-81ba-56e16eec4fb7" },
   morphoPrime: { project: "morpho-v1", chain: "Ethereum", symbol: "SGFEURCV", poolId: "4c02c11c-2d48-4d5c-b5ed-27f3f354b73c" },
@@ -44,7 +44,7 @@ interface DefiLlamaPool {
 
 function matchPool(
   pool: DefiLlamaPool,
-  matcher: { project: string | string[]; chain: string; symbol: string | string[]; poolId?: string }
+  matcher: { project: string | string[]; chain: string; symbol: string | string[]; poolId?: string; useBaseApy?: boolean }
 ): boolean {
   if (matcher.poolId) {
     return pool.pool === matcher.poolId;
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     for (const [key, matcher] of Object.entries(POOL_MATCHERS)) {
       const found = pools.find((p) => matchPool(p, matcher));
       if (found) {
-        const apy = found.apy ?? found.apyBase ?? 0;
+        const apy = matcher.useBaseApy ? (found.apyBase ?? found.apy ?? 0) : (found.apy ?? found.apyBase ?? 0);
         results.push({
           pool_key: key,
           apy: Math.round(apy * 100) / 100,
