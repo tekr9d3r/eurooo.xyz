@@ -398,8 +398,6 @@ export function useProtocolData() {
       safetyReportUrl: 'https://defisafety.com/app/pqrs/578',
       tvlChange: calcChange(summerData.tvl, defiLlamaData.summerBase.previousTvl),
       apyChange: calcApyDiff(summerData.apy, defiLlamaData.summerBase.previousApy),
-      isExternal: true,
-      externalDepositUrl: 'https://pro.summer.fi/referrals/0x5FfD23B1B0350debB17A2cB668929aC5f76d0E18',
     },
     {
       id: 'yo',
