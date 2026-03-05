@@ -26,7 +26,7 @@ export function Header() {
                 href="https://luma.com/mznyc1io"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs font-medium border border-accent/40 bg-accent/10 text-accent-foreground rounded-full px-2 py-0.5 hover:bg-accent/20 transition-colors mr-1 sm:mr-2"
+                className="flex items-center gap-1 text-xs font-medium border border-accent/40 bg-accent/10 text-foreground rounded-full px-2 py-0.5 hover:bg-accent/20 transition-colors mr-1 sm:mr-2"
               >
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
@@ -70,7 +70,7 @@ export function Header() {
                 href="https://luma.com/mznyc1io"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs font-medium border border-accent/40 bg-accent/10 text-accent-foreground rounded-full px-2 py-0.5 hover:bg-accent/20 transition-colors"
+                className="flex items-center gap-1 text-xs font-medium border border-accent/40 bg-accent/10 text-foreground rounded-full px-2 py-0.5 hover:bg-accent/20 transition-colors"
               >
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
