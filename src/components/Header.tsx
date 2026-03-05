@@ -22,6 +22,19 @@ export function Header() {
           {isAppPage ? (
             <>
               {/* App page: show wallet connection */}
+              <a
+                href="https://luma.com/mznyc1io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs font-medium border border-accent/40 bg-accent/10 text-accent-foreground rounded-full px-2 py-0.5 hover:bg-accent/20 transition-colors mr-1 sm:mr-2"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                </span>
+                <span className="hidden sm:inline">B€€R. Euros. DeFi.</span>
+                <span className="sm:hidden">B€€R</span>
+              </a>
               <a 
                 href="https://hub.eurooo.xyz/" 
                 className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
@@ -53,6 +66,19 @@ export function Header() {
             <>
               {/* Home/other pages: show navigation buttons */}
               <ThemeToggle />
+              <a
+                href="https://luma.com/mznyc1io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs font-medium border border-accent/40 bg-accent/10 text-accent-foreground rounded-full px-2 py-0.5 hover:bg-accent/20 transition-colors"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                </span>
+                <span className="hidden sm:inline">B€€R. Euros. DeFi.</span>
+                <span className="sm:hidden">B€€R</span>
+              </a>
               <a 
                 href="https://hub.eurooo.xyz/" 
                 className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
