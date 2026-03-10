@@ -1,19 +1,21 @@
-import { LiFiWidget, WidgetConfig } from '@lifi/widget';
+import { lazy, Suspense, useMemo } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { SEO } from '@/components/SEO';
 import { useTheme } from 'next-themes';
-import { useMemo } from 'react';
+import type { WidgetConfig } from '@lifi/widget';
+
+const LiFiWidget = lazy(() =>
+  import('@lifi/widget').then((module) => ({ default: module.LiFiWidget }))
+);
 
 const SwapPage = () => {
   const { resolvedTheme } = useTheme();
 
   const widgetConfig: WidgetConfig = useMemo(() => ({
-    integrator: 'eurooo',
     fee: 0.01,
-    variant: 'wide',
-    subvariant: 'default',
-    appearance: resolvedTheme === 'dark' ? 'dark' : 'light',
+    appearance: resolvedTheme === 'dark' ? 'dark' as const : 'light' as const,
+    variant: 'wide' as const,
     theme: {
       container: {
         borderRadius: '12px',
@@ -31,13 +33,6 @@ const SwapPage = () => {
         borderRadiusSecondary: 8,
       },
     },
-    feeConfig: {
-      fee: 0.01,
-      referrer: {
-        evm: '0x5FfD23B1B0350debB17A2cB668929aC5f76d0E18',
-        svm: '6xtfyyZNKcTQsuC5bEURb68ySSpQvNggEB8v1CfEdcMW',
-      },
-    },
   }), [resolvedTheme]);
 
   return (
@@ -49,7 +44,15 @@ const SwapPage = () => {
       />
       <Header />
       <main className="container py-8 flex justify-center">
-        <LiFiWidget config={widgetConfig} integrator="eurooo" />
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          }
+        >
+          <LiFiWidget integrator="eurooo" config={widgetConfig} />
+        </Suspense>
       </main>
       <Footer />
     </div>
