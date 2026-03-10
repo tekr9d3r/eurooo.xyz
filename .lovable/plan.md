@@ -1,19 +1,36 @@
 
 
-## Add Event Link to Header
+## Add Li.Fi Swap Widget on /swap
 
-**File: `src/components/Header.tsx`**
+### What we're building
+A new `/swap` page that embeds the Li.Fi Widget for cross-chain swaps/bridges, with a 1% fee directed to your wallets. The page is accessible only via direct URL — no nav links added.
 
-Add a compact event pill/badge link in both header variants (app page and non-app pages), positioned as the first nav item. The link opens `https://luma.com/mznyc1io` in a new tab.
+### Dependencies to install
+- `@lifi/widget` — the widget itself
+- `@bigmi/react` — required peer dependency for Bitcoin wallet support
+- `@solana/wallet-adapter-react` — required peer dependency for Solana
+- `@mysten/dapp-kit` — required peer dependency for Sui
 
-**Design:**
-- Small pill with a pulsing dot (gold/accent color) + text "B€€R. Euros. DeFi."
-- On mobile: condensed to "B€€R" to save space
-- Styled with `border border-accent/40 bg-accent/10 text-accent` to use the existing EU Gold accent
-- Pulsing dot uses a CSS animation (keyframe already possible via tailwind-animate)
-- `target="_blank"` with `rel="noopener noreferrer"`
+(wagmi, viem, and @tanstack/react-query are already installed)
 
-**Placement:** Before the Knowledge Hub link in both the `isAppPage` and non-app branches of the header JSX.
+### New files
 
-Single file change: `src/components/Header.tsx`.
+**`src/pages/Swap.tsx`**
+- Imports `LiFiWidget` from `@lifi/widget`
+- Configures widget with:
+  - `integrator: "eurooo"`
+  - `fee: 0.01` (1%)
+  - Theme styling to match the site (border radius, colors that work in light/dark mode)
+  - Fee collection wallets: EVM `0x5FfD23B1B0350debB17A2cB668929aC5f76d0E18`, SVM `6xtfyyZNKcTQsuC5bEURb68ySSpQvNggEB8v1CfEdcMW`
+- Renders Header, the widget centered on page, and Footer
+- Wrapped in `WagmiReadyGuard` like the App page
+
+### Route registration
+
+**`src/App.tsx`**
+- Add lazy import for Swap page
+- Add `<Route path="/swap" element={<SwapPage />} />` before the catch-all route
+
+### No navigation changes
+The page won't be linked from the header or anywhere else — only accessible via `/swap` directly.
 
