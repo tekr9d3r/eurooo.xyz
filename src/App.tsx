@@ -13,7 +13,6 @@ const Home = lazy(() => import("./pages/Home"));
 const AppPage = lazy(() => import("./pages/App"));
 const Stats = lazy(() => import("./pages/Stats"));
 const Terms = lazy(() => import("./pages/Terms"));
-const SwapPage = lazy(() => import("./pages/Swap"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Minimal loading fallback
@@ -36,7 +35,6 @@ const App = () => (
                 <Route path="/app" element={<AppPage />} />
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/terms" element={<Terms />} />
-                <Route path="/swap" element={<SwapPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
