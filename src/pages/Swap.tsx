@@ -13,6 +13,7 @@ const SwapPage = () => {
   const { resolvedTheme } = useTheme();
 
   const widgetConfig: WidgetConfig = useMemo(() => ({
+    integrator: 'eurooo',
     fee: 0.01,
     appearance: resolvedTheme === 'dark' ? 'dark' as const : 'light' as const,
     variant: 'wide' as const,
