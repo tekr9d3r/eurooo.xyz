@@ -43,6 +43,14 @@ export function Footer() {
             </div>
           </div>
 
+          {/* Center: Navigation links */}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <Link to="/app" className="hover:text-foreground transition-colors">Earn</Link>
+            <a href="https://www.swap.eurooo.xyz/" className="hover:text-foreground transition-colors">Swap</a>
+            <Link to="/stats" className="hover:text-foreground transition-colors">Stats</Link>
+            <a href="https://hub.eurooo.xyz/" className="hover:text-foreground transition-colors">Learn</a>
+          </div>
+
           {/* Right: Social links */}
           <div className="flex items-center gap-4">
             <a

@@ -101,6 +101,12 @@ export function Header() {
                 <span>📊</span>
                 Stats
               </Link>
+              <Button asChild size="sm" variant="outline" className="gap-1">
+                <a href="https://www.swap.eurooo.xyz/">
+                  Swap
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </Button>
               <Button asChild size="sm" className="gap-1 bg-primary hover:bg-primary/90 shadow-md shadow-primary/20">
                 <Link to="/app">
                   Earn
