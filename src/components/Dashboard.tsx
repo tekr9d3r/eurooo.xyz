@@ -7,7 +7,7 @@ import { DepositModal } from './DepositModal';
 import { WithdrawModal } from './WithdrawModal';
 import { toast } from 'sonner';
 import { useProtocolData, ProtocolData } from '@/hooks/useProtocolData';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, ArrowRight } from 'lucide-react';
 
 export function Dashboard() {
   const { isConnected } = useAccount();
