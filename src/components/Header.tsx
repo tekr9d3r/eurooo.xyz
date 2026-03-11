@@ -49,6 +49,13 @@ export function Header() {
                 <span>📊</span>
                 Stats
               </Link>
+              <a
+                href="https://www.swap.eurooo.xyz/"
+                className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-1 sm:mr-2"
+              >
+                <span>🔄</span>
+                Swap
+              </a>
               <ThemeToggle />
               <ConnectButton 
                 showBalance={false}
