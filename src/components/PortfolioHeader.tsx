@@ -42,7 +42,12 @@ export function PortfolioHeader({
       {!hasDeposits && !isLoading ? (
         <div className="text-center py-4">
           <p className="text-muted-foreground">No deposits yet</p>
-          <p className="text-sm text-muted-foreground">Deposit EURC to start earning yield</p>
+          <p className="text-sm text-muted-foreground">
+            Deposit EURC to start earning yield.{' '}
+            <a href="https://www.swap.eurooo.xyz/" className="font-medium text-primary hover:underline">
+              No EURC? Get some →
+            </a>
+          </p>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">

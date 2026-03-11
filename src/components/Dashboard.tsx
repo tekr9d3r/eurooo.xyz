@@ -7,7 +7,7 @@ import { DepositModal } from './DepositModal';
 import { WithdrawModal } from './WithdrawModal';
 import { toast } from 'sonner';
 import { useProtocolData, ProtocolData } from '@/hooks/useProtocolData';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, ArrowRight } from 'lucide-react';
 
 export function Dashboard() {
   const { isConnected } = useAccount();
@@ -59,6 +59,24 @@ export function Dashboard() {
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Yield Opportunities</h2>
             <ChainSelector value={selectedChain} onChange={setSelectedChain} />
+          </div>
+
+          {/* Swap CTA Banner */}
+          <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 p-5 sm:p-6">
+            <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-primary/5 blur-3xl" />
+            <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-center sm:text-left">
+                <h3 className="text-lg font-semibold">Don't have EUR stablecoins?</h3>
+                <p className="text-sm text-muted-foreground mt-1">Swap any crypto to EURC instantly — best rates aggregated for you.</p>
+              </div>
+              <a
+                href="https://www.swap.eurooo.xyz/"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 whitespace-nowrap"
+              >
+                Swap to EUR
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
           </div>
 
           <ProtocolTable

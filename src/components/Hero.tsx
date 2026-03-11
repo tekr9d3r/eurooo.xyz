@@ -172,10 +172,16 @@ export function Hero() {
           </p>
 
           {/* CTA */}
-          <div className="opacity-0 animate-fade-in animation-delay-300">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 opacity-0 animate-fade-in animation-delay-300">
             <Button size="lg" onClick={handleStartEarning} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5">
               Start Earning
               <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button size="lg" variant="outline" asChild className="gap-2 transition-all duration-300 hover:-translate-y-0.5">
+              <a href="https://www.swap.eurooo.xyz/">
+                Get EUR
+                <ArrowRight className="h-4 w-4" />
+              </a>
             </Button>
           </div>
 
