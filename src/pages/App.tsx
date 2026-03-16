@@ -8,9 +8,9 @@ const AppPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="DeFi Yields Dashboard"
-        description="Compare live APY rates and deposit EUR stablecoins across Aave, Morpho, Summer.fi, and more."
-        path="/app"
+        title="eurooo.xyz - Grow Your Euros in DeFi"
+        description="Compare and deposit EURC stablecoins across trusted DeFi protocols. Simple, transparent yield for Europeans."
+        path="/"
       />
       <Header />
       <main>
