@@ -31,8 +31,8 @@ const FALLBACK_DATA: Record<string, { apy: number; tvl: number }> = {
   fluidBase: { apy: 2.77, tvl: 2_768_000 },
   moonwellBase: { apy: 1.10, tvl: 5_533_000 },
   // Jupiter and Drift EURC not available via their APIs - hardcoded
-  jupiterSolana: { apy: 0.24, tvl: 13_700_000 },
-  driftSolana: { apy: 0.73, tvl: 914_000 },
+  jupiterSolana: { apy: 0.27, tvl: 13_100_000 },
+  driftSolana: { apy: 0.72, tvl: 939_000 },
 };
 
 const POOL_KEYS = Object.keys(FALLBACK_DATA);
