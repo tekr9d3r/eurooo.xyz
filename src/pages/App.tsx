@@ -3,6 +3,7 @@ import { Dashboard } from '@/components/Dashboard';
 import { Footer } from '@/components/Footer';
 import { WagmiReadyGuard } from '@/components/WagmiReadyGuard';
 import { SEO } from '@/components/SEO';
+import { WalletProvider } from '@/components/WalletProvider';
 
 const AppPage = () => {
   return (
