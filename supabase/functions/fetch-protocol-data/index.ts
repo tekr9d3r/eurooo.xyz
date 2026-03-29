@@ -23,6 +23,8 @@ const POOL_MATCHERS: Record<
   morphoMoonwell: { project: "morpho-v1", chain: "Base", symbol: "MWEURC", poolId: "c1aee434-6c8e-4958-a851-eda8ab8bb32d" },
   morphoSteakhouse: { project: "morpho-v1", chain: "Base", symbol: "STEAKEURC", poolId: "cd35c563-0b37-47f6-a522-c7e5240b3f65" },
   morphoSteakhousePrime: { project: "morpho-v1", chain: "Base", symbol: "STEAKEURC", poolId: "e76a40b2-30d5-4b9c-9cf3-41249eeeeb3a" },
+  morphoSteakhouseEurcv: { project: "morpho-v1", chain: "Ethereum", symbol: "STEAKEURCV", poolId: "cf3e15c7-bc2c-4e7f-acf2-1fbf544acbb3" },
+  morphoSteakhousePrimeInstant: { project: "morpho-v1", chain: "Ethereum", symbol: "STEAKEURCV", poolId: "d3b28212-a46b-4db8-8bb7-2c946b3cbe76" },
   fluidBase: { project: "fluid-lending", chain: "Base", symbol: "EURC" },
   moonwellBase: { project: "moonwell-lending", chain: "Base", symbol: "EURC" },
   // Jupiter and Drift EURC pools are not available via their APIs or DeFi Llama.

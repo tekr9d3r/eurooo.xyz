@@ -13,13 +13,17 @@ export type MorphoVaultId =
   | 'morpho-kpk'
   | 'morpho-moonwell'
   | 'morpho-steakhouse'
-  | 'morpho-steakhouse-prime';
+  | 'morpho-steakhouse-prime'
+  | 'morpho-steakhouse-eurcv'
+  | 'morpho-steakhouse-prime-instant';
 
 // Map vault IDs to their chain
 const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453> = {
   'morpho-gauntlet': 1,
   'morpho-prime': 1,
   'morpho-kpk': 1,
+  'morpho-steakhouse-eurcv': 1,
+  'morpho-steakhouse-prime-instant': 1,
   'morpho-moonwell': 8453,
   'morpho-steakhouse': 8453,
   'morpho-steakhouse-prime': 8453,
@@ -38,6 +42,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
   const { 
     morphoGauntlet, morphoPrime, morphoKpk,
     morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime,
+    morphoSteakhouseEurcv, morphoSteakhousePrimeInstant,
     isLoading: isLoadingDefiLlama, refetch: refetchDefiLlama 
   } = useDefiLlamaData();
   
@@ -46,6 +51,8 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     'morpho-gauntlet': morphoGauntlet,
     'morpho-prime': morphoPrime,
     'morpho-kpk': morphoKpk,
+    'morpho-steakhouse-eurcv': morphoSteakhouseEurcv,
+    'morpho-steakhouse-prime-instant': morphoSteakhousePrimeInstant,
     'morpho-moonwell': morphoMoonwell,
     'morpho-steakhouse': morphoSteakhouse,
     'morpho-steakhouse-prime': morphoSteakhousePrime,

@@ -72,6 +72,8 @@ export function useProtocolData() {
   const morphoGauntletData = useMorphoData('morpho-gauntlet');
   const morphoPrimeData = useMorphoData('morpho-prime');
   const morphoKpkData = useMorphoData('morpho-kpk');
+  const morphoSteakhouseEurcvData = useMorphoData('morpho-steakhouse-eurcv');
+  const morphoSteakhousePrimeInstantData = useMorphoData('morpho-steakhouse-prime-instant');
   const morphoMoonwellData = useMorphoData('morpho-moonwell');
   const morphoSteakhouseData = useMorphoData('morpho-steakhouse');
   const morphoSteakhousePrimeData = useMorphoData('morpho-steakhouse-prime');
@@ -343,8 +345,55 @@ export function useProtocolData() {
     apyChange: calcApyDiff(morphoSteakhousePrimeData.apy, defiLlamaData.morphoSteakhousePrime.previousApy),
   };
 
+  // Ethereum Morpho EURCV vault entries
+  const morphoSteakhouseEurcv: ProtocolData = {
+    id: 'morpho-steakhouse-eurcv',
+    name: 'Steakhouse EURCV',
+    description: 'Morpho vault by Steakhouse',
+    apy: morphoSteakhouseEurcvData.apy,
+    tvl: morphoSteakhouseEurcvData.tvl,
+    tvlFormatted: morphoSteakhouseEurcvData.tvl > 0 ? formatTVL(morphoSteakhouseEurcvData.tvl) : '—',
+    chains: ['Ethereum'],
+    chainId: 1,
+    color: 'morpho',
+    userDeposit: morphoSteakhouseEurcvData.userDeposit,
+    isLoading: morphoSteakhouseEurcvData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURCV',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0x75741A12B36D181f44F389E0c6B1E0210311e3Ff/steakhouse-eurcv',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+    tvlChange: calcChange(morphoSteakhouseEurcvData.tvl, defiLlamaData.morphoSteakhouseEurcv.previousTvl),
+    apyChange: calcApyDiff(morphoSteakhouseEurcvData.apy, defiLlamaData.morphoSteakhouseEurcv.previousApy),
+  };
+
+  const morphoSteakhousePrimeInstant: ProtocolData = {
+    id: 'morpho-steakhouse-prime-instant',
+    name: 'Steakhouse Prime Instant',
+    description: 'Morpho vault by Steakhouse',
+    apy: morphoSteakhousePrimeInstantData.apy,
+    tvl: morphoSteakhousePrimeInstantData.tvl,
+    tvlFormatted: morphoSteakhousePrimeInstantData.tvl > 0 ? formatTVL(morphoSteakhousePrimeInstantData.tvl) : '—',
+    chains: ['Ethereum'],
+    chainId: 1,
+    color: 'morpho',
+    userDeposit: morphoSteakhousePrimeInstantData.userDeposit,
+    isLoading: morphoSteakhousePrimeInstantData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURCV',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0xbeef0C075Da5D01112AE5cF34d257074fB5DDB2f/steakhouse-prime-instant',
+    safetyScore: 93,
+    safetyProvider: 'DeFiSafety',
+    safetyReportUrl: 'https://defisafety.com/app/pqrs/535',
+    tvlChange: calcChange(morphoSteakhousePrimeInstantData.tvl, defiLlamaData.morphoSteakhousePrimeInstant.previousTvl),
+    apyChange: calcApyDiff(morphoSteakhousePrimeInstantData.apy, defiLlamaData.morphoSteakhousePrimeInstant.previousApy),
+  };
+
   // Calculate aggregated Morpho metrics
-  const morphoSubProtocols = [morphoGauntlet, morphoPrime, morphoKpk, morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime];
+  const morphoSubProtocols = [morphoGauntlet, morphoPrime, morphoKpk, morphoSteakhouseEurcv, morphoSteakhousePrimeInstant, morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime];
   const morphoTotalTvl = morphoSubProtocols.reduce((sum, p) => sum + p.tvl, 0);
   const morphoTotalDeposit = morphoSubProtocols.reduce((sum, p) => sum + p.userDeposit, 0);
   
@@ -522,6 +571,8 @@ export function useProtocolData() {
     morphoGauntletData.refetch();
     morphoPrimeData.refetch();
     morphoKpkData.refetch();
+    morphoSteakhouseEurcvData.refetch();
+    morphoSteakhousePrimeInstantData.refetch();
     morphoMoonwellData.refetch();
     morphoSteakhouseData.refetch();
     morphoSteakhousePrimeData.refetch();
