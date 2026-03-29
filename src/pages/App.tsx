@@ -7,28 +7,30 @@ import { WalletProvider } from '@/components/WalletProvider';
 
 const AppPage = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <SEO
-        title="eurooo.xyz - Grow Your Euros in DeFi"
-        description="Compare and deposit EURC stablecoins across trusted DeFi protocols. Simple, transparent yield for Europeans."
-        path="/"
-      />
-      <Header />
-      <main>
-        <WagmiReadyGuard
-          fallback={
-            <section className="py-12">
-              <div className="container flex items-center justify-center min-h-[400px]">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
-            </section>
-          }
-        >
-          <Dashboard />
-        </WagmiReadyGuard>
-      </main>
-      <Footer />
-    </div>
+    <WalletProvider>
+      <div className="min-h-screen bg-background">
+        <SEO
+          title="eurooo.xyz - Grow Your Euros in DeFi"
+          description="Compare and deposit EURC stablecoins across trusted DeFi protocols. Simple, transparent yield for Europeans."
+          path="/"
+        />
+        <Header />
+        <main>
+          <WagmiReadyGuard
+            fallback={
+              <section className="py-12">
+                <div className="container flex items-center justify-center min-h-[400px]">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+              </section>
+            }
+          >
+            <Dashboard />
+          </WagmiReadyGuard>
+        </main>
+        <Footer />
+      </div>
+    </WalletProvider>
   );
 };
 
