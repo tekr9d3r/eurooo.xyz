@@ -82,6 +82,12 @@ export const MORPHO_VAULT_ADDRESSES = {
   'morpho-kpk': {
     1: '0x0c6aec603d48eBf1cECc7b247a2c3DA08b398DC1' as const,
   },
+  'morpho-steakhouse-eurcv': {
+    1: '0x75741A12B36D181f44F389E0c6B1E0210311e3Ff' as const,
+  },
+  'morpho-steakhouse-prime-instant': {
+    1: '0xbeef0C075Da5D01112AE5cF34d257074fB5DDB2f' as const,
+  },
   // Base vaults
   'morpho-moonwell': {
     8453: '0xf24608E0CCb972b0b0f4A6446a0BBf58c701a026' as const,

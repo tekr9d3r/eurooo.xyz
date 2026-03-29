@@ -138,6 +138,10 @@ export function useDefiLlamaData() {
     morphoPrime: get('morphoPrime'),
     morphoKpk: get('morphoKpk'),
     
+    // Morpho - Ethereum (EURCV)
+    morphoSteakhouseEurcv: get('morphoSteakhouseEurcv'),
+    morphoSteakhousePrimeInstant: get('morphoSteakhousePrimeInstant'),
+    
     // Morpho - Base
     morphoMoonwell: get('morphoMoonwell'),
     morphoSteakhouse: get('morphoSteakhouse'),
