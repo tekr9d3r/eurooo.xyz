@@ -28,6 +28,8 @@ const FALLBACK_DATA: Record<string, { apy: number; tvl: number }> = {
   morphoMoonwell: { apy: 1.17, tvl: 5_530_000 },
   morphoSteakhouse: { apy: 0.57, tvl: 5_190_000 },
   morphoSteakhousePrime: { apy: 2.78, tvl: 4_190_000 },
+  morphoSteakhouseEurcv: { apy: 0.22, tvl: 32_920_000 },
+  morphoSteakhousePrimeInstant: { apy: 4.04, tvl: 23_500_000 },
   fluidBase: { apy: 2.77, tvl: 2_768_000 },
   moonwellBase: { apy: 1.10, tvl: 5_533_000 },
   // Jupiter and Drift EURC not available via their APIs - hardcoded
