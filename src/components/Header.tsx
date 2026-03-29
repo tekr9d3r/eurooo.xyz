@@ -1,9 +1,16 @@
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { lazy, Suspense } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 import euroooLogo from '@/assets/eurooo-logo.png';
+
+// Lazy-load RainbowKit ConnectButton so it's only downloaded on /app
+const ConnectButton = lazy(() =>
+  import('@rainbow-me/rainbowkit').then((mod) => ({
+    default: mod.ConnectButton,
+  }))
+);
 
 export function Header() {
   const location = useLocation();
@@ -57,17 +64,19 @@ export function Header() {
                 Swap
               </a>
               <ThemeToggle />
-              <ConnectButton 
-                showBalance={false}
-                accountStatus={{
-                  smallScreen: 'avatar',
-                  largeScreen: 'full',
-                }}
-                chainStatus={{
-                  smallScreen: 'icon',
-                  largeScreen: 'full',
-                }}
-              />
+              <Suspense fallback={<div className="h-10 w-32 animate-pulse rounded-xl bg-muted" />}>
+                <ConnectButton 
+                  showBalance={false}
+                  accountStatus={{
+                    smallScreen: 'avatar',
+                    largeScreen: 'full',
+                  }}
+                  chainStatus={{
+                    smallScreen: 'icon',
+                    largeScreen: 'full',
+                  }}
+                />
+              </Suspense>
             </>
           ) : (
             <>
