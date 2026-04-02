@@ -2,3 +2,6 @@ project_id = "ifeyhwfcvgxkiwatorje"
 
 [functions.fetch-protocol-data]
 verify_jwt = false
+
+[functions.fetch-stablecoin-stats]
+verify_jwt = false
