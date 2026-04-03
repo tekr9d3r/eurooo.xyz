@@ -21,7 +21,7 @@ export interface ProtocolData {
   tvl: number;
   tvlFormatted: string;
   chains: string[];
-  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'drift' | 'moonwell';
+  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'moonwell';
   chainId: number;
   userDeposit: number;
   isLoading: boolean;
