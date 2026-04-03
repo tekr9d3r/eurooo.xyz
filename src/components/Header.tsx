@@ -49,7 +49,7 @@ export function Header() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <img src={euroooLogo} alt="eurooo.xyz" className="h-10 w-10 md:h-14 md:w-14 rounded-lg object-cover" />
-          <span className="hidden sm:inline text-xl font-semibold tracking-tight">eurooo.xyz</span>
+          <span className="text-xl font-semibold tracking-tight">eurooo.xyz</span>
         </Link>
 
         {/* Desktop nav */}
