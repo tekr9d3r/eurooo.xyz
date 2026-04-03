@@ -11,7 +11,7 @@ import morphoLogo from '@/assets/morpho-logo.svg';
 import fluidLogo from '@/assets/fluid-logo.png';
 import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
-import driftLogo from '@/assets/drift-logo.png';
+
 
 export interface ProtocolData {
   id: string;
@@ -21,7 +21,7 @@ export interface ProtocolData {
   tvl: number;
   tvlFormatted: string;
   chains: string[];
-  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'drift' | 'moonwell';
+  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'moonwell';
   chainId: number;
   userDeposit: number;
   isLoading: boolean;
@@ -532,27 +532,6 @@ export function useProtocolData() {
       auditProvider: 'Jupiter Docs',
       isExternal: true,
       externalDepositUrl: 'https://jup.ag/lend/earn/EURC/deposit',
-    },
-    {
-      id: 'drift',
-      name: 'Drift',
-      description: 'Solana perpetuals & lending',
-      apy: defiLlamaData.driftSolana.apy,
-      tvl: defiLlamaData.driftSolana.tvl,
-      tvlFormatted: formatTVL(defiLlamaData.driftSolana.tvl),
-      chains: ['Solana'],
-      chainId: 0, // Solana - not EVM
-      color: 'drift',
-      userDeposit: 0, // External - no on-chain tracking
-      isLoading: false,
-      isSupported: true,
-      stablecoin: 'EURC',
-      logo: driftLogo,
-      learnMoreUrl: 'https://app.drift.trade/earn/borrow-lend',
-      auditUrl: 'https://docs.drift.trade/protocol/risk-and-safety/audits',
-      auditProvider: 'Drift Docs',
-      isExternal: true,
-      externalDepositUrl: 'https://app.drift.trade/ref/eurooo',
     },
   ];
 

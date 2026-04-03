@@ -27,10 +27,9 @@ const POOL_MATCHERS: Record<
   morphoSteakhousePrimeInstant: { project: "morpho-v1", chain: "Ethereum", symbol: "STEAKEURCV", poolId: "d3b28212-a46b-4db8-8bb7-2c946b3cbe76" },
   fluidBase: { project: "fluid-lending", chain: "Base", symbol: "EURC" },
   moonwellBase: { project: "moonwell-lending", chain: "Base", symbol: "EURC" },
-  // Jupiter and Drift EURC pools are not available via their APIs or DeFi Llama.
+  // Jupiter EURC pool is not available via their APIs or DeFi Llama.
   // Jupiter Lend only supports SOL/USDC/JupUSD vaults.
-  // Drift's earn page hides EURC behind pagination.
-  // Both remain hardcoded in the frontend fallback data.
+  // Remains hardcoded in the frontend fallback data.
 };
 
 interface DefiLlamaPool {

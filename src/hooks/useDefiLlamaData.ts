@@ -32,9 +32,8 @@ const FALLBACK_DATA: Record<string, { apy: number; tvl: number }> = {
   morphoSteakhousePrimeInstant: { apy: 4.04, tvl: 23_500_000 },
   fluidBase: { apy: 2.77, tvl: 2_768_000 },
   moonwellBase: { apy: 1.10, tvl: 5_533_000 },
-  // Jupiter and Drift EURC not available via their APIs - hardcoded
+  // Jupiter EURC not available via their APIs - hardcoded
   jupiterSolana: { apy: 0.32, tvl: 12_500_000 },
-  driftSolana: { apy: 0.69, tvl: 834_000 },
 };
 
 const POOL_KEYS = Object.keys(FALLBACK_DATA);
@@ -157,7 +156,6 @@ export function useDefiLlamaData() {
     
     // Solana (hardcoded - not available via APIs)
     jupiterSolana: get('jupiterSolana'),
-    driftSolana: get('driftSolana'),
     
     isLoading,
     refetch,
