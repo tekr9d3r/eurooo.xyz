@@ -11,7 +11,7 @@ import morphoLogo from '@/assets/morpho-logo.svg';
 import fluidLogo from '@/assets/fluid-logo.png';
 import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
-import driftLogo from '@/assets/drift-logo.png';
+
 
 export interface ProtocolData {
   id: string;
