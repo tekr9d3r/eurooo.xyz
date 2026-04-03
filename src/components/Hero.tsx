@@ -135,9 +135,6 @@ export function Hero() {
   }, {
     name: 'Jupiter',
     logo: jupiterLogo
-  }, {
-    name: 'Drift',
-    logo: driftLogo
   }];
   return <section className="relative overflow-hidden py-24 lg:py-40">
       {/* Animated background */}
