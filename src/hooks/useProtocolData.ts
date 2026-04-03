@@ -533,27 +533,6 @@ export function useProtocolData() {
       isExternal: true,
       externalDepositUrl: 'https://jup.ag/lend/earn/EURC/deposit',
     },
-    {
-      id: 'drift',
-      name: 'Drift',
-      description: 'Solana perpetuals & lending',
-      apy: defiLlamaData.driftSolana.apy,
-      tvl: defiLlamaData.driftSolana.tvl,
-      tvlFormatted: formatTVL(defiLlamaData.driftSolana.tvl),
-      chains: ['Solana'],
-      chainId: 0, // Solana - not EVM
-      color: 'drift',
-      userDeposit: 0, // External - no on-chain tracking
-      isLoading: false,
-      isSupported: true,
-      stablecoin: 'EURC',
-      logo: driftLogo,
-      learnMoreUrl: 'https://app.drift.trade/earn/borrow-lend',
-      auditUrl: 'https://docs.drift.trade/protocol/risk-and-safety/audits',
-      auditProvider: 'Drift Docs',
-      isExternal: true,
-      externalDepositUrl: 'https://app.drift.trade/ref/eurooo',
-    },
   ];
 
   const totalDeposits = protocols.reduce((sum, p) => sum + p.userDeposit, 0);

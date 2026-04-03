@@ -156,7 +156,6 @@ export function useDefiLlamaData() {
     
     // Solana (hardcoded - not available via APIs)
     jupiterSolana: get('jupiterSolana'),
-    driftSolana: get('driftSolana'),
     
     isLoading,
     refetch,

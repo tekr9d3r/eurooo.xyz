@@ -204,7 +204,7 @@ export function Hero() {
               </div>
               <h3 className="font-semibold">Trusted Protocols</h3>
               <p className="text-sm text-muted-foreground">
-                Aave, Morpho, Jupiter, Drift & more — battle-tested DeFi platforms
+                Aave, Morpho, Jupiter & more — battle-tested DeFi platforms
               </p>
             </div>
             <div className="group flex flex-col items-center gap-3 text-center p-6 rounded-2xl transition-all duration-300 hover:bg-secondary/50 hover:shadow-lg">
