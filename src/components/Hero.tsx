@@ -11,7 +11,7 @@ import yoLogo from '@/assets/yo-logo.png';
 import fluidLogo from '@/assets/fluid-logo.png';
 import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
-import driftLogo from '@/assets/drift-logo.png';
+
 
 // Animated EU-style gold stars component with parallax
 function AnimatedStars() {
