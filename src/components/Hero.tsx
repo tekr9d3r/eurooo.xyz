@@ -107,7 +107,6 @@ export function Hero() {
       defiLlamaData.fluidBase.apy,
       defiLlamaData.moonwellBase.apy,
       defiLlamaData.jupiterSolana.apy,
-      defiLlamaData.driftSolana.apy,
     ];
     return Math.max(...allApys);
   }, [defiLlamaData]);
