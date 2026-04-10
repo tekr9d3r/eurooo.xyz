@@ -11,16 +11,81 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowUpDown, ExternalLink, TrendingUp, Zap, Wallet } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ArrowUpDown, ExternalLink, TrendingUp, Zap, Wallet, ArrowDown } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { useAccount, useChainId, useSwitchChain, useWriteContract, useReadContract, useSendTransaction } from 'wagmi';
-import { mainnet, base, gnosis, avalanche } from 'wagmi/chains';
+import { mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon } from 'wagmi/chains';
 import { ERC20_ABI } from '@/lib/contracts';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
-const CHAIN_MAP = { 1: mainnet, 8453: base, 100: gnosis, 43114: avalanche } as const;
+const CHAIN_MAP = {
+  1: mainnet,
+  8453: base,
+  100: gnosis,
+  43114: avalanche,
+  42161: arbitrum,
+  10: optimism,
+  137: polygon,
+} as const;
+
 const COMPOSER_API = '/lifi-composer';
 const LIFI_API_KEY = import.meta.env.VITE_LIFI_API_KEY as string;
+
+// ── From-chain / From-token registry ────────────────────────────────────────
+
+interface TokenOption {
+  symbol: string;
+  address: string;
+  decimals: number;
+}
+
+const FROM_CHAINS = [
+  { id: 1,     name: 'Ethereum' },
+  { id: 8453,  name: 'Base' },
+  { id: 42161, name: 'Arbitrum' },
+  { id: 10,    name: 'Optimism' },
+  { id: 137,   name: 'Polygon' },
+  { id: 43114, name: 'Avalanche' },
+];
+
+const NATIVE = '0x0000000000000000000000000000000000000000';
+
+const FROM_TOKENS: Record<number, TokenOption[]> = {
+  1: [
+    { symbol: 'ETH',  address: NATIVE,                                         decimals: 18 },
+    { symbol: 'USDC', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', decimals: 6  },
+    { symbol: 'USDT', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6  },
+    { symbol: 'EURC', address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c', decimals: 6  },
+    { symbol: 'DAI',  address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', decimals: 18 },
+  ],
+  8453: [
+    { symbol: 'ETH',  address: NATIVE,                                         decimals: 18 },
+    { symbol: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6  },
+    { symbol: 'EURC', address: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42', decimals: 6  },
+  ],
+  42161: [
+    { symbol: 'ETH',  address: NATIVE,                                         decimals: 18 },
+    { symbol: 'USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', decimals: 6  },
+    { symbol: 'USDT', address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', decimals: 6  },
+  ],
+  10: [
+    { symbol: 'ETH',  address: NATIVE,                                         decimals: 18 },
+    { symbol: 'USDC', address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85', decimals: 6  },
+    { symbol: 'USDT', address: '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', decimals: 6  },
+  ],
+  137: [
+    { symbol: 'POL',  address: NATIVE,                                         decimals: 18 },
+    { symbol: 'USDC', address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', decimals: 6  },
+    { symbol: 'USDT', address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', decimals: 6  },
+  ],
+  43114: [
+    { symbol: 'AVAX', address: NATIVE,                                         decimals: 18 },
+    { symbol: 'USDC', address: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E', decimals: 6  },
+  ],
+};
+
+// ── Formatters ───────────────────────────────────────────────────────────────
 
 function formatApy(val: number | null | undefined) {
   if (val == null) return '—';
@@ -29,8 +94,8 @@ function formatApy(val: number | null | undefined) {
 
 function formatTvl(usd: number) {
   if (usd >= 1_000_000_000) return `$${(usd / 1_000_000_000).toFixed(2)}B`;
-  if (usd >= 1_000_000) return `$${(usd / 1_000_000).toFixed(2)}M`;
-  if (usd >= 1_000) return `$${(usd / 1_000).toFixed(1)}K`;
+  if (usd >= 1_000_000)     return `$${(usd / 1_000_000).toFixed(2)}M`;
+  if (usd >= 1_000)         return `$${(usd / 1_000).toFixed(1)}K`;
   return `$${usd.toFixed(0)}`;
 }
 
@@ -56,9 +121,9 @@ function PortfolioSummary({ totalDeposits, averageApy, isLoading }: {
     return () => clearInterval(t);
   }, [totalDeposits, averageApy]);
 
-  const daily = (totalDeposits * (averageApy / 100)) / 365;
-  const weekly = daily * 7;
-  const yearly = totalDeposits * (averageApy / 100);
+  const daily   = (totalDeposits * (averageApy / 100)) / 365;
+  const weekly  = daily * 7;
+  const yearly  = totalDeposits * (averageApy / 100);
   const hasDeposits = totalDeposits > 0;
 
   return (
@@ -75,7 +140,6 @@ function PortfolioSummary({ totalDeposits, averageApy, isLoading }: {
         </div>
       ) : (
         <div className="flex flex-col gap-5">
-          {/* Top row: balance + APY */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Portfolio</p>
@@ -105,7 +169,6 @@ function PortfolioSummary({ totalDeposits, averageApy, isLoading }: {
               </div>
             </div>
           </div>
-          {/* Mobile yield row */}
           <div className="flex md:hidden items-center gap-4 text-xs text-muted-foreground border-t border-border/40 pt-3">
             <span>Weekly <span className="text-emerald-500 font-semibold">+€{weekly.toFixed(3)}</span></span>
             <span>·</span>
@@ -117,118 +180,348 @@ function PortfolioSummary({ totalDeposits, averageApy, isLoading }: {
   );
 }
 
-// ── Deposit button states ────────────────────────────────────────────────────
+// ── Deposit Modal ────────────────────────────────────────────────────────────
 
-type DepositStatus = 'idle' | 'switching' | 'quoting' | 'approving' | 'depositing' | 'error';
+type QuoteStatus = 'idle' | 'loading' | 'success' | 'error';
+type TxStatus = 'idle' | 'switching' | 'approving' | 'depositing' | 'done' | 'error';
 
-const BUTTON_LABEL: Record<DepositStatus, string> = {
-  idle: 'Deposit',
-  switching: 'Switching chain…',
-  quoting: 'Getting quote…',
-  approving: 'Approving token…',
+const TX_LABEL: Record<TxStatus, string> = {
+  idle:       'Deposit',
+  switching:  'Switching chain…',
+  approving:  'Approving token…',
   depositing: 'Confirm in wallet…',
-  error: 'Retry',
+  done:       'Done!',
+  error:      'Retry',
 };
 
-// ── Vault Card ───────────────────────────────────────────────────────────────
-
-interface VaultCardProps {
+interface DepositModalProps {
   vault: UnifiedVault;
-  userDeposit: number;
+  onClose: () => void;
 }
 
-function VaultCard({ vault, userDeposit }: VaultCardProps) {
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
+function DepositModal({ vault, onClose }: DepositModalProps) {
+  const { address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const { sendTransactionAsync } = useSendTransaction();
-  const [status, setStatus] = useState<DepositStatus>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [approvalAddress, setApprovalAddress] = useState<`0x${string}` | null>(null);
+
+  const defaultChainId = vault.chainId && FROM_CHAINS.some(c => c.id === vault.chainId)
+    ? vault.chainId
+    : 1;
+  const [fromChainId, setFromChainId] = useState<number>(defaultChainId);
+  const [fromToken, setFromToken] = useState<TokenOption>(FROM_TOKENS[defaultChainId]?.[0] ?? FROM_TOKENS[1][0]);
+  const [amount, setAmount] = useState('');
+
+  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>('idle');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [quote, setQuote] = useState<any>(null);
+  const [quoteError, setQuoteError] = useState('');
+
+  const [txStatus, setTxStatus] = useState<TxStatus>('idle');
+  const [txError, setTxError] = useState('');
+
+  const isNative = fromToken.address === NATIVE;
+  const approvalAddress = quote?.estimate?.approvalAddress as `0x${string}` | undefined;
 
   const { refetch: refetchAllowance } = useReadContract({
-    address: vault.lifiTokenAddress as `0x${string}`,
+    address: !isNative ? (fromToken.address as `0x${string}`) : undefined,
     abi: ERC20_ABI,
     functionName: 'allowance',
     args: address && approvalAddress ? [address, approvalAddress] : undefined,
     query: { enabled: false },
   });
 
-  async function handleDeposit() {
-    if (!address || !vault.lifiAddress || !vault.lifiTokenAddress || !vault.chainId) return;
-    setErrorMsg('');
+  function handleChainChange(val: string) {
+    const cid = Number(val);
+    setFromChainId(cid);
+    setFromToken(FROM_TOKENS[cid]?.[0] ?? FROM_TOKENS[1][0]);
+    resetQuote();
+  }
+
+  function handleTokenChange(symbol: string) {
+    const t = FROM_TOKENS[fromChainId]?.find((x) => x.symbol === symbol);
+    if (t) { setFromToken(t); resetQuote(); }
+  }
+
+  function resetQuote() {
+    setQuote(null);
+    setQuoteStatus('idle');
+    setTxStatus('idle');
+    setTxError('');
+  }
+
+  async function getQuote() {
+    if (!address || !vault.chainId || !vault.lifiAddress || !amount || parseFloat(amount) <= 0) return;
+    setQuoteStatus('loading');
+    setQuoteError('');
     try {
-      if (chainId !== vault.chainId) {
-        setStatus('switching');
-        await switchChainAsync({ chainId: vault.chainId as keyof typeof CHAIN_MAP });
-      }
-
-      setStatus('quoting');
-      const decimals = vault.lifiTokenDecimals ?? 6;
-      const fromAmount = String(10 ** decimals);
-
+      const fromAmount = String(Math.floor(parseFloat(amount) * 10 ** fromToken.decimals));
       const params = new URLSearchParams({
-        fromChain: String(vault.chainId),
-        toChain: String(vault.chainId),
-        fromToken: vault.lifiTokenAddress,
-        toToken: vault.lifiAddress,
+        fromChain:   String(fromChainId),
+        toChain:     String(vault.chainId),
+        fromToken:   fromToken.address,
+        toToken:     vault.lifiAddress,
         fromAddress: address,
-        toAddress: address,
+        toAddress:   address,
         fromAmount,
       });
-
       const res = await fetch(`${COMPOSER_API}/v1/quote?${params}`, {
         headers: { 'x-lifi-api-key': LIFI_API_KEY },
       });
-      if (!res.ok) throw new Error(`Quote failed: ${res.status}`);
-      const quote = await res.json();
-      const tx = quote.transactionRequest;
-      if (!tx) throw new Error('No transaction in quote response');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { message?: string };
+        throw new Error(err.message ?? `Quote failed: ${res.status}`);
+      }
+      setQuote(await res.json());
+      setQuoteStatus('success');
+    } catch (e: unknown) {
+      setQuoteError(e instanceof Error ? e.message : 'Failed to get quote');
+      setQuoteStatus('error');
+    }
+  }
 
-      const spender: `0x${string}` | undefined = quote.estimate?.approvalAddress ?? tx.to;
-      if (spender) {
-        setApprovalAddress(spender);
-        const { data: allowance } = await refetchAllowance();
+  async function executeDeposit() {
+    if (!quote || !address) return;
+    setTxError('');
+
+    try {
+      // 1. Switch to fromChain
+      setTxStatus('switching');
+      await switchChainAsync({ chainId: fromChainId });
+
+      // 2. Approve ERC20 if needed
+      if (!isNative && approvalAddress) {
+        const fromAmount = String(Math.floor(parseFloat(amount) * 10 ** fromToken.decimals));
         const needed = BigInt(fromAmount);
+        const { data: allowance } = await refetchAllowance();
         if (!allowance || (allowance as bigint) < needed) {
-          setStatus('approving');
-          const chain = CHAIN_MAP[vault.chainId as keyof typeof CHAIN_MAP];
+          setTxStatus('approving');
+          const chain = CHAIN_MAP[fromChainId as keyof typeof CHAIN_MAP];
           await writeContractAsync({
-            address: vault.lifiTokenAddress as `0x${string}`,
+            address: fromToken.address as `0x${string}`,
             abi: ERC20_ABI,
             functionName: 'approve',
-            args: [spender, needed],
+            args: [approvalAddress, needed],
             account: address,
             chain,
           });
+          // Poll until approval is reflected
           await new Promise<void>((resolve, reject) => {
             const t = setInterval(async () => {
-              const { data: newAllowance } = await refetchAllowance();
-              if (newAllowance && (newAllowance as bigint) >= needed) { clearInterval(t); resolve(); }
+              const { data: fresh } = await refetchAllowance();
+              if (fresh && (fresh as bigint) >= needed) { clearInterval(t); resolve(); }
             }, 2000);
             setTimeout(() => { clearInterval(t); reject(new Error('Approval timeout')); }, 120_000);
           });
         }
       }
 
-      setStatus('depositing');
+      // 3. Send the deposit transaction
+      setTxStatus('depositing');
+      const tx = quote.transactionRequest;
       await sendTransactionAsync({
-        to: tx.to as `0x${string}`,
-        data: tx.data,
-        value: tx.value ? BigInt(tx.value) : undefined,
-        chainId: vault.chainId as keyof typeof CHAIN_MAP,
+        to:      tx.to as `0x${string}`,
+        data:    tx.data,
+        value:   tx.value ? BigInt(tx.value) : undefined,
+        chainId: fromChainId,
       });
-      setStatus('idle');
+
+      setTxStatus('done');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
-      setErrorMsg(msg.includes('User rejected') ? 'Transaction rejected' : msg);
-      setStatus('error');
+      setTxError(msg.includes('User rejected') ? 'Transaction rejected' : msg);
+      setTxStatus('error');
     }
   }
 
+  // ── Derived quote display values ─────────────────────────────────────────
+  const estOutput = quote?.estimate?.toAmount
+    ? (Number(quote.estimate.toAmount) / 10 ** (vault.lifiTokenDecimals ?? 6)).toFixed(4)
+    : null;
+  const estTimeSec: number = quote?.estimate?.executionDuration ?? 0;
+  const estTime = estTimeSec > 0
+    ? estTimeSec < 60 ? `~${estTimeSec}s` : `~${Math.ceil(estTimeSec / 60)} min`
+    : null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const totalFeeUsd = ((quote?.estimate?.feeCosts ?? []) as any[])
+    .reduce((s: number, f) => s + Number(f.amountUSD ?? 0), 0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const steps: any[] = quote?.includedSteps ?? [];
+
+  const isBusy = txStatus !== 'idle' && txStatus !== 'done' && txStatus !== 'error';
+  const isCrossChain = fromChainId !== vault.chainId;
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Deposit into {vault.name}</DialogTitle>
+          <DialogDescription>
+            {vault.protocol} · {vault.network} · {formatApy(vault.apy)} APY
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4 py-1">
+
+          {/* FROM section */}
+          <div className="rounded-lg border border-border/60 p-3 flex flex-col gap-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From</p>
+            <div className="flex gap-2">
+              <Select value={String(fromChainId)} onValueChange={handleChainChange}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FROM_CHAINS.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={fromToken.symbol} onValueChange={handleTokenChange}>
+                <SelectTrigger className="w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(FROM_TOKENS[fromChainId] ?? []).map((t) => (
+                    <SelectItem key={t.symbol} value={t.symbol}>{t.symbol}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="relative">
+              <input
+                type="number"
+                placeholder="0.00"
+                min="0"
+                value={amount}
+                onChange={(e) => { setAmount(e.target.value); resetQuote(); }}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pr-14"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">
+                {fromToken.symbol}
+              </span>
+            </div>
+          </div>
+
+          {/* Arrow */}
+          <div className="flex justify-center">
+            <div className="rounded-full bg-secondary p-1.5">
+              <ArrowDown className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+
+          {/* TO section */}
+          <div className="rounded-lg border border-border/60 p-3 flex flex-col gap-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">To</p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{vault.token}</span>
+              <div className="flex items-center gap-1.5">
+                <Badge variant="outline" className="text-xs">{vault.network}</Badge>
+                <Badge variant="secondary" className="text-xs">{formatApy(vault.apy)} APY</Badge>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">{vault.protocol} · {vault.name}</p>
+            {isCrossChain && (
+              <div className="mt-1 flex items-center gap-1 text-xs text-amber-500">
+                <Zap className="h-3 w-3" />
+                <span>Cross-chain — LI.FI bridges automatically</span>
+              </div>
+            )}
+          </div>
+
+          {/* Get Quote */}
+          {quoteStatus !== 'success' && (
+            <Button
+              onClick={getQuote}
+              disabled={!amount || parseFloat(amount) <= 0 || quoteStatus === 'loading'}
+              variant="outline"
+              className="w-full"
+            >
+              {quoteStatus === 'loading' ? 'Getting quote…' : 'Get Quote'}
+            </Button>
+          )}
+
+          {quoteStatus === 'error' && (
+            <p className="text-xs text-destructive">{quoteError}</p>
+          )}
+
+          {/* Quote result */}
+          {quoteStatus === 'success' && quote && (
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex flex-col gap-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Route</p>
+
+              {steps.map((step, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-xs">
+                  <span className="text-muted-foreground shrink-0">{i + 1}.</span>
+                  <span className="capitalize font-medium">{step.type}</span>
+                  {step.toolDetails?.name && (
+                    <span className="text-muted-foreground">via {step.toolDetails.name}</span>
+                  )}
+                </div>
+              ))}
+
+              <div className="border-t border-border/40 pt-2 mt-1 flex flex-col gap-1.5">
+                {estOutput && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">You receive</span>
+                    <span className="font-semibold text-emerald-500">~{estOutput} {vault.token}</span>
+                  </div>
+                )}
+                {totalFeeUsd > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Fees</span>
+                    <span>~${totalFeeUsd.toFixed(2)}</span>
+                  </div>
+                )}
+                {estTime && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Est. time</span>
+                    <span>{estTime}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Tx error */}
+          {txStatus === 'error' && txError && (
+            <p className="text-xs text-destructive">{txError}</p>
+          )}
+
+          {/* Action buttons */}
+          {quoteStatus === 'success' && (
+            <div className="flex flex-col gap-2">
+              <Button
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={executeDeposit}
+                disabled={isBusy || txStatus === 'done'}
+              >
+                {txStatus === 'done' ? '✓ Deposited' : TX_LABEL[txStatus]}
+              </Button>
+              {txStatus !== 'done' && (
+                <Button variant="ghost" size="sm" className="text-xs w-full" onClick={resetQuote}>
+                  Change amount / token
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Vault Card ───────────────────────────────────────────────────────────────
+
+interface VaultCardProps {
+  vault: UnifiedVault;
+  userDeposit: number;
+  onDeposit: (vault: UnifiedVault) => void;
+}
+
+function VaultCard({ vault, userDeposit, onDeposit }: VaultCardProps) {
+  const { isConnected } = useAccount();
   const isLifi = vault.source === 'lifi';
-  const isBusy = status !== 'idle' && status !== 'error';
 
   return (
     <Card className="flex flex-col justify-between hover:shadow-md transition-shadow duration-200">
@@ -240,7 +533,7 @@ function VaultCard({ vault, userDeposit }: VaultCardProps) {
               {isLifi && (
                 <Tooltip>
                   <TooltipTrigger><Zap className="h-3 w-3 text-emerald-500" /></TooltipTrigger>
-                  <TooltipContent>1-click deposit via LI.FI</TooltipContent>
+                  <TooltipContent>Cross-chain deposit via LI.FI</TooltipContent>
                 </Tooltip>
               )}
             </div>
@@ -278,7 +571,7 @@ function VaultCard({ vault, userDeposit }: VaultCardProps) {
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span>TVL <span className="text-foreground font-medium">{formatTvl(vault.tvl)}</span></span>
           {vault.apy30d != null && <span>30d <span className="text-foreground font-medium">{formatApy(vault.apy30d)}</span></span>}
-          {vault.apy7d != null && <span>7d <span className="text-foreground font-medium">{formatApy(vault.apy7d)}</span></span>}
+          {vault.apy7d  != null && <span>7d  <span className="text-foreground font-medium">{formatApy(vault.apy7d)}</span></span>}
         </div>
 
         {/* User balance */}
@@ -301,11 +594,6 @@ function VaultCard({ vault, userDeposit }: VaultCardProps) {
           </div>
         )}
 
-        {/* Error */}
-        {status === 'error' && errorMsg && (
-          <p className="text-xs text-destructive truncate" title={errorMsg}>{errorMsg}</p>
-        )}
-
         {/* Actions */}
         <div className="flex gap-2 mt-1">
           {!isConnected ? (
@@ -322,10 +610,9 @@ function VaultCard({ vault, userDeposit }: VaultCardProps) {
             <Button
               size="sm"
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={handleDeposit}
-              disabled={isBusy}
+              onClick={() => onDeposit(vault)}
             >
-              {BUTTON_LABEL[status]}
+              Deposit
             </Button>
           ) : (
             <Tooltip>
@@ -362,21 +649,12 @@ function VaultSkeleton() {
 }
 
 // ── Protocol deposit map ─────────────────────────────────────────────────────
-// Maps protocolKey → total user deposit across all vaults of that protocol
 
 function buildDepositMap(protocols: ReturnType<typeof useProtocolData>['protocols']) {
   const map: Record<string, number> = {};
   for (const p of protocols) {
-    const key = p.id.split('-')[0]; // 'aave', 'morpho', 'summer', etc.
+    const key = p.id.split('-')[0];
     map[key] = (map[key] ?? 0) + p.userDeposit;
-    // Also handle grouped sub-protocols
-    if (p.subProtocols) {
-      for (const sub of p.subProtocols) {
-        const subKey = sub.id.split('-')[0];
-        // Don't double-count — grouped already sums subProtocols
-        if (!map[subKey]) map[subKey] = 0;
-      }
-    }
   }
   return map;
 }
@@ -384,14 +662,14 @@ function buildDepositMap(protocols: ReturnType<typeof useProtocolData>['protocol
 // ── Main page ────────────────────────────────────────────────────────────────
 
 const PROTOCOL_OPTIONS = [
-  { value: 'all', label: 'All Protocols' },
-  { value: 'Aave', label: 'Aave' },
-  { value: 'Morpho', label: 'Morpho' },
-  { value: 'YO', label: 'YO' },
-  { value: 'Summer', label: 'Summer' },
-  { value: 'Fluid', label: 'Fluid' },
+  { value: 'all',      label: 'All Protocols' },
+  { value: 'Aave',     label: 'Aave' },
+  { value: 'Morpho',   label: 'Morpho' },
+  { value: 'YO',       label: 'YO' },
+  { value: 'Summer',   label: 'Summer' },
+  { value: 'Fluid',    label: 'Fluid' },
   { value: 'Moonwell', label: 'Moonwell' },
-  { value: 'Jupiter', label: 'Jupiter' },
+  { value: 'Jupiter',  label: 'Jupiter' },
 ];
 
 function LiFiEarnInner() {
@@ -399,6 +677,7 @@ function LiFiEarnInner() {
   const { protocols, totalDeposits, averageApy, isLoading: portfolioLoading } = useProtocolData();
   const [selectedProtocol, setSelectedProtocol] = useState('all');
   const [sortBy, setSortBy] = useState<'apy' | 'tvl'>('apy');
+  const [depositVault, setDepositVault] = useState<UnifiedVault | null>(null);
 
   const depositMap = buildDepositMap(protocols);
 
@@ -485,6 +764,7 @@ function LiFiEarnInner() {
               key={vault.id}
               vault={vault}
               userDeposit={depositMap[vault.protocolKey] ?? 0}
+              onDeposit={setDepositVault}
             />
           ))}
         </div>
@@ -493,8 +773,16 @@ function LiFiEarnInner() {
       {/* Legend */}
       <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
         <Zap className="h-3.5 w-3.5 text-emerald-500" />
-        <span>1-click deposit powered by LI.FI · Other protocols open directly on their platform</span>
+        <span>Cross-chain deposit powered by LI.FI · Other protocols open directly on their platform</span>
       </div>
+
+      {/* Deposit Modal */}
+      {depositVault && (
+        <DepositModal
+          vault={depositVault}
+          onClose={() => setDepositVault(null)}
+        />
+      )}
     </main>
   );
 }
