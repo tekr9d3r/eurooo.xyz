@@ -10,6 +10,18 @@ export default defineConfig(() => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      '/earn-api': {
+        target: 'https://earn.li.fi',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/earn-api/, ''),
+      },
+      '/lifi-composer': {
+        target: 'https://li.quest',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/lifi-composer/, ''),
+      },
+    },
   },
   plugins: [
     react(),
