@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/lifi-composer/:path*",
+      "destination": "https://li.quest/:path*"
+    },
+    {
+      "source": "/earn-api/:path*",
+      "destination": "https://earn.li.fi/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
