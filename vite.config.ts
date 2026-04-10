@@ -41,7 +41,7 @@ export default defineConfig(() => ({
     // Reduce chunk size warnings threshold
     chunkSizeWarningLimit: 600,
     // Enable minification optimizations
-    minify: 'esbuild',
+    minify: 'esbuild' as const,
     // Target modern browsers for smaller bundle
     target: 'es2020',
   },

@@ -157,8 +157,8 @@ export function Hero() {
           <div className="relative mb-6">
             <AnimatedStars />
             <h1 className="relative z-10 text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl opacity-0 animate-fade-in-up animation-delay-100">
-              Grow Your Euros{' '}
-              <span className="text-primary">in DeFi</span>
+              Don't Let Inflation{' '}
+              <span className="text-primary">Eat Your Euros</span>
             </h1>
           </div>
 
