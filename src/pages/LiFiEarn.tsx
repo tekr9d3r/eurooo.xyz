@@ -794,7 +794,7 @@ export default function LiFiEarn() {
         <SEO
           title="EUR Yield — Powered by LI.FI"
           description="Discover EUR stablecoin vaults across Aave, Morpho, YO, Summer, Fluid, Moonwell and Jupiter."
-          path="/lifi"
+          path="/earn"
         />
         <Header />
         <WagmiReadyGuard>
