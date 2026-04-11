@@ -25,6 +25,7 @@ import { mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon } from 'w
 import { ERC20_ABI } from '@/lib/contracts';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useEurUsdRate } from '@/hooks/useEurUsdRate';
+import { useWalletAssets } from '@/hooks/useWalletAssets';
 import { FROM_CHAINS, FROM_TOKENS, NATIVE, type TokenOption } from '@/lib/tokens';
 
 const PROTOCOL_LOGOS: Record<string, string> = {
@@ -663,46 +664,14 @@ function VaultTableSkeleton() {
   );
 }
 
-// ── Wallet analysis via LI.FI balances API ───────────────────────────────────
+// ── Wallet analysis ───────────────────────────────────────────────────────────
 
 interface TokenBalance {
   symbol: string;
   name: string;
-  chainId: number;
   chainName: string;
   amountUsd: number;
   amount: string;
-}
-
-const CHAIN_NAMES: Record<number, string> = {
-  1: 'Ethereum', 8453: 'Base', 42161: 'Arbitrum',
-  10: 'Optimism', 137: 'Polygon', 43114: 'Avalanche', 100: 'Gnosis',
-};
-
-async function fetchWalletTokens(address: string): Promise<TokenBalance[]> {
-  const res = await fetch(`/lifi-composer/v1/balances/${address}`, {
-    headers: { 'x-lifi-api-key': LIFI_API_KEY },
-  });
-  if (!res.ok) throw new Error('Balance fetch failed');
-  // Response: { [chainId]: [{ symbol, name, amount, priceUSD, ... }] }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const json: Record<string, any[]> = await res.json();
-  const results: TokenBalance[] = [];
-  for (const [chainId, tokens] of Object.entries(json)) {
-    for (const t of tokens ?? []) {
-      const amountUsd = Number(t.amount ?? 0) * Number(t.priceUSD ?? 0);
-      if (amountUsd < 0.01) continue;
-      results.push({
-        symbol: t.symbol ?? '?',
-        name: t.name ?? t.symbol ?? '?',
-        chainId: Number(chainId),
-        chainName: CHAIN_NAMES[Number(chainId)] ?? `Chain ${chainId}`,
-        amountUsd,
-        amount: Number(t.amount ?? 0).toLocaleString('en-US', { maximumFractionDigits: 4 }),
-      });
-    }
-  }
-  return results.sort((a, b) => b.amountUsd - a.amountUsd);
 }
 
 const STORAGE_KEY = (address: string) => `eurooo_wallet_analysis_${address.toLowerCase()}`;
@@ -778,16 +747,44 @@ interface YieldCalculatorProps {
   bestApy: number;
 }
 
-type AnalysisState = 'idle' | 'loading' | 'done' | 'error';
+type AnalysisState = 'idle' | 'loading' | 'done';
 
 function YieldCalculator({ bestApy }: YieldCalculatorProps) {
   const { address, isConnected } = useAccount();
   const { data: rateData } = useEurUsdRate();
   const eurRate = rateData?.current ?? 0.92;
 
-  // Persisted wallet tokens — load from localStorage on mount
+  // Live wallet data from wagmi hooks
+  const walletAssets = useWalletAssets();
+
+  // Build token list from wagmi data
+  const liveTokens = useMemo((): TokenBalance[] => {
+    const list: TokenBalance[] = [];
+    if (walletAssets.ethBalanceRaw > 0.0001) {
+      // Distribute ETH across chains — report as single aggregate for simplicity
+      list.push({
+        symbol: 'ETH',
+        name: 'Ethereum',
+        chainName: 'All chains',
+        amountUsd: walletAssets.ethBalanceUsd,
+        amount: walletAssets.ethBalanceRaw.toLocaleString('en-US', { maximumFractionDigits: 4 }),
+      });
+    }
+    if (walletAssets.usdBalance > 0.01) {
+      list.push({
+        symbol: 'USD Stablecoins',
+        name: 'USDC / USDT / DAI',
+        chainName: 'All chains',
+        amountUsd: walletAssets.usdBalance,
+        amount: walletAssets.usdBalance.toLocaleString('en-US', { maximumFractionDigits: 2 }),
+      });
+    }
+    return list.sort((a, b) => b.amountUsd - a.amountUsd);
+  }, [walletAssets.ethBalanceUsd, walletAssets.ethBalanceRaw, walletAssets.usdBalance]);
+
+  // Persisted state — load from localStorage on mount
   const [tokens, setTokens] = useState<TokenBalance[]>(() => {
-    if (!address) return [];
+    if (typeof window === 'undefined' || !address) return [];
     try {
       const stored = localStorage.getItem(STORAGE_KEY(address));
       return stored ? JSON.parse(stored) : [];
@@ -796,7 +793,6 @@ function YieldCalculator({ bestApy }: YieldCalculatorProps) {
   const [analysisState, setAnalysisState] = useState<AnalysisState>(() =>
     tokens.length > 0 ? 'done' : 'idle'
   );
-  const [errorMsg, setErrorMsg] = useState('');
 
   // Re-load from storage when address changes
   useEffect(() => {
@@ -811,16 +807,14 @@ function YieldCalculator({ bestApy }: YieldCalculatorProps) {
   async function analyse() {
     if (!address) return;
     setAnalysisState('loading');
-    setErrorMsg('');
-    try {
-      const result = await fetchWalletTokens(address);
-      setTokens(result);
-      localStorage.setItem(STORAGE_KEY(address), JSON.stringify(result));
-      setAnalysisState('done');
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Analysis failed');
-      setAnalysisState('error');
-    }
+    // Show animation for at least 1.5s so it feels like something is happening
+    await new Promise(r => setTimeout(r, 1500));
+    const result = liveTokens.length > 0 ? liveTokens : [
+      { symbol: 'USD Stablecoins', name: 'USDC/USDT/DAI', chainName: 'All chains', amountUsd: 0, amount: '0' },
+    ];
+    setTokens(result);
+    localStorage.setItem(STORAGE_KEY(address), JSON.stringify(result));
+    setAnalysisState('done');
   }
 
   const totalUsd = tokens.reduce((s, t) => s + t.amountUsd, 0);
@@ -836,15 +830,14 @@ function YieldCalculator({ bestApy }: YieldCalculatorProps) {
   return (
     <div className="rounded-xl border border-border/50 bg-card p-5 md:p-6 mb-8">
 
-      {/* ── Analyse CTA (idle / error) ── */}
-      {(analysisState === 'idle' || analysisState === 'error') && isConnected && (
+      {/* ── Analyse CTA (idle) ── */}
+      {analysisState === 'idle' && isConnected && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5 pb-5 border-b border-border/40">
           <div>
             <p className="font-semibold text-sm">What are your funds worth in EUR yield?</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               We scan your wallet across all chains to calculate your potential earnings.
             </p>
-            {analysisState === 'error' && <p className="text-xs text-destructive mt-1">{errorMsg}</p>}
           </div>
           <Button
             className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
