@@ -1081,6 +1081,7 @@ function LiFiEarnInner() {
   const { protocols, totalDeposits, averageApy, isLoading: portfolioLoading } = useProtocolData();
   const [depositVault, setDepositVault] = useState<UnifiedVault | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [showOtherProtocols, setShowOtherProtocols] = useState(false);
 
   function toggleGroup(key: string) {
     setExpandedGroups(prev => {
@@ -1122,6 +1123,9 @@ function LiFiEarnInner() {
         return b.bestApy - a.bestApy;
       });
   }, [vaults, depositMap]);
+
+  const lifiGroups = groups.filter(g => g.vaults.some(v => v.source === 'lifi' && v.isTransactional));
+  const otherGroups = groups.filter(g => !g.vaults.some(v => v.source === 'lifi' && v.isTransactional));
 
   const isLoading = vaultsLoading || portfolioLoading;
 
@@ -1178,9 +1182,9 @@ function LiFiEarnInner() {
             <div className="col-span-2">Your Balance</div>
             <div className="col-span-2 text-right">Action</div>
           </div>
-          {/* Rows */}
+          {/* LI.FI one-click rows */}
           <div className="divide-y divide-border/30">
-            {groups.map((group) => (
+            {lifiGroups.map((group) => (
               <ProtocolGroupRow
                 key={group.protocolKey}
                 group={group}
@@ -1191,6 +1195,39 @@ function LiFiEarnInner() {
               />
             ))}
           </div>
+          {/* Other protocols — collapsed by default */}
+          {otherGroups.length > 0 && (
+            <>
+              <button
+                onClick={() => setShowOtherProtocols(p => !p)}
+                className="w-full flex items-center justify-between gap-2 px-6 py-3 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/20 transition-colors border-t border-border/30"
+              >
+                <span className="flex items-center gap-1.5">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  {showOtherProtocols
+                    ? 'Hide other protocols'
+                    : `Show ${otherGroups.length} more protocol${otherGroups.length > 1 ? 's' : ''} (manual deposit only)`}
+                </span>
+                {showOtherProtocols
+                  ? <ChevronDown className="h-3.5 w-3.5" />
+                  : <ChevronRight className="h-3.5 w-3.5" />}
+              </button>
+              {showOtherProtocols && (
+                <div className="divide-y divide-border/30 border-t border-border/30 bg-secondary/10">
+                  {otherGroups.map((group) => (
+                    <ProtocolGroupRow
+                      key={group.protocolKey}
+                      group={group}
+                      depositMap={depositMap}
+                      isExpanded={expandedGroups.has(group.protocolKey)}
+                      onToggle={() => toggleGroup(group.protocolKey)}
+                      onDeposit={(v) => setDepositVault(v)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
