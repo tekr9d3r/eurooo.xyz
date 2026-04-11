@@ -1,18 +1,17 @@
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense, useEffect, useMemo } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { WalletProvider } from '@/components/WalletProvider';
 import { WagmiReadyGuard } from '@/components/WagmiReadyGuard';
 import { useEuroooVaults, UnifiedVault } from '@/hooks/useEuroooVaults';
 import { useProtocolData } from '@/hooks/useProtocolData';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ArrowUpDown, ExternalLink, TrendingUp, Zap, Wallet, ArrowDown, AlertTriangle, DollarSign } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronDown, ChevronRight, ExternalLink, TrendingUp, Zap, Wallet, ArrowDown, AlertTriangle, DollarSign } from 'lucide-react';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
@@ -478,149 +477,190 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
   );
 }
 
-// ── Vault Card ───────────────────────────────────────────────────────────────
+// ── Vault Table ──────────────────────────────────────────────────────────────
 
-interface VaultCardProps {
+interface ProtocolGroup {
+  protocolKey: string;
+  protocol: string;
+  bestApy: number;
+  totalTvl: number;
+  userDeposit: number;
+  vaults: UnifiedVault[];
+}
+
+interface VaultRowProps {
   vault: UnifiedVault;
   userDeposit: number;
   onDeposit: (vault: UnifiedVault) => void;
 }
 
-function VaultCard({ vault, userDeposit, onDeposit }: VaultCardProps) {
+function VaultSubRow({ vault, userDeposit, onDeposit }: VaultRowProps) {
   const { isConnected } = useAccount();
   const isLifi = vault.source === 'lifi';
-
   return (
-    <Card className="flex flex-col justify-between hover:shadow-md transition-shadow duration-200">
-      <CardHeader className="pb-2 pt-5 px-5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            {PROTOCOL_LOGOS[vault.protocolKey] && (
-              <img
-                src={PROTOCOL_LOGOS[vault.protocolKey]}
-                alt={vault.protocol}
-                className="h-9 w-9 rounded-lg object-contain shrink-0 bg-secondary/40 p-1"
-              />
+    <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-secondary/20 border-t border-border/20 items-center text-sm">
+      {/* Name + badges */}
+      <div className="col-span-4 flex items-center gap-2 pl-10">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="text-xs font-medium truncate text-muted-foreground">{vault.name}</span>
+          <div className="flex items-center gap-1">
+            <Badge variant="outline" className="text-[10px] px-1 py-0 h-3.5">{vault.network}</Badge>
+            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-3.5">{vault.token}</Badge>
+            {isLifi && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Zap className="h-2.5 w-2.5 text-emerald-500" />
+                </TooltipTrigger>
+                <TooltipContent>1-click deposit</TooltipContent>
+              </Tooltip>
             )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{vault.protocol}</p>
-                {isLifi && (
-                  <Tooltip>
-                    <TooltipTrigger><Zap className="h-3 w-3 text-emerald-500" /></TooltipTrigger>
-                    <TooltipContent>Cross-chain deposit via LI.FI</TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-              <h3 className="font-semibold text-sm leading-tight truncate" title={vault.name}>{vault.name}</h3>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            <Badge variant="outline" className="text-xs px-1.5">{vault.network}</Badge>
-            <Badge variant="secondary" className="text-xs px-1.5">{vault.token}</Badge>
           </div>
         </div>
-      </CardHeader>
-
-      <CardContent className="px-5 pb-5 flex flex-col gap-3">
-        {/* APY */}
-        <div className="flex items-end gap-3">
-          <div>
-            <p className="text-xs text-muted-foreground mb-0.5">Total APY</p>
-            <p className="text-3xl font-bold text-emerald-500 leading-none">{formatApy(vault.apy)}</p>
-          </div>
-          {(vault.apyReward ?? 0) > 0 && (
-            <>
-              <div className="pb-0.5">
-                <p className="text-xs text-muted-foreground mb-0.5">Base</p>
-                <p className="text-sm font-medium">{formatApy(vault.apyBase)}</p>
-              </div>
-              <div className="pb-0.5">
-                <p className="text-xs text-muted-foreground mb-0.5">Reward</p>
-                <p className="text-sm font-medium text-amber-500">{formatApy(vault.apyReward)}</p>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* TVL + snapshots */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span>TVL <span className="text-foreground font-medium">{formatTvl(vault.tvl)}</span></span>
-          {vault.apy30d != null && <span>30d <span className="text-foreground font-medium">{formatApy(vault.apy30d)}</span></span>}
-          {vault.apy7d  != null && <span>7d  <span className="text-foreground font-medium">{formatApy(vault.apy7d)}</span></span>}
-        </div>
-
-        {/* User balance */}
-        {isConnected && (
-          <div className="flex items-center gap-1.5 rounded-lg bg-secondary/40 px-3 py-2">
-            <Wallet className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <span className="text-xs text-muted-foreground">Your balance:</span>
-            <span className={`text-xs font-semibold ml-auto ${userDeposit > 0 ? 'text-emerald-500' : 'text-muted-foreground'}`}>
-              {userDeposit > 0 ? `€${formatBalance(userDeposit)}` : '—'}
-            </span>
-          </div>
+      </div>
+      {/* APY */}
+      <div className="col-span-2 text-emerald-500 font-semibold">{formatApy(vault.apy)}</div>
+      {/* TVL */}
+      <div className="col-span-2 text-muted-foreground text-xs">{formatTvl(vault.tvl)}</div>
+      {/* Balance */}
+      <div className="col-span-2 text-xs">
+        {isConnected ? (
+          <span className={userDeposit > 0 ? 'text-emerald-500 font-semibold' : 'text-muted-foreground'}>
+            {userDeposit > 0 ? `€${formatBalance(userDeposit)}` : '—'}
+          </span>
+        ) : '—'}
+      </div>
+      {/* Action */}
+      <div className="col-span-2 flex justify-end gap-1">
+        {!isConnected ? (
+          <ConnectButton.Custom>
+            {({ openConnectModal }) => (
+              <Button size="sm" variant="outline" className="text-xs h-7" onClick={openConnectModal}>Connect</Button>
+            )}
+          </ConnectButton.Custom>
+        ) : isLifi && vault.isTransactional ? (
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7" onClick={() => onDeposit(vault)}>
+            Convert & Earn
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" className="text-xs h-7" asChild>
+            <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
+          </Button>
         )}
-
-        {/* Tags */}
-        {vault.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {vault.tags.map((tag) => (
-              <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-muted-foreground">{tag}</Badge>
-            ))}
-          </div>
+        {vault.protocolUrl && (
+          <Button size="sm" variant="ghost" className="px-1.5 h-7" asChild>
+            <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </Button>
         )}
-
-        {/* Actions */}
-        <div className="flex gap-2 mt-1">
-          {!isConnected ? (
-            <div className="flex-1">
-              <ConnectButton.Custom>
-                {({ openConnectModal }) => (
-                  <Button size="sm" className="w-full" variant="outline" onClick={openConnectModal}>
-                    Connect Wallet
-                  </Button>
-                )}
-              </ConnectButton.Custom>
-            </div>
-          ) : isLifi && vault.isTransactional ? (
-            <Button
-              size="sm"
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={() => onDeposit(vault)}
-            >
-              Convert & Earn
-            </Button>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="sm" className="flex-1" variant="outline" asChild>
-                  <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">Open Protocol</a>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Deposit directly on {vault.protocol}</TooltipContent>
-            </Tooltip>
-          )}
-          {vault.protocolUrl && (
-            <Button size="sm" variant="ghost" asChild className="px-2">
-              <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
-function VaultSkeleton() {
+interface ProtocolGroupRowProps {
+  group: ProtocolGroup;
+  depositMap: Record<string, number>;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onDeposit: (vault: UnifiedVault) => void;
+}
+
+function ProtocolGroupRow({ group, depositMap, isExpanded, onToggle, onDeposit }: ProtocolGroupRowProps) {
+  const hasDeposit = group.userDeposit > 0;
+  const logo = PROTOCOL_LOGOS[group.protocolKey];
+  const multiVault = group.vaults.length > 1;
+
   return (
-    <Card className="flex flex-col gap-3 p-5">
-      <Skeleton className="h-4 w-2/3" />
-      <Skeleton className="h-8 w-1/3" />
-      <Skeleton className="h-4 w-1/2" />
-      <Skeleton className="h-9 w-full mt-2" />
-    </Card>
+    <div className={hasDeposit ? 'border-l-2 border-l-emerald-500' : ''}>
+      {/* Protocol header row */}
+      <button
+        className="w-full grid grid-cols-12 gap-4 px-6 py-4 items-center text-sm hover:bg-secondary/30 transition-colors text-left"
+        onClick={multiVault ? onToggle : undefined}
+        style={{ cursor: multiVault ? 'pointer' : 'default' }}
+      >
+        {/* Protocol name */}
+        <div className="col-span-4 flex items-center gap-3">
+          {logo && (
+            <img src={logo} alt={group.protocol} className="h-8 w-8 rounded-lg object-contain bg-secondary/40 p-1 shrink-0" />
+          )}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-semibold">{group.protocol}</span>
+            {multiVault && (
+              <span className="text-[10px] text-muted-foreground bg-secondary rounded px-1 py-0.5">
+                {group.vaults.length} vaults
+              </span>
+            )}
+          </div>
+          {multiVault && (
+            isExpanded
+              ? <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+              : <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+          )}
+        </div>
+        {/* Best APY */}
+        <div className="col-span-2 text-emerald-500 font-bold">{formatApy(group.bestApy)}</div>
+        {/* TVL */}
+        <div className="col-span-2 text-muted-foreground">{formatTvl(group.totalTvl)}</div>
+        {/* Balance */}
+        <div className="col-span-2">
+          {hasDeposit ? (
+            <span className="text-emerald-500 font-semibold">€{formatBalance(group.userDeposit)}</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
+        {/* Action — only show for single-vault protocols */}
+        <div className="col-span-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
+          {!multiVault && group.vaults[0] && (
+            group.vaults[0].source === 'lifi' && group.vaults[0].isTransactional ? (
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7"
+                onClick={() => onDeposit(group.vaults[0])}>
+                Convert & Earn
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" className="text-xs h-7" asChild>
+                <a href={group.vaults[0].protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
+              </Button>
+            )
+          )}
+          {multiVault && (
+            <span className="text-xs text-muted-foreground">
+              {isExpanded ? 'Collapse' : 'View vaults'}
+            </span>
+          )}
+        </div>
+      </button>
+
+      {/* Expanded sub-rows */}
+      {isExpanded && multiVault && group.vaults.map((vault) => (
+        <VaultSubRow
+          key={vault.id}
+          vault={vault}
+          userDeposit={depositMap[vault.protocolKey] ?? 0}
+          onDeposit={onDeposit}
+        />
+      ))}
+    </div>
+  );
+}
+
+function VaultTableSkeleton() {
+  return (
+    <div className="rounded-xl border border-border/50 bg-card overflow-hidden divide-y divide-border/30">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="grid grid-cols-12 gap-4 px-6 py-4 items-center">
+          <div className="col-span-4 flex items-center gap-3">
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="col-span-2"><Skeleton className="h-4 w-12" /></div>
+          <div className="col-span-2"><Skeleton className="h-4 w-16" /></div>
+          <div className="col-span-2"><Skeleton className="h-4 w-10" /></div>
+          <div className="col-span-2 flex justify-end"><Skeleton className="h-7 w-24" /></div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -731,21 +771,49 @@ const PROTOCOL_OPTIONS = [
 function LiFiEarnInner() {
   const { vaults, isLoading: vaultsLoading, error } = useEuroooVaults();
   const { protocols, totalDeposits, averageApy, isLoading: portfolioLoading } = useProtocolData();
-  const [selectedProtocol, setSelectedProtocol] = useState('all');
-  const [sortBy, setSortBy] = useState<'apy' | 'tvl'>('apy');
   const [depositVault, setDepositVault] = useState<UnifiedVault | null>(null);
   const [initialFromToken, setInitialFromToken] = useState<{ chainId: number; symbol: string } | undefined>();
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   function openDepositWithToken(fromToken: { chainId: number; symbol: string }, vault?: UnifiedVault) {
     setInitialFromToken(fromToken);
-    setDepositVault(vault ?? filtered[0] ?? vaults[0] ?? null);
+    setDepositVault(vault ?? groups[0]?.vaults[0] ?? null);
+  }
+
+  function toggleGroup(key: string) {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
   }
 
   const depositMap = buildDepositMap(protocols);
 
-  const filtered = vaults
-    .filter((v) => selectedProtocol === 'all' || v.protocol === selectedProtocol)
-    .sort((a, b) => sortBy === 'apy' ? b.apy - a.apy : b.tvl - a.tvl);
+  // Group vaults by protocol, sorted by best APY
+  const groups = useMemo<ProtocolGroup[]>(() => {
+    const map = new Map<string, ProtocolGroup>();
+    for (const v of vaults) {
+      const existing = map.get(v.protocolKey);
+      if (existing) {
+        existing.vaults.push(v);
+        existing.bestApy = Math.max(existing.bestApy, v.apy);
+        existing.totalTvl += v.tvl;
+      } else {
+        map.set(v.protocolKey, {
+          protocolKey: v.protocolKey,
+          protocol: v.protocol,
+          bestApy: v.apy,
+          totalTvl: v.tvl,
+          userDeposit: depositMap[v.protocolKey] ?? 0,
+          vaults: [v],
+        });
+      }
+    }
+    return Array.from(map.values())
+      .map(g => ({ ...g, userDeposit: depositMap[g.protocolKey] ?? 0 }))
+      .sort((a, b) => b.bestApy - a.bestApy);
+  }, [vaults, depositMap]);
 
   const isLoading = vaultsLoading || portfolioLoading;
 
@@ -788,60 +856,43 @@ function LiFiEarnInner() {
         onOpenDeposit={(fromToken) => openDepositWithToken(fromToken)}
       />
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <Select value={selectedProtocol} onValueChange={setSelectedProtocol}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Protocol" />
-          </SelectTrigger>
-          <SelectContent>
-            {PROTOCOL_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5 text-xs"
-          onClick={() => setSortBy(sortBy === 'apy' ? 'tvl' : 'apy')}
-        >
-          <ArrowUpDown className="h-3.5 w-3.5" />
-          Sort: {sortBy === 'apy' ? 'APY' : 'TVL'}
-        </Button>
-
-        <span className="text-xs text-muted-foreground ml-auto">
-          {filtered.length} vault{filtered.length !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {/* Grid */}
+      {/* Vault Table */}
       {error ? (
         <div className="text-center py-20 text-muted-foreground">Failed to load vaults. Please try again.</div>
       ) : isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => <VaultSkeleton key={i} />)}
-        </div>
-      ) : filtered.length === 0 ? (
+        <VaultTableSkeleton />
+      ) : groups.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">No vaults found.</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((vault) => (
-            <VaultCard
-              key={vault.id}
-              vault={vault}
-              userDeposit={depositMap[vault.protocolKey] ?? 0}
-              onDeposit={(v) => { setInitialFromToken(undefined); setDepositVault(v); }}
-            />
-          ))}
+        <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+          {/* Table header */}
+          <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-secondary/30 border-b border-border/50 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <div className="col-span-4">Protocol</div>
+            <div className="col-span-2">Best APY</div>
+            <div className="col-span-2">TVL</div>
+            <div className="col-span-2">Your Balance</div>
+            <div className="col-span-2 text-right">Action</div>
+          </div>
+          {/* Rows */}
+          <div className="divide-y divide-border/30">
+            {groups.map((group) => (
+              <ProtocolGroupRow
+                key={group.protocolKey}
+                group={group}
+                depositMap={depositMap}
+                isExpanded={expandedGroups.has(group.protocolKey)}
+                onToggle={() => toggleGroup(group.protocolKey)}
+                onDeposit={(v) => { setInitialFromToken(undefined); setDepositVault(v); }}
+              />
+            ))}
+          </div>
         </div>
       )}
 
       {/* Legend */}
-      <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
         <Zap className="h-3.5 w-3.5 text-emerald-500" />
-        <span>Cross-chain deposit powered by LI.FI · Other protocols open directly on their platform</span>
+        <span>1-click deposit powered by LI.FI · Other protocols open directly on their platform</span>
       </div>
 
       {/* Deposit Modal */}
