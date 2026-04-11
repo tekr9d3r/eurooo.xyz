@@ -13,8 +13,25 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ArrowUpDown, ExternalLink, TrendingUp, Zap, Wallet, ArrowDown } from 'lucide-react';
+import aaveLogo from '@/assets/aave-logo.png';
+import morphoLogo from '@/assets/morpho-logo.svg';
+import yoLogo from '@/assets/yo-logo.png';
+import summerLogo from '@/assets/summer-logo.png';
+import fluidLogo from '@/assets/fluid-logo.png';
+import moonwellLogo from '@/assets/moonwell-logo.png';
+import jupiterLogo from '@/assets/jupiter-logo.png';
+
+const PROTOCOL_LOGOS: Record<string, string> = {
+  aave:     aaveLogo,
+  morpho:   morphoLogo,
+  yo:       yoLogo,
+  summer:   summerLogo,
+  fluid:    fluidLogo,
+  moonwell: moonwellLogo,
+  jupiter:  jupiterLogo,
+};
 import { SEO } from '@/components/SEO';
-import { useAccount, useChainId, useSwitchChain, useWriteContract, useReadContract, useSendTransaction } from 'wagmi';
+import { useAccount, useSwitchChain, useWriteContract, useReadContract, useSendTransaction } from 'wagmi';
 import { mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon } from 'wagmi/chains';
 import { ERC20_ABI } from '@/lib/contracts';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -287,7 +304,7 @@ function DepositModal({ vault, onClose }: DepositModalProps) {
     try {
       // 1. Switch to fromChain
       setTxStatus('switching');
-      await switchChainAsync({ chainId: fromChainId });
+      await switchChainAsync({ chainId: fromChainId as (typeof FROM_CHAINS)[number]['id'] });
 
       // 2. Approve ERC20 if needed
       if (!isNative && approvalAddress) {
@@ -296,14 +313,14 @@ function DepositModal({ vault, onClose }: DepositModalProps) {
         const { data: allowance } = await refetchAllowance();
         if (!allowance || (allowance as bigint) < needed) {
           setTxStatus('approving');
-          const chain = CHAIN_MAP[fromChainId as keyof typeof CHAIN_MAP];
           await writeContractAsync({
             address: fromToken.address as `0x${string}`,
             abi: ERC20_ABI,
             functionName: 'approve',
             args: [approvalAddress, needed],
             account: address,
-            chain,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            chain: (CHAIN_MAP as any)[fromChainId],
           });
           // Poll until approval is reflected
           await new Promise<void>((resolve, reject) => {
@@ -323,7 +340,7 @@ function DepositModal({ vault, onClose }: DepositModalProps) {
         to:      tx.to as `0x${string}`,
         data:    tx.data,
         value:   tx.value ? BigInt(tx.value) : undefined,
-        chainId: fromChainId,
+        chainId: fromChainId as (typeof FROM_CHAINS)[number]['id'],
       });
 
       setTxStatus('done');
@@ -527,17 +544,26 @@ function VaultCard({ vault, userDeposit, onDeposit }: VaultCardProps) {
     <Card className="flex flex-col justify-between hover:shadow-md transition-shadow duration-200">
       <CardHeader className="pb-2 pt-5 px-5">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{vault.protocol}</p>
-              {isLifi && (
-                <Tooltip>
-                  <TooltipTrigger><Zap className="h-3 w-3 text-emerald-500" /></TooltipTrigger>
-                  <TooltipContent>Cross-chain deposit via LI.FI</TooltipContent>
-                </Tooltip>
-              )}
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            {PROTOCOL_LOGOS[vault.protocolKey] && (
+              <img
+                src={PROTOCOL_LOGOS[vault.protocolKey]}
+                alt={vault.protocol}
+                className="h-9 w-9 rounded-lg object-contain shrink-0 bg-secondary/40 p-1"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-1">
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{vault.protocol}</p>
+                {isLifi && (
+                  <Tooltip>
+                    <TooltipTrigger><Zap className="h-3 w-3 text-emerald-500" /></TooltipTrigger>
+                    <TooltipContent>Cross-chain deposit via LI.FI</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              <h3 className="font-semibold text-sm leading-tight truncate" title={vault.name}>{vault.name}</h3>
             </div>
-            <h3 className="font-semibold text-sm leading-tight truncate" title={vault.name}>{vault.name}</h3>
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0">
             <Badge variant="outline" className="text-xs px-1.5">{vault.network}</Badge>
