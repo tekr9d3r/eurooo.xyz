@@ -16,7 +16,7 @@ function formatSupply(value: number): string {
   if (value >= 1_000_000) {
     return `€${(value / 1_000_000).toFixed(2)} million`;
   }
-  return `€${value.toLocaleString()}`;
+  return `€${value.toLocaleString('en-US')}`;
 }
 
 interface FAQItem {
@@ -115,7 +115,7 @@ export function generateFAQSchema(
     if (value >= 1_000_000) {
       return `€${(value / 1_000_000).toFixed(2)} million`;
     }
-    return `€${value.toLocaleString()}`;
+    return `€${value.toLocaleString('en-US')}`;
   };
 
   return {

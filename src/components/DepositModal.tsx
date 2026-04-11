@@ -308,7 +308,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
                     onClick={handleMax}
                     className="text-xs text-primary hover:underline"
                   >
-                    Max: €{maxAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                    Max: €{maxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </button>
                 )}
               </div>
@@ -359,7 +359,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Amount</span>
-                <span className="font-medium">€{numericAmount.toLocaleString()}</span>
+                <span className="font-medium">€{numericAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Current APY</span>
@@ -394,7 +394,7 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
                 <CheckCircle2 className="h-12 w-12 text-success" />
                 <p className="text-center font-medium">Deposit successful!</p>
                 <p className="text-sm text-muted-foreground">
-                  €{numericAmount.toLocaleString()} deposited to {protocol.name}
+                  €{numericAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} deposited to {protocol.name}
                 </p>
                 {txHash && (
                   <a 

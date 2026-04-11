@@ -58,7 +58,7 @@ export function PortfolioHeader({
               <Skeleton className="h-8 w-48 mx-auto md:mx-0" />
             ) : (
               <div className="text-2xl sm:text-3xl font-bold yield-glow text-success tracking-tight">
-                €{displayValue.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                €{displayValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             )}
           </div>
@@ -82,7 +82,7 @@ export function PortfolioHeader({
                 <div className="flex items-center gap-1 justify-center">
                   <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-success" />
                   <span className="text-sm md:text-lg font-semibold text-success">
-                    +€{dailyYield.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+                    +€{dailyYield.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
                   </span>
                 </div>
               </div>
@@ -95,7 +95,7 @@ export function PortfolioHeader({
                 <div className="flex items-center gap-1 justify-center">
                   <TrendingUp className="h-4 w-4 text-success" />
                   <span className="text-lg font-semibold text-success">
-                    +€{yearlyYield.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    +€{yearlyYield.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>

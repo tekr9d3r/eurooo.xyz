@@ -22,7 +22,7 @@ function formatMarketCap(valueInUsd: number): string {
   if (valueInEur >= 1_000) {
     return `€${(valueInEur / 1_000).toFixed(0)}K`;
   }
-  return `€${valueInEur.toLocaleString()}`;
+  return `€${valueInEur.toLocaleString('en-US')}`;
 }
 
 export function TopStablecoins({ stablecoins, isLoading }: TopStablecoinsProps) {

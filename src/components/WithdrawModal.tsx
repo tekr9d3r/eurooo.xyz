@@ -293,7 +293,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
                     onClick={handleMax}
                     className="text-xs text-primary hover:underline"
                   >
-                    Max: €{maxAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                    Max: €{maxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </button>
                 )}
               </div>
@@ -317,7 +317,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
             <div className="rounded-lg bg-secondary/50 p-4">
               <p className="text-sm text-muted-foreground">Your current deposit</p>
               <p className="text-lg font-semibold">
-                €{maxAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                €{maxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>
@@ -332,12 +332,12 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Withdraw amount</span>
-                <span className="font-medium">€{numericAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</span>
+                <span className="font-medium">€{numericAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Remaining deposit</span>
                 <span className="font-medium">
-                  €{Math.max(0, maxAmount - numericAmount).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                  €{Math.max(0, maxAmount - numericAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
@@ -365,7 +365,7 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
                 <CheckCircle2 className="h-12 w-12 text-success" />
                 <p className="text-center font-medium">Withdrawal successful!</p>
                 <p className="text-sm text-muted-foreground">
-                  €{numericAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })} withdrawn from {protocol.name}
+                  €{numericAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} withdrawn from {protocol.name}
                 </p>
                 {txHash && (
                   <a 

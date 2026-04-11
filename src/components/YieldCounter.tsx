@@ -75,7 +75,7 @@ export function YieldCounter({ totalDeposit, averageApy, isLoading }: YieldCount
         ) : (
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-bold tracking-tight yield-glow text-success">
-              €{displayValue.toLocaleString('de-DE', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
+              €{displayValue.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
             </span>
           </div>
         )}
