@@ -505,7 +505,7 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
               variant="outline"
               className="w-full"
             >
-              {quoteStatus === 'loading' ? 'Calculating…' : 'See how much you\'ll earn'}
+              {quoteStatus === 'loading' ? 'Calculating…' : 'Preview deposit'}
             </Button>
           )}
 
