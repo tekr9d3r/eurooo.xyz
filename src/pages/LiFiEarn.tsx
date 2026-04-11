@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown, ChevronRight, ExternalLink, TrendingUp, Zap, Wallet, ArrowDown, AlertTriangle, DollarSign } from 'lucide-react';
+import { ChevronDown, ChevronRight, ExternalLink, TrendingUp, Zap, Wallet, ArrowDown } from 'lucide-react';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
@@ -664,82 +664,129 @@ function VaultTableSkeleton() {
   );
 }
 
-// ── Wallet Insights ──────────────────────────────────────────────────────────
+// ── Yield Calculator ─────────────────────────────────────────────────────────
 
-interface WalletInsightsProps {
-  bestApy: number;
-  onOpenDeposit: (initialFromToken: { chainId: number; symbol: string }) => void;
+// Simple sparkline: 12 monthly compounding data points normalised to 0–100
+function YieldSparkline({ principal, apy }: { principal: number; apy: number }) {
+  const points = Array.from({ length: 13 }, (_, i) => {
+    const months = i;
+    return principal * Math.pow(1 + apy / 100 / 12, months);
+  });
+  const min = points[0];
+  const max = points[points.length - 1];
+  const range = max - min || 1;
+  const W = 280; const H = 56;
+  const coords = points.map((v, i) => {
+    const x = (i / (points.length - 1)) * W;
+    const y = H - ((v - min) / range) * H * 0.85 - H * 0.075;
+    return `${x},${y}`;
+  });
+  const polyline = coords.join(' ');
+  const area = `0,${H} ${polyline} ${W},${H}`;
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-14" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="yg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={area} fill="url(#yg)" />
+      <polyline points={polyline} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
-function WalletInsights({ bestApy, onOpenDeposit }: WalletInsightsProps) {
+interface YieldCalculatorProps {
+  bestApy: number;
+}
+
+function YieldCalculator({ bestApy }: YieldCalculatorProps) {
   const { isConnected } = useAccount();
   const { ethBalanceUsd, usdBalance } = useWalletAssets();
   const { data: rateData } = useEurUsdRate();
+  const eurRate = rateData?.current ?? 0.92;
 
-  if (!isConnected) return null;
-  if (ethBalanceUsd < 1 && usdBalance < 1) return null;
+  // Total wallet value converted to EUR
+  const totalUsd = ethBalanceUsd + usdBalance;
+  const totalEur = totalUsd * eurRate;
 
-  const usdLoss = rateData?.usdLossPct ?? 0;
+  // Allow manual override via slider if wallet not connected or balance is 0
+  const [manualAmount, setManualAmount] = useState<number | null>(null);
+  const principal = manualAmount ?? (totalEur > 1 ? Math.round(totalEur) : 1000);
+
+  const apy = bestApy > 0 ? bestApy : 4;
+  const weekly  = (principal * (apy / 100)) / 52;
+  const monthly = (principal * (apy / 100)) / 12;
+  const yearly  = principal * (apy / 100);
+
+  const showWalletValue = isConnected && totalEur > 1 && manualAmount === null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-      {/* ETH card */}
-      {ethBalanceUsd >= 1 && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-amber-500/15 p-1.5">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-              </div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-amber-500">ETH Holdings</span>
-            </div>
-            <span className="text-sm font-bold">${ethBalanceUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
-          </div>
-          <div>
-            <p className="font-semibold text-sm mb-1">ETH is unpredictable</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Convert to EUR and earn a stable {formatApy(bestApy)} — no more watching charts.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-auto"
-            onClick={() => onOpenDeposit({ chainId: 1, symbol: 'ETH' })}
-          >
-            Start earning
-          </Button>
-        </div>
-      )}
+    <div className="rounded-xl border border-border/50 bg-card p-5 md:p-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-start gap-6">
 
-      {/* USD card */}
-      {usdBalance >= 1 && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-destructive/15 p-1.5">
-                <DollarSign className="h-4 w-4 text-destructive" />
-              </div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-destructive">USD Holdings</span>
+        {/* Left: amount input + yield numbers */}
+        <div className="flex-1">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+            What could your money earn?
+          </p>
+
+          {/* Amount row */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">€</span>
+              <input
+                type="number"
+                min={100}
+                step={100}
+                value={principal}
+                onChange={(e) => setManualAmount(Number(e.target.value) || 100)}
+                className="w-full rounded-lg border border-input bg-background pl-7 pr-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
             </div>
-            <span className="text-sm font-bold">${usdBalance.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+            <span className="text-xs text-muted-foreground shrink-0">at</span>
+            <span className="text-sm font-bold text-emerald-500 shrink-0">{apy.toFixed(2)}% APY</span>
+            {showWalletValue && (
+              <Badge variant="secondary" className="text-xs shrink-0">
+                <Wallet className="h-3 w-3 mr-1" />
+                Your wallet
+              </Badge>
+            )}
           </div>
-          <div>
-            <p className="font-semibold text-sm mb-1">
-              Your USD lost {usdLoss > 0 ? `${usdLoss.toFixed(1)}%` : 'value'} vs EUR this year
-            </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              The euro has strengthened against the dollar. Earn in EUR and stop losing to currency moves.
-            </p>
+
+          {/* Yield numbers */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg bg-secondary/40 px-3 py-2.5 text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Weekly</p>
+              <p className="text-base font-bold text-emerald-500">+€{weekly.toFixed(2)}</p>
+            </div>
+            <div className="rounded-lg bg-secondary/40 px-3 py-2.5 text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Monthly</p>
+              <p className="text-base font-bold text-emerald-500">+€{monthly.toFixed(2)}</p>
+            </div>
+            <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5 text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Yearly</p>
+              <p className="text-base font-bold text-emerald-500">+€{yearly.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
+            </div>
           </div>
-          <Button
-            size="sm"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-auto"
-            onClick={() => onOpenDeposit({ chainId: 1, symbol: 'USDC' })}
-          >
-            Start earning
-          </Button>
         </div>
-      )}
+
+        {/* Right: sparkline */}
+        <div className="md:w-72">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">12-month growth</p>
+          <YieldSparkline principal={principal} apy={apy} />
+          <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+            <span>Now</span>
+            <span className="text-emerald-500 font-semibold">€{(principal + yearly).toLocaleString('en-US', { maximumFractionDigits: 0 })} in 12 months</span>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground mt-4">
+        Pick a pool below and convert your funds to EUR — we handle the rest.
+      </p>
     </div>
   );
 }
@@ -772,13 +819,7 @@ function LiFiEarnInner() {
   const { vaults, isLoading: vaultsLoading, error } = useEuroooVaults();
   const { protocols, totalDeposits, averageApy, isLoading: portfolioLoading } = useProtocolData();
   const [depositVault, setDepositVault] = useState<UnifiedVault | null>(null);
-  const [initialFromToken, setInitialFromToken] = useState<{ chainId: number; symbol: string } | undefined>();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-
-  function openDepositWithToken(fromToken: { chainId: number; symbol: string }, vault?: UnifiedVault) {
-    setInitialFromToken(fromToken);
-    setDepositVault(vault ?? groups[0]?.vaults[0] ?? null);
-  }
 
   function toggleGroup(key: string) {
     setExpandedGroups(prev => {
@@ -812,7 +853,13 @@ function LiFiEarnInner() {
     }
     return Array.from(map.values())
       .map(g => ({ ...g, userDeposit: depositMap[g.protocolKey] ?? 0 }))
-      .sort((a, b) => b.bestApy - a.bestApy);
+      .sort((a, b) => {
+        // LI.FI transactional protocols first, then by APY
+        const aLifi = a.vaults.some(v => v.source === 'lifi' && v.isTransactional) ? 1 : 0;
+        const bLifi = b.vaults.some(v => v.source === 'lifi' && v.isTransactional) ? 1 : 0;
+        if (bLifi !== aLifi) return bLifi - aLifi;
+        return b.bestApy - a.bestApy;
+      });
   }, [vaults, depositMap]);
 
   const isLoading = vaultsLoading || portfolioLoading;
@@ -850,11 +897,8 @@ function LiFiEarnInner() {
         isLoading={isLoading}
       />
 
-      {/* Wallet Insights */}
-      <WalletInsights
-        bestApy={vaults[0]?.apy ?? 0}
-        onOpenDeposit={(fromToken) => openDepositWithToken(fromToken)}
-      />
+      {/* Yield Calculator */}
+      <YieldCalculator bestApy={vaults[0]?.apy ?? 0} />
 
       {/* Vault Table */}
       {error ? (
@@ -882,7 +926,7 @@ function LiFiEarnInner() {
                 depositMap={depositMap}
                 isExpanded={expandedGroups.has(group.protocolKey)}
                 onToggle={() => toggleGroup(group.protocolKey)}
-                onDeposit={(v) => { setInitialFromToken(undefined); setDepositVault(v); }}
+                onDeposit={(v) => setDepositVault(v)}
               />
             ))}
           </div>
@@ -899,8 +943,7 @@ function LiFiEarnInner() {
       {depositVault && (
         <DepositModal
           vault={depositVault}
-          onClose={() => { setDepositVault(null); setInitialFromToken(undefined); }}
-          initialFromToken={initialFromToken}
+          onClose={() => setDepositVault(null)}
         />
       )}
     </main>
