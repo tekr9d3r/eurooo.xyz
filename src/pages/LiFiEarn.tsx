@@ -24,7 +24,6 @@ import { useAccount, useSwitchChain, useWriteContract, useReadContract, useSendT
 import { mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon } from 'wagmi/chains';
 import { ERC20_ABI } from '@/lib/contracts';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useWalletAssets } from '@/hooks/useWalletAssets';
 import { useEurUsdRate } from '@/hooks/useEurUsdRate';
 import { FROM_CHAINS, FROM_TOKENS, NATIVE, type TokenOption } from '@/lib/tokens';
 
@@ -664,26 +663,101 @@ function VaultTableSkeleton() {
   );
 }
 
-// ── Yield Calculator ─────────────────────────────────────────────────────────
+// ── Wallet analysis via LI.FI balances API ───────────────────────────────────
 
-// Simple sparkline: 12 monthly compounding data points normalised to 0–100
-function YieldSparkline({ principal, apy }: { principal: number; apy: number }) {
-  const points = Array.from({ length: 13 }, (_, i) => {
-    const months = i;
-    return principal * Math.pow(1 + apy / 100 / 12, months);
+interface TokenBalance {
+  symbol: string;
+  name: string;
+  chainId: number;
+  chainName: string;
+  amountUsd: number;
+  amount: string;
+}
+
+const CHAIN_NAMES: Record<number, string> = {
+  1: 'Ethereum', 8453: 'Base', 42161: 'Arbitrum',
+  10: 'Optimism', 137: 'Polygon', 43114: 'Avalanche', 100: 'Gnosis',
+};
+
+async function fetchWalletTokens(address: string): Promise<TokenBalance[]> {
+  const res = await fetch(`/lifi-composer/v1/balances/${address}`, {
+    headers: { 'x-lifi-api-key': LIFI_API_KEY },
   });
-  const min = points[0];
-  const max = points[points.length - 1];
-  const range = max - min || 1;
+  if (!res.ok) throw new Error('Balance fetch failed');
+  // Response: { [chainId]: [{ symbol, name, amount, priceUSD, ... }] }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const json: Record<string, any[]> = await res.json();
+  const results: TokenBalance[] = [];
+  for (const [chainId, tokens] of Object.entries(json)) {
+    for (const t of tokens ?? []) {
+      const amountUsd = Number(t.amount ?? 0) * Number(t.priceUSD ?? 0);
+      if (amountUsd < 0.01) continue;
+      results.push({
+        symbol: t.symbol ?? '?',
+        name: t.name ?? t.symbol ?? '?',
+        chainId: Number(chainId),
+        chainName: CHAIN_NAMES[Number(chainId)] ?? `Chain ${chainId}`,
+        amountUsd,
+        amount: Number(t.amount ?? 0).toLocaleString('en-US', { maximumFractionDigits: 4 }),
+      });
+    }
+  }
+  return results.sort((a, b) => b.amountUsd - a.amountUsd);
+}
+
+const STORAGE_KEY = (address: string) => `eurooo_wallet_analysis_${address.toLowerCase()}`;
+
+// ── Spinning star animation ───────────────────────────────────────────────────
+
+function AnalysisSpinner() {
+  const stars = Array.from({ length: 12 }, (_, i) => i);
+  return (
+    <div className="relative w-24 h-24 mx-auto">
+      <style>{`
+        @keyframes ea-spin { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
+        @keyframes ea-counter { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(-360deg); } }
+        @keyframes ea-twinkle { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+      `}</style>
+      <div className="absolute top-1/2 left-1/2 w-20 h-20"
+        style={{ animation: 'ea-spin 2s linear infinite' }}>
+        {stars.map(i => {
+          const angle = i * 30 * (Math.PI / 180);
+          const r = 42;
+          const x = 50 + r * Math.cos(angle - Math.PI / 2);
+          const y = 50 + r * Math.sin(angle - Math.PI / 2);
+          return (
+            <div key={i} className="absolute w-2.5 h-2.5"
+              style={{
+                left: `${x}%`, top: `${y}%`,
+                transform: 'translate(-50%,-50%)',
+                animation: `ea-counter 2s linear infinite, ea-twinkle ${1 + i % 3 * 0.4}s ease-in-out infinite`,
+                animationDelay: `0s, ${i * 0.1}s`,
+              }}>
+              <svg viewBox="0 0 24 24" fill="hsl(var(--accent))" className="w-full h-full drop-shadow-[0_0_6px_hsl(var(--accent)/0.6)]">
+                <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6.3-4.6-6.3 4.6 2.3-7-6-4.6h7.6z" />
+              </svg>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Sparkline ─────────────────────────────────────────────────────────────────
+
+function YieldSparkline({ principal, apy }: { principal: number; apy: number }) {
+  const points = Array.from({ length: 13 }, (_, i) =>
+    principal * Math.pow(1 + apy / 100 / 12, i)
+  );
+  const min = points[0]; const max = points[12]; const range = max - min || 1;
   const W = 280; const H = 56;
   const coords = points.map((v, i) => {
-    const x = (i / (points.length - 1)) * W;
+    const x = (i / 12) * W;
     const y = H - ((v - min) / range) * H * 0.85 - H * 0.075;
     return `${x},${y}`;
   });
-  const polyline = coords.join(' ');
-  const area = `0,${H} ${polyline} ${W},${H}`;
-
+  const pl = coords.join(' ');
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-14" preserveAspectRatio="none">
       <defs>
@@ -692,71 +766,165 @@ function YieldSparkline({ principal, apy }: { principal: number; apy: number }) 
           <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <polygon points={area} fill="url(#yg)" />
-      <polyline points={polyline} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" />
+      <polygon points={`0,${H} ${pl} ${W},${H}`} fill="url(#yg)" />
+      <polyline points={pl} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );
 }
+
+// ── Yield Calculator ─────────────────────────────────────────────────────────
 
 interface YieldCalculatorProps {
   bestApy: number;
 }
 
+type AnalysisState = 'idle' | 'loading' | 'done' | 'error';
+
 function YieldCalculator({ bestApy }: YieldCalculatorProps) {
-  const { isConnected } = useAccount();
-  const { ethBalanceUsd, usdBalance } = useWalletAssets();
+  const { address, isConnected } = useAccount();
   const { data: rateData } = useEurUsdRate();
   const eurRate = rateData?.current ?? 0.92;
 
-  // Total wallet value converted to EUR
-  const totalUsd = ethBalanceUsd + usdBalance;
+  // Persisted wallet tokens — load from localStorage on mount
+  const [tokens, setTokens] = useState<TokenBalance[]>(() => {
+    if (!address) return [];
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY(address));
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+  const [analysisState, setAnalysisState] = useState<AnalysisState>(() =>
+    tokens.length > 0 ? 'done' : 'idle'
+  );
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Re-load from storage when address changes
+  useEffect(() => {
+    if (!address) { setTokens([]); setAnalysisState('idle'); return; }
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY(address));
+      if (stored) { setTokens(JSON.parse(stored)); setAnalysisState('done'); }
+      else { setTokens([]); setAnalysisState('idle'); }
+    } catch { setTokens([]); setAnalysisState('idle'); }
+  }, [address]);
+
+  async function analyse() {
+    if (!address) return;
+    setAnalysisState('loading');
+    setErrorMsg('');
+    try {
+      const result = await fetchWalletTokens(address);
+      setTokens(result);
+      localStorage.setItem(STORAGE_KEY(address), JSON.stringify(result));
+      setAnalysisState('done');
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : 'Analysis failed');
+      setAnalysisState('error');
+    }
+  }
+
+  const totalUsd = tokens.reduce((s, t) => s + t.amountUsd, 0);
   const totalEur = totalUsd * eurRate;
 
-  // Allow manual override via slider if wallet not connected or balance is 0
   const [manualAmount, setManualAmount] = useState<number | null>(null);
   const principal = manualAmount ?? (totalEur > 1 ? Math.round(totalEur) : 1000);
-
   const apy = bestApy > 0 ? bestApy : 4;
   const weekly  = (principal * (apy / 100)) / 52;
   const monthly = (principal * (apy / 100)) / 12;
   const yearly  = principal * (apy / 100);
 
-  const showWalletValue = isConnected && totalEur > 1 && manualAmount === null;
-
   return (
     <div className="rounded-xl border border-border/50 bg-card p-5 md:p-6 mb-8">
-      <div className="flex flex-col md:flex-row md:items-start gap-6">
 
-        {/* Left: amount input + yield numbers */}
+      {/* ── Analyse CTA (idle / error) ── */}
+      {(analysisState === 'idle' || analysisState === 'error') && isConnected && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5 pb-5 border-b border-border/40">
+          <div>
+            <p className="font-semibold text-sm">What are your funds worth in EUR yield?</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              We scan your wallet across all chains to calculate your potential earnings.
+            </p>
+            {analysisState === 'error' && <p className="text-xs text-destructive mt-1">{errorMsg}</p>}
+          </div>
+          <Button
+            className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+            onClick={analyse}
+          >
+            <TrendingUp className="h-4 w-4" />
+            Analyse my wallet
+          </Button>
+        </div>
+      )}
+
+      {/* ── Loading animation ── */}
+      {analysisState === 'loading' && (
+        <div className="flex flex-col items-center gap-3 py-6 mb-5 border-b border-border/40">
+          <AnalysisSpinner />
+          <p className="text-sm font-medium text-muted-foreground animate-pulse">Analysing your wallet…</p>
+        </div>
+      )}
+
+      {/* ── Token results ── */}
+      {analysisState === 'done' && tokens.length > 0 && (
+        <div className="mb-5 pb-5 border-b border-border/40">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Your wallet</p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold">
+                ~€{totalEur.toLocaleString('en-US', { maximumFractionDigits: 0 })} total
+              </span>
+              <button
+                onClick={() => { setAnalysisState('idle'); setTokens([]); if (address) localStorage.removeItem(STORAGE_KEY(address)); }}
+                className="text-[10px] text-muted-foreground hover:text-foreground underline"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {tokens.slice(0, 8).map((t, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-2 gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold truncate">{t.symbol}</p>
+                  <p className="text-[10px] text-muted-foreground">{t.chainName}</p>
+                </div>
+                <p className="text-xs font-bold text-right shrink-0">
+                  ${t.amountUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                </p>
+              </div>
+            ))}
+            {tokens.length > 8 && (
+              <div className="flex items-center justify-center rounded-lg bg-secondary/20 px-3 py-2">
+                <p className="text-xs text-muted-foreground">+{tokens.length - 8} more</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Calculator ── */}
+      <div className="flex flex-col md:flex-row md:items-start gap-6">
         <div className="flex-1">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
-            What could your money earn?
+            What could this earn in EUR?
           </p>
-
-          {/* Amount row */}
           <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">€</span>
               <input
-                type="number"
-                min={100}
-                step={100}
-                value={principal}
+                type="number" min={100} step={100} value={principal}
                 onChange={(e) => setManualAmount(Number(e.target.value) || 100)}
                 className="w-full rounded-lg border border-input bg-background pl-7 pr-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
             <span className="text-xs text-muted-foreground shrink-0">at</span>
             <span className="text-sm font-bold text-emerald-500 shrink-0">{apy.toFixed(2)}% APY</span>
-            {showWalletValue && (
+            {analysisState === 'done' && totalEur > 1 && manualAmount === null && (
               <Badge variant="secondary" className="text-xs shrink-0">
-                <Wallet className="h-3 w-3 mr-1" />
-                Your wallet
+                <Wallet className="h-3 w-3 mr-1" />Your wallet
               </Badge>
             )}
           </div>
-
-          {/* Yield numbers */}
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg bg-secondary/40 px-3 py-2.5 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Weekly</p>
@@ -772,8 +940,6 @@ function YieldCalculator({ bestApy }: YieldCalculatorProps) {
             </div>
           </div>
         </div>
-
-        {/* Right: sparkline */}
         <div className="md:w-72">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">12-month growth</p>
           <YieldSparkline principal={principal} apy={apy} />
