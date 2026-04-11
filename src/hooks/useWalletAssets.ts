@@ -100,11 +100,44 @@ export function useWalletAssets() {
   const ethBalanceUsd = totalEth * ethPrice;
   const usdBalance = usd0 + usd1 + usd2 + usd3 + usd4 + usd5 + usd6 + usd7 + usd8 + usd9 + usd10;
 
+  // Detailed breakdown for UI display
+  type BreakdownItem = {
+    chainId: number; chainName: string; symbol: string;
+    tokenAddress: string; decimals: number; balance: number; amountUsd: number;
+  };
+  const NATIVE_ADDR = '0x0000000000000000000000000000000000000000';
+  const breakdown: BreakdownItem[] = [];
+
+  // Native tokens
+  if (ethEthereum  > 0.00001) breakdown.push({ chainId: 1,     chainName: 'Ethereum', symbol: 'ETH',  tokenAddress: NATIVE_ADDR, decimals: 18, balance: ethEthereum,  amountUsd: ethEthereum  * ethPrice });
+  if (ethBase      > 0.00001) breakdown.push({ chainId: 8453,  chainName: 'Base',     symbol: 'ETH',  tokenAddress: NATIVE_ADDR, decimals: 18, balance: ethBase,      amountUsd: ethBase      * ethPrice });
+  if (ethArbitrum  > 0.00001) breakdown.push({ chainId: 42161, chainName: 'Arbitrum', symbol: 'ETH',  tokenAddress: NATIVE_ADDR, decimals: 18, balance: ethArbitrum,  amountUsd: ethArbitrum  * ethPrice });
+  if (ethOptimism  > 0.00001) breakdown.push({ chainId: 10,    chainName: 'Optimism', symbol: 'ETH',  tokenAddress: NATIVE_ADDR, decimals: 18, balance: ethOptimism,  amountUsd: ethOptimism  * ethPrice });
+  if (ethPolygon   > 0.001)   breakdown.push({ chainId: 137,   chainName: 'Polygon',  symbol: 'POL',  tokenAddress: NATIVE_ADDR, decimals: 18, balance: ethPolygon,   amountUsd: 0 /* POL price not tracked */ });
+  if (ethAvalanche > 0.00001) breakdown.push({ chainId: 43114, chainName: 'Avalanche',symbol: 'AVAX', tokenAddress: NATIVE_ADDR, decimals: 18, balance: ethAvalanche, amountUsd: 0 /* AVAX price not tracked */ });
+
+  // USD stablecoins
+  if (usd0  > 0.01) breakdown.push({ chainId: 1,     chainName: 'Ethereum', symbol: 'USDC', tokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', decimals: 6,  balance: usd0,  amountUsd: usd0  });
+  if (usd1  > 0.01) breakdown.push({ chainId: 1,     chainName: 'Ethereum', symbol: 'USDT', tokenAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6,  balance: usd1,  amountUsd: usd1  });
+  if (usd2  > 0.01) breakdown.push({ chainId: 1,     chainName: 'Ethereum', symbol: 'DAI',  tokenAddress: '0x6B175474E89094C44Da98b954EedeAC495271d0F', decimals: 18, balance: usd2,  amountUsd: usd2  });
+  if (usd3  > 0.01) breakdown.push({ chainId: 8453,  chainName: 'Base',     symbol: 'USDC', tokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6,  balance: usd3,  amountUsd: usd3  });
+  if (usd4  > 0.01) breakdown.push({ chainId: 42161, chainName: 'Arbitrum', symbol: 'USDC', tokenAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', decimals: 6,  balance: usd4,  amountUsd: usd4  });
+  if (usd5  > 0.01) breakdown.push({ chainId: 42161, chainName: 'Arbitrum', symbol: 'USDT', tokenAddress: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', decimals: 6,  balance: usd5,  amountUsd: usd5  });
+  if (usd6  > 0.01) breakdown.push({ chainId: 10,    chainName: 'Optimism', symbol: 'USDC', tokenAddress: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85', decimals: 6,  balance: usd6,  amountUsd: usd6  });
+  if (usd7  > 0.01) breakdown.push({ chainId: 10,    chainName: 'Optimism', symbol: 'USDT', tokenAddress: '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', decimals: 6,  balance: usd7,  amountUsd: usd7  });
+  if (usd8  > 0.01) breakdown.push({ chainId: 137,   chainName: 'Polygon',  symbol: 'USDC', tokenAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', decimals: 6,  balance: usd8,  amountUsd: usd8  });
+  if (usd9  > 0.01) breakdown.push({ chainId: 137,   chainName: 'Polygon',  symbol: 'USDT', tokenAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', decimals: 6,  balance: usd9,  amountUsd: usd9  });
+  if (usd10 > 0.01) breakdown.push({ chainId: 43114, chainName: 'Avalanche',symbol: 'USDC', tokenAddress: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E', decimals: 6,  balance: usd10, amountUsd: usd10 });
+
+  breakdown.sort((a, b) => b.amountUsd - a.amountUsd);
+
   return {
     ethBalanceUsd,
     ethBalanceRaw: totalEth,
     usdBalance,
     isConnected: !!address,
+    breakdown,
+    ethPrice,
   };
 }
 

@@ -20,12 +20,13 @@ import fluidLogo from '@/assets/fluid-logo.png';
 import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
 import { SEO } from '@/components/SEO';
-import { useAccount, useSwitchChain, useWriteContract, useReadContract, useSendTransaction } from 'wagmi';
+import { useAccount, useSwitchChain, useWriteContract, useReadContract, useSendTransaction, useBalance } from 'wagmi';
+import { formatUnits } from 'viem';
 import { mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon } from 'wagmi/chains';
 import { ERC20_ABI } from '@/lib/contracts';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useEurUsdRate } from '@/hooks/useEurUsdRate';
-import { useWalletAssets } from '@/hooks/useWalletAssets';
+import { useWalletAssets, useEthPriceUsd } from '@/hooks/useWalletAssets';
 import { FROM_CHAINS, FROM_TOKENS, NATIVE, type TokenOption } from '@/lib/tokens';
 
 const PROTOCOL_LOGOS: Record<string, string> = {
@@ -166,11 +167,35 @@ interface DepositModalProps {
   initialFromToken?: { chainId: number; symbol: string };
 }
 
+// Hook: reads balance of currently-selected token on currently-selected chain
+function useSelectedTokenBalance(chainId: number, token: TokenOption, userAddress?: `0x${string}`) {
+  const isNative = token.address === NATIVE;
+  const { data: nativeBal } = useBalance({
+    address: userAddress,
+    chainId: chainId as (typeof FROM_CHAINS)[number]['id'],
+    query: { enabled: !!userAddress && isNative, staleTime: 15_000 },
+  });
+  const { data: erc20Bal } = useReadContract({
+    address: !isNative ? (token.address as `0x${string}`) : undefined,
+    abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: userAddress ? [userAddress] : undefined,
+    chainId: chainId as (typeof FROM_CHAINS)[number]['id'],
+    query: { enabled: !!userAddress && !isNative, staleTime: 15_000 },
+  });
+  if (isNative) return nativeBal ? Number(nativeBal.formatted) : 0;
+  return erc20Bal ? Number(formatUnits(erc20Bal as bigint, token.decimals)) : 0;
+}
+
 function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
   const { address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const { sendTransactionAsync } = useSendTransaction();
+  const { data: rateData } = useEurUsdRate();
+  const eurRate = rateData?.current ?? 0.92;
+  const { data: ethPrice = 0 } = useEthPriceUsd();
+  const walletAssets = useWalletAssets();
 
   const defaultChainId = initialFromToken?.chainId
     ?? (vault.chainId && FROM_CHAINS.some(c => c.id === vault.chainId) ? vault.chainId : 1);
@@ -192,6 +217,19 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
   const isNative = fromToken.address === NATIVE;
   const approvalAddress = quote?.estimate?.approvalAddress as `0x${string}` | undefined;
 
+  // Live balance for selected token/chain
+  const selectedBalance = useSelectedTokenBalance(fromChainId, fromToken, address);
+
+  // EUR equivalent of current amount
+  const amountNum = parseFloat(amount) || 0;
+  const isUsdStable = ['USDC', 'USDT', 'DAI'].includes(fromToken.symbol);
+  const isEurc = fromToken.symbol === 'EURC';
+  const isEthLike = ['ETH'].includes(fromToken.symbol);
+  const eurEquiv = isEurc ? amountNum
+    : isUsdStable ? amountNum * eurRate
+    : isEthLike ? amountNum * ethPrice * eurRate
+    : null; // POL/AVAX — no price available, skip
+
   const { refetch: refetchAllowance } = useReadContract({
     address: !isNative ? (fromToken.address as `0x${string}`) : undefined,
     abi: ERC20_ABI,
@@ -205,11 +243,22 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
     setFromChainId(cid);
     setFromToken(FROM_TOKENS[cid]?.[0] ?? FROM_TOKENS[1][0]);
     resetQuote();
+    setAmount('');
   }
 
   function handleTokenChange(symbol: string) {
     const t = FROM_TOKENS[fromChainId]?.find((x) => x.symbol === symbol);
-    if (t) { setFromToken(t); resetQuote(); }
+    if (t) { setFromToken(t); resetQuote(); setAmount(''); }
+  }
+
+  function handleWalletChip(item: typeof walletAssets.breakdown[0]) {
+    const cid = item.chainId;
+    const tok = FROM_TOKENS[cid]?.find(t => t.symbol === item.symbol) ?? FROM_TOKENS[cid]?.[0];
+    if (!tok) return;
+    setFromChainId(cid);
+    setFromToken(tok);
+    setAmount(item.balance.toFixed(6).replace(/\.?0+$/, ''));
+    resetQuote();
   }
 
   function resetQuote() {
@@ -324,7 +373,7 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Convert & Earn — {vault.name}</DialogTitle>
+          <DialogTitle>One-click deposit — {vault.name}</DialogTitle>
           <DialogDescription>
             {vault.protocol} · {vault.network} · {formatApy(vault.apy)} APY
           </DialogDescription>
@@ -332,9 +381,47 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
 
         <div className="flex flex-col gap-4 py-1">
 
+          {/* Wallet balance chips */}
+          {walletAssets.breakdown.length > 0 && (
+            <div>
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Your wallet</p>
+              <div className="flex flex-wrap gap-1.5">
+                {walletAssets.breakdown.slice(0, 8).map((item, i) => {
+                  const isSelected = fromChainId === item.chainId && fromToken.symbol === item.symbol;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleWalletChip(item)}
+                      className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                        isSelected
+                          ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : 'border-border/60 bg-secondary/40 hover:border-border hover:bg-secondary/70'
+                      }`}
+                    >
+                      <span className="font-semibold">{item.symbol}</span>
+                      <span className="text-muted-foreground">{item.chainName}</span>
+                      <span className="font-medium">
+                        {item.amountUsd > 0
+                          ? `$${item.amountUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                          : item.balance.toLocaleString('en-US', { maximumFractionDigits: 4 })}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* FROM section */}
           <div className="rounded-lg border border-border/60 p-3 flex flex-col gap-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From</p>
+              {selectedBalance > 0 && (
+                <span className="text-[10px] text-muted-foreground">
+                  Balance: {selectedBalance.toLocaleString('en-US', { maximumFractionDigits: 6 })} {fromToken.symbol}
+                </span>
+              )}
+            </div>
             <div className="flex gap-2">
               <Select value={String(fromChainId)} onValueChange={handleChainChange}>
                 <SelectTrigger className="flex-1">
@@ -357,18 +444,33 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="relative">
-              <input
-                type="number"
-                placeholder="0.00"
-                min="0"
-                value={amount}
-                onChange={(e) => { setAmount(e.target.value); resetQuote(); }}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pr-14"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">
-                {fromToken.symbol}
-              </span>
+            <div className="flex flex-col gap-1">
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => { setAmount(e.target.value); resetQuote(); }}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pr-24"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  {selectedBalance > 0 && (
+                    <button
+                      onClick={() => { setAmount(selectedBalance.toFixed(8).replace(/\.?0+$/, '')); resetQuote(); }}
+                      className="text-[10px] font-semibold text-emerald-600 hover:text-emerald-500 uppercase tracking-wide"
+                    >
+                      MAX
+                    </button>
+                  )}
+                  <span className="text-xs text-muted-foreground font-medium">{fromToken.symbol}</span>
+                </div>
+              </div>
+              {eurEquiv !== null && amountNum > 0 && (
+                <p className="text-xs text-muted-foreground px-1">
+                  ≈ €{eurEquiv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              )}
             </div>
           </div>
 
@@ -539,7 +641,7 @@ function VaultSubRow({ vault, userDeposit, onDeposit }: VaultRowProps) {
           </ConnectButton.Custom>
         ) : isLifi && vault.isTransactional ? (
           <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7" onClick={() => onDeposit(vault)}>
-            Convert & Earn
+            One-click deposit
           </Button>
         ) : (
           <Button size="sm" variant="outline" className="text-xs h-7" asChild>
@@ -616,7 +718,7 @@ function ProtocolGroupRow({ group, depositMap, isExpanded, onToggle, onDeposit }
             group.vaults[0].source === 'lifi' && group.vaults[0].isTransactional ? (
               <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7"
                 onClick={() => onDeposit(group.vaults[0])}>
-                Convert & Earn
+                One-click deposit
               </Button>
             ) : (
               <Button size="sm" variant="outline" className="text-xs h-7" asChild>
