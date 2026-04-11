@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ArrowUpDown, ExternalLink, TrendingUp, Zap, Wallet, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ExternalLink, TrendingUp, Zap, Wallet, ArrowDown, AlertTriangle, DollarSign } from 'lucide-react';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
@@ -20,6 +20,14 @@ import summerLogo from '@/assets/summer-logo.png';
 import fluidLogo from '@/assets/fluid-logo.png';
 import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
+import { SEO } from '@/components/SEO';
+import { useAccount, useSwitchChain, useWriteContract, useReadContract, useSendTransaction } from 'wagmi';
+import { mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon } from 'wagmi/chains';
+import { ERC20_ABI } from '@/lib/contracts';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useWalletAssets } from '@/hooks/useWalletAssets';
+import { useEurUsdRate } from '@/hooks/useEurUsdRate';
+import { FROM_CHAINS, FROM_TOKENS, NATIVE, type TokenOption } from '@/lib/tokens';
 
 const PROTOCOL_LOGOS: Record<string, string> = {
   aave:     aaveLogo,
@@ -30,11 +38,6 @@ const PROTOCOL_LOGOS: Record<string, string> = {
   moonwell: moonwellLogo,
   jupiter:  jupiterLogo,
 };
-import { SEO } from '@/components/SEO';
-import { useAccount, useSwitchChain, useWriteContract, useReadContract, useSendTransaction } from 'wagmi';
-import { mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon } from 'wagmi/chains';
-import { ERC20_ABI } from '@/lib/contracts';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 const CHAIN_MAP = {
   1: mainnet,
@@ -48,59 +51,6 @@ const CHAIN_MAP = {
 
 const COMPOSER_API = '/lifi-composer';
 const LIFI_API_KEY = import.meta.env.VITE_LIFI_API_KEY as string;
-
-// ── From-chain / From-token registry ────────────────────────────────────────
-
-interface TokenOption {
-  symbol: string;
-  address: string;
-  decimals: number;
-}
-
-const FROM_CHAINS = [
-  { id: 1,     name: 'Ethereum' },
-  { id: 8453,  name: 'Base' },
-  { id: 42161, name: 'Arbitrum' },
-  { id: 10,    name: 'Optimism' },
-  { id: 137,   name: 'Polygon' },
-  { id: 43114, name: 'Avalanche' },
-];
-
-const NATIVE = '0x0000000000000000000000000000000000000000';
-
-const FROM_TOKENS: Record<number, TokenOption[]> = {
-  1: [
-    { symbol: 'ETH',  address: NATIVE,                                         decimals: 18 },
-    { symbol: 'USDC', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', decimals: 6  },
-    { symbol: 'USDT', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6  },
-    { symbol: 'EURC', address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c', decimals: 6  },
-    { symbol: 'DAI',  address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', decimals: 18 },
-  ],
-  8453: [
-    { symbol: 'ETH',  address: NATIVE,                                         decimals: 18 },
-    { symbol: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6  },
-    { symbol: 'EURC', address: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42', decimals: 6  },
-  ],
-  42161: [
-    { symbol: 'ETH',  address: NATIVE,                                         decimals: 18 },
-    { symbol: 'USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', decimals: 6  },
-    { symbol: 'USDT', address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', decimals: 6  },
-  ],
-  10: [
-    { symbol: 'ETH',  address: NATIVE,                                         decimals: 18 },
-    { symbol: 'USDC', address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85', decimals: 6  },
-    { symbol: 'USDT', address: '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', decimals: 6  },
-  ],
-  137: [
-    { symbol: 'POL',  address: NATIVE,                                         decimals: 18 },
-    { symbol: 'USDC', address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', decimals: 6  },
-    { symbol: 'USDT', address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', decimals: 6  },
-  ],
-  43114: [
-    { symbol: 'AVAX', address: NATIVE,                                         decimals: 18 },
-    { symbol: 'USDC', address: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E', decimals: 6  },
-  ],
-};
 
 // ── Formatters ───────────────────────────────────────────────────────────────
 
@@ -214,19 +164,22 @@ const TX_LABEL: Record<TxStatus, string> = {
 interface DepositModalProps {
   vault: UnifiedVault;
   onClose: () => void;
+  initialFromToken?: { chainId: number; symbol: string };
 }
 
-function DepositModal({ vault, onClose }: DepositModalProps) {
+function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
   const { address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const { sendTransactionAsync } = useSendTransaction();
 
-  const defaultChainId = vault.chainId && FROM_CHAINS.some(c => c.id === vault.chainId)
-    ? vault.chainId
-    : 1;
+  const defaultChainId = initialFromToken?.chainId
+    ?? (vault.chainId && FROM_CHAINS.some(c => c.id === vault.chainId) ? vault.chainId : 1);
+  const defaultToken = initialFromToken
+    ? (FROM_TOKENS[initialFromToken.chainId]?.find(t => t.symbol === initialFromToken.symbol) ?? FROM_TOKENS[1][0])
+    : (FROM_TOKENS[defaultChainId]?.[0] ?? FROM_TOKENS[1][0]);
   const [fromChainId, setFromChainId] = useState<number>(defaultChainId);
-  const [fromToken, setFromToken] = useState<TokenOption>(FROM_TOKENS[defaultChainId]?.[0] ?? FROM_TOKENS[1][0]);
+  const [fromToken, setFromToken] = useState<TokenOption>(defaultToken);
   const [amount, setAmount] = useState('');
 
   const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>('idle');
@@ -372,7 +325,7 @@ function DepositModal({ vault, onClose }: DepositModalProps) {
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Deposit into {vault.name}</DialogTitle>
+          <DialogTitle>Convert & Earn — {vault.name}</DialogTitle>
           <DialogDescription>
             {vault.protocol} · {vault.network} · {formatApy(vault.apy)} APY
           </DialogDescription>
@@ -438,12 +391,9 @@ function DepositModal({ vault, onClose }: DepositModalProps) {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">{vault.protocol} · {vault.name}</p>
-            {isCrossChain && (
-              <div className="mt-1 flex items-center gap-1 text-xs text-amber-500">
-                <Zap className="h-3 w-3" />
-                <span>Cross-chain — LI.FI bridges automatically</span>
-              </div>
-            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              We handle everything. Your {fromToken.symbol} arrives as EUR, earning yield immediately.
+            </p>
           </div>
 
           {/* Get Quote */}
@@ -454,7 +404,7 @@ function DepositModal({ vault, onClose }: DepositModalProps) {
               variant="outline"
               className="w-full"
             >
-              {quoteStatus === 'loading' ? 'Getting quote…' : 'Get Quote'}
+              {quoteStatus === 'loading' ? 'Calculating…' : 'See how much you\'ll earn'}
             </Button>
           )}
 
@@ -480,7 +430,7 @@ function DepositModal({ vault, onClose }: DepositModalProps) {
               <div className="border-t border-border/40 pt-2 mt-1 flex flex-col gap-1.5">
                 {estOutput && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">You receive</span>
+                    <span className="text-muted-foreground">EUR deposited into vault</span>
                     <span className="font-semibold text-emerald-500">~{estOutput} {vault.token}</span>
                   </div>
                 )}
@@ -638,7 +588,7 @@ function VaultCard({ vault, userDeposit, onDeposit }: VaultCardProps) {
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={() => onDeposit(vault)}
             >
-              Deposit
+              Convert & Earn
             </Button>
           ) : (
             <Tooltip>
@@ -674,6 +624,86 @@ function VaultSkeleton() {
   );
 }
 
+// ── Wallet Insights ──────────────────────────────────────────────────────────
+
+interface WalletInsightsProps {
+  bestApy: number;
+  onOpenDeposit: (initialFromToken: { chainId: number; symbol: string }) => void;
+}
+
+function WalletInsights({ bestApy, onOpenDeposit }: WalletInsightsProps) {
+  const { isConnected } = useAccount();
+  const { ethBalanceUsd, usdBalance } = useWalletAssets();
+  const { data: rateData } = useEurUsdRate();
+
+  if (!isConnected) return null;
+  if (ethBalanceUsd < 1 && usdBalance < 1) return null;
+
+  const usdLoss = rateData?.usdLossPct ?? 0;
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      {/* ETH card */}
+      {ethBalanceUsd >= 1 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg bg-amber-500/15 p-1.5">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-amber-500">ETH Holdings</span>
+            </div>
+            <span className="text-sm font-bold">${ethBalanceUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+          </div>
+          <div>
+            <p className="font-semibold text-sm mb-1">ETH is unpredictable</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Convert to EUR and earn a stable {formatApy(bestApy)} — no more watching charts.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-auto"
+            onClick={() => onOpenDeposit({ chainId: 1, symbol: 'ETH' })}
+          >
+            Start earning
+          </Button>
+        </div>
+      )}
+
+      {/* USD card */}
+      {usdBalance >= 1 && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg bg-destructive/15 p-1.5">
+                <DollarSign className="h-4 w-4 text-destructive" />
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-destructive">USD Holdings</span>
+            </div>
+            <span className="text-sm font-bold">${usdBalance.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+          </div>
+          <div>
+            <p className="font-semibold text-sm mb-1">
+              Your USD lost {usdLoss > 0 ? `${usdLoss.toFixed(1)}%` : 'value'} vs EUR this year
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              The euro has strengthened against the dollar. Earn in EUR and stop losing to currency moves.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-auto"
+            onClick={() => onOpenDeposit({ chainId: 1, symbol: 'USDC' })}
+          >
+            Start earning
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Protocol deposit map ─────────────────────────────────────────────────────
 
 function buildDepositMap(protocols: ReturnType<typeof useProtocolData>['protocols']) {
@@ -704,6 +734,12 @@ function LiFiEarnInner() {
   const [selectedProtocol, setSelectedProtocol] = useState('all');
   const [sortBy, setSortBy] = useState<'apy' | 'tvl'>('apy');
   const [depositVault, setDepositVault] = useState<UnifiedVault | null>(null);
+  const [initialFromToken, setInitialFromToken] = useState<{ chainId: number; symbol: string } | undefined>();
+
+  function openDepositWithToken(fromToken: { chainId: number; symbol: string }, vault?: UnifiedVault) {
+    setInitialFromToken(fromToken);
+    setDepositVault(vault ?? filtered[0] ?? vaults[0] ?? null);
+  }
 
   const depositMap = buildDepositMap(protocols);
 
@@ -744,6 +780,12 @@ function LiFiEarnInner() {
         totalDeposits={totalDeposits}
         averageApy={averageApy}
         isLoading={isLoading}
+      />
+
+      {/* Wallet Insights */}
+      <WalletInsights
+        bestApy={vaults[0]?.apy ?? 0}
+        onOpenDeposit={(fromToken) => openDepositWithToken(fromToken)}
       />
 
       {/* Filters */}
@@ -790,7 +832,7 @@ function LiFiEarnInner() {
               key={vault.id}
               vault={vault}
               userDeposit={depositMap[vault.protocolKey] ?? 0}
-              onDeposit={setDepositVault}
+              onDeposit={(v) => { setInitialFromToken(undefined); setDepositVault(v); }}
             />
           ))}
         </div>
@@ -806,7 +848,8 @@ function LiFiEarnInner() {
       {depositVault && (
         <DepositModal
           vault={depositVault}
-          onClose={() => setDepositVault(null)}
+          onClose={() => { setDepositVault(null); setInitialFromToken(undefined); }}
+          initialFromToken={initialFromToken}
         />
       )}
     </main>
