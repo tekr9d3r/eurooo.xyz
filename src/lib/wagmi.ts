@@ -8,6 +8,7 @@ import {
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
+import { fallback } from 'viem';
 import { mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon } from 'wagmi/chains';
 
 // WalletConnect Cloud project ID (32 characters, no hyphens)
@@ -42,7 +43,7 @@ export const config = createConfig({
   connectors,
   chains: [mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon],
   transports: {
-    [mainnet.id]:   http(),
+    [mainnet.id]:   fallback([http('https://eth.llamarpc.com'), http('https://cloudflare-eth.com'), http()]),
     [base.id]:      http(),
     [gnosis.id]:    http(),
     [avalanche.id]: http(),
