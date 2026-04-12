@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown, ChevronRight, ExternalLink, TrendingUp, Zap, Wallet, ArrowDown } from 'lucide-react';
+import { ChevronDown, ChevronRight, ExternalLink, TrendingUp, Zap, ArrowDown } from 'lucide-react';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
@@ -844,55 +844,6 @@ function VaultTableSkeleton() {
   );
 }
 
-// ── Wallet analysis ───────────────────────────────────────────────────────────
-
-interface TokenBalance {
-  symbol: string;
-  name: string;
-  chainName: string;
-  amountUsd: number;
-  amount: string;
-}
-
-const STORAGE_KEY = (address: string) => `eurooo_wallet_analysis_${address.toLowerCase()}`;
-
-// ── Spinning star animation ───────────────────────────────────────────────────
-
-function AnalysisSpinner() {
-  const stars = Array.from({ length: 12 }, (_, i) => i);
-  return (
-    <div className="relative w-24 h-24 mx-auto">
-      <style>{`
-        @keyframes ea-spin { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
-        @keyframes ea-counter { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(-360deg); } }
-        @keyframes ea-twinkle { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
-      `}</style>
-      <div className="absolute top-1/2 left-1/2 w-20 h-20"
-        style={{ animation: 'ea-spin 2s linear infinite' }}>
-        {stars.map(i => {
-          const angle = i * 30 * (Math.PI / 180);
-          const r = 42;
-          const x = 50 + r * Math.cos(angle - Math.PI / 2);
-          const y = 50 + r * Math.sin(angle - Math.PI / 2);
-          return (
-            <div key={i} className="absolute w-2.5 h-2.5"
-              style={{
-                left: `${x}%`, top: `${y}%`,
-                transform: 'translate(-50%,-50%)',
-                animation: `ea-counter 2s linear infinite, ea-twinkle ${1 + i % 3 * 0.4}s ease-in-out infinite`,
-                animationDelay: `0s, ${i * 0.1}s`,
-              }}>
-              <svg viewBox="0 0 24 24" fill="hsl(var(--accent))" className="w-full h-full drop-shadow-[0_0_6px_hsl(var(--accent)/0.6)]">
-                <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6.3-4.6-6.3 4.6 2.3-7-6-4.6h7.6z" />
-              </svg>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ── Sparkline ─────────────────────────────────────────────────────────────────
 
 function YieldSparkline({ principal, apy }: { principal: number; apy: number }) {
@@ -923,180 +874,31 @@ function YieldSparkline({ principal, apy }: { principal: number; apy: number }) 
 
 // ── Yield Calculator ─────────────────────────────────────────────────────────
 
-interface YieldCalculatorProps {
-  bestApy: number;
-}
-
-type AnalysisState = 'idle' | 'loading' | 'done';
-
-function YieldCalculator({ bestApy }: YieldCalculatorProps) {
-  const { address, isConnected } = useAccount();
-  const { data: rateData } = useEurUsdRate();
-  const eurRate = rateData?.current ?? 0.92;
-
-  // Live wallet data from wagmi hooks
-  const walletAssets = useWalletAssets();
-
-  // Build token list from wagmi data
-  const liveTokens = useMemo((): TokenBalance[] => {
-    const list: TokenBalance[] = [];
-    if (walletAssets.ethBalanceRaw > 0.0001) {
-      // Distribute ETH across chains — report as single aggregate for simplicity
-      list.push({
-        symbol: 'ETH',
-        name: 'Ethereum',
-        chainName: 'All chains',
-        amountUsd: walletAssets.ethBalanceUsd,
-        amount: walletAssets.ethBalanceRaw.toLocaleString('en-US', { maximumFractionDigits: 4 }),
-      });
-    }
-    if (walletAssets.usdBalance > 0.01) {
-      list.push({
-        symbol: 'USD Stablecoins',
-        name: 'USDC / USDT / DAI',
-        chainName: 'All chains',
-        amountUsd: walletAssets.usdBalance,
-        amount: walletAssets.usdBalance.toLocaleString('en-US', { maximumFractionDigits: 2 }),
-      });
-    }
-    return list.sort((a, b) => b.amountUsd - a.amountUsd);
-  }, [walletAssets.ethBalanceUsd, walletAssets.ethBalanceRaw, walletAssets.usdBalance]);
-
-  // Persisted state — load from localStorage on mount
-  const [tokens, setTokens] = useState<TokenBalance[]>(() => {
-    if (typeof window === 'undefined' || !address) return [];
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY(address));
-      return stored ? JSON.parse(stored) : [];
-    } catch { return []; }
-  });
-  const [analysisState, setAnalysisState] = useState<AnalysisState>(() =>
-    tokens.length > 0 ? 'done' : 'idle'
-  );
-
-  // Re-load from storage when address changes
-  useEffect(() => {
-    if (!address) { setTokens([]); setAnalysisState('idle'); return; }
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY(address));
-      if (stored) { setTokens(JSON.parse(stored)); setAnalysisState('done'); }
-      else { setTokens([]); setAnalysisState('idle'); }
-    } catch { setTokens([]); setAnalysisState('idle'); }
-  }, [address]);
-
-  async function analyse() {
-    if (!address) return;
-    setAnalysisState('loading');
-    // Show animation for at least 1.5s so it feels like something is happening
-    await new Promise(r => setTimeout(r, 1500));
-    const result = liveTokens.length > 0 ? liveTokens : [
-      { symbol: 'USD Stablecoins', name: 'USDC/USDT/DAI', chainName: 'All chains', amountUsd: 0, amount: '0' },
-    ];
-    setTokens(result);
-    localStorage.setItem(STORAGE_KEY(address), JSON.stringify(result));
-    setAnalysisState('done');
-  }
-
-  const totalUsd = tokens.reduce((s, t) => s + t.amountUsd, 0);
-  const totalEur = totalUsd * eurRate;
-
-  const [manualAmount, setManualAmount] = useState<number | null>(null);
-  const principal = manualAmount ?? (totalEur > 1 ? Math.round(totalEur) : 1000);
-  const apy = bestApy > 0 ? bestApy : 4;
+function YieldCalculator({ bestApy }: { bestApy: number }) {
+  const [principal, setPrincipal] = useState(1000);
+  const apy     = bestApy > 0 ? bestApy : 4;
   const weekly  = (principal * (apy / 100)) / 52;
   const monthly = (principal * (apy / 100)) / 12;
   const yearly  = principal * (apy / 100);
 
   return (
     <div className="rounded-xl border border-border/50 bg-card p-5 md:p-6">
-
-      {/* ── Analyse CTA (idle) ── */}
-      {analysisState === 'idle' && isConnected && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5 pb-5 border-b border-border/40">
-          <div>
-            <p className="font-semibold text-sm">What are your funds worth in EUR yield?</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              We scan your wallet across all chains to calculate your potential earnings.
-            </p>
-          </div>
-          <Button
-            className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-            onClick={analyse}
-          >
-            <TrendingUp className="h-4 w-4" />
-            Analyse my wallet
-          </Button>
-        </div>
-      )}
-
-      {/* ── Loading animation ── */}
-      {analysisState === 'loading' && (
-        <div className="flex flex-col items-center gap-3 py-6 mb-5 border-b border-border/40">
-          <AnalysisSpinner />
-          <p className="text-sm font-medium text-muted-foreground animate-pulse">Analysing your wallet…</p>
-        </div>
-      )}
-
-      {/* ── Token results ── */}
-      {analysisState === 'done' && tokens.length > 0 && (
-        <div className="mb-5 pb-5 border-b border-border/40">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Your wallet</p>
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-bold">
-                ~€{totalEur.toLocaleString('en-US', { maximumFractionDigits: 0 })} total
-              </span>
-              <button
-                onClick={() => { setAnalysisState('idle'); setTokens([]); if (address) localStorage.removeItem(STORAGE_KEY(address)); }}
-                className="text-[10px] text-muted-foreground hover:text-foreground underline"
-              >
-                Refresh
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {tokens.slice(0, 8).map((t, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-2 gap-2">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold truncate">{t.symbol}</p>
-                  <p className="text-[10px] text-muted-foreground">{t.chainName}</p>
-                </div>
-                <p className="text-xs font-bold text-right shrink-0">
-                  ${t.amountUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                </p>
-              </div>
-            ))}
-            {tokens.length > 8 && (
-              <div className="flex items-center justify-center rounded-lg bg-secondary/20 px-3 py-2">
-                <p className="text-xs text-muted-foreground">+{tokens.length - 8} more</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Calculator ── */}
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
+        Yield simulator
+      </p>
       <div className="flex flex-col md:flex-row md:items-start gap-6">
         <div className="flex-1">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
-            What could this earn in EUR?
-          </p>
           <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">€</span>
               <input
                 type="number" min={100} step={100} value={principal}
-                onChange={(e) => setManualAmount(Number(e.target.value) || 100)}
+                onChange={(e) => setPrincipal(Number(e.target.value) || 100)}
                 className="w-full rounded-lg border border-input bg-background pl-7 pr-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
             <span className="text-xs text-muted-foreground shrink-0">at</span>
             <span className="text-sm font-bold text-emerald-500 shrink-0">{apy.toFixed(2)}% APY</span>
-            {analysisState === 'done' && totalEur > 1 && manualAmount === null && (
-              <Badge variant="secondary" className="text-xs shrink-0">
-                <Wallet className="h-3 w-3 mr-1" />Your wallet
-              </Badge>
-            )}
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg bg-secondary/40 px-3 py-2.5 text-center">
@@ -1122,10 +924,6 @@ function YieldCalculator({ bestApy }: YieldCalculatorProps) {
           </div>
         </div>
       </div>
-
-      <p className="text-xs text-muted-foreground mt-4">
-        Pick a pool below and convert your funds to EUR — we handle the rest.
-      </p>
     </div>
   );
 }
