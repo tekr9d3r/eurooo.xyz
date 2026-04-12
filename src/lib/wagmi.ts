@@ -42,13 +42,15 @@ export const config = createConfig({
   connectors,
   chains: [mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon],
   transports: {
-    [mainnet.id]: http(),
-    [base.id]: http(),
-    [gnosis.id]: http(),
-    [avalanche.id]: http(),
-    [arbitrum.id]: http(),
-    [optimism.id]: http(),
-    [polygon.id]: http(),
+    // Ankr free public RPCs — more reliable for multi-call balance reads than
+    // the default viem public endpoints (cloudflare-eth etc.)
+    [mainnet.id]:   http('https://rpc.ankr.com/eth'),
+    [base.id]:      http('https://rpc.ankr.com/base'),
+    [gnosis.id]:    http('https://rpc.ankr.com/gnosis'),
+    [avalanche.id]: http('https://rpc.ankr.com/avalanche'),
+    [arbitrum.id]:  http('https://rpc.ankr.com/arbitrum'),
+    [optimism.id]:  http('https://rpc.ankr.com/optimism'),
+    [polygon.id]:   http('https://rpc.ankr.com/polygon'),
   },
 });
 
