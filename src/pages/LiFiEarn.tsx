@@ -381,34 +381,43 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
 
         <div className="flex flex-col gap-4 py-1">
 
-          {/* Wallet balance chips */}
+          {/* Wallet balance dropdown */}
           {walletAssets.breakdown.length > 0 && (
             <div>
-              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Your wallet</p>
-              <div className="flex flex-wrap gap-1.5">
-                {walletAssets.breakdown.slice(0, 8).map((item, i) => {
-                  const isSelected = fromChainId === item.chainId && fromToken.symbol === item.symbol;
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => handleWalletChip(item)}
-                      className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                        isSelected
-                          ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : 'border-border/60 bg-secondary/40 hover:border-border hover:bg-secondary/70'
-                      }`}
-                    >
-                      <span className="font-semibold">{item.symbol}</span>
-                      <span className="text-muted-foreground">{item.chainName}</span>
-                      <span className="font-medium">
-                        {item.amountUsd > 0
-                          ? `$${item.amountUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-                          : item.balance.toLocaleString('en-US', { maximumFractionDigits: 4 })}
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Pay from wallet</p>
+              <Select
+                value={walletAssets.breakdown.findIndex(
+                  i => i.chainId === fromChainId && i.symbol === fromToken.symbol
+                ).toString()}
+                onValueChange={(val) => {
+                  const item = walletAssets.breakdown[Number(val)];
+                  if (item) handleWalletChip(item);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pick a token from your wallet…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {walletAssets.breakdown.map((item, i) => (
+                    <SelectItem key={i} value={i.toString()}>
+                      <span className="flex items-center justify-between gap-3 w-full">
+                        <span>
+                          <span className="font-semibold">{item.symbol}</span>
+                          <span className="text-muted-foreground ml-1.5 text-xs">{item.chainName}</span>
+                        </span>
+                        <span className="text-xs font-medium ml-4">
+                          {item.balance.toLocaleString('en-US', { maximumFractionDigits: 4 })}
+                          {item.amountUsd > 0 && (
+                            <span className="text-muted-foreground ml-1">
+                              (${item.amountUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })})
+                            </span>
+                          )}
+                        </span>
                       </span>
-                    </button>
-                  );
-                })}
-              </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
