@@ -1008,7 +1008,7 @@ function YieldCalculator({ bestApy }: YieldCalculatorProps) {
   const yearly  = principal * (apy / 100);
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card p-5 md:p-6 mb-8">
+    <div className="rounded-xl border border-border/50 bg-card p-5 md:p-6">
 
       {/* ── Analyse CTA (idle) ── */}
       {analysisState === 'idle' && isConnected && (
@@ -1240,9 +1240,6 @@ function LiFiEarnInner() {
         isLoading={isLoading}
       />
 
-      {/* Yield Calculator */}
-      <YieldCalculator bestApy={vaults[0]?.apy ?? 0} />
-
       {/* Vault Table */}
       {error ? (
         <div className="text-center py-20 text-muted-foreground">Failed to load vaults. Please try again.</div>
@@ -1309,8 +1306,11 @@ function LiFiEarnInner() {
         </div>
       )}
 
+      {/* Yield Calculator */}
+      <YieldCalculator bestApy={vaults[0]?.apy ?? 0} />
+
       {/* Legend */}
-      <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
         <Zap className="h-3.5 w-3.5 text-emerald-500" />
         <span>1-click deposit powered by LI.FI · Other protocols open directly on their platform</span>
       </div>
