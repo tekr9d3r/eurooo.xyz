@@ -523,7 +523,7 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
                 disabled={!amount || parseFloat(amount) <= 0 || quoteStatus === 'loading'}
                 className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition-all"
               >
-                {quoteStatus === 'loading' ? 'Calculating…' : `Deposit ${amount ? `${amount} ${fromToken.symbol}` : '→ enter amount above'}`}
+                {quoteStatus === 'loading' ? 'Calculating…' : `Preview deposit${amount ? ` — ${amount} ${fromToken.symbol}` : ''}`}
               </Button>
               {quoteStatus === 'error' && (
                 <p className="text-xs text-destructive text-center">{quoteError}</p>
@@ -534,6 +534,10 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
               {/* Quote result */}
               {quote && (
                 <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5 pb-1.5 border-b border-emerald-500/20">
+                    <span className="text-[10px] text-muted-foreground">Route powered by</span>
+                    <span className="text-[10px] font-semibold text-foreground">LI.FI</span>
+                  </div>
                   {estOutput && (
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">EUR deposited into vault</span>
