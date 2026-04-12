@@ -296,13 +296,17 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
     try {
       const fromAmount = String(Math.floor(parseFloat(amount) * 10 ** fromToken.decimals));
       const params = new URLSearchParams({
-        fromChain:   String(fromChainId),
-        toChain:     String(vault.chainId),
-        fromToken:   fromToken.address,
-        toToken:     vault.lifiAddress,
-        fromAddress: address,
-        toAddress:   address,
+        fromChain:    String(fromChainId),
+        toChain:      String(vault.chainId),
+        fromToken:    fromToken.address,
+        toToken:      vault.lifiAddress,
+        fromAddress:  address,
+        toAddress:    address,
         fromAmount,
+        // Mayan claims to deliver vault tokens cross-chain in one step but
+        // actually only bridges to a regular token — the Aave/vault deposit
+        // fails silently. Force routes that use the Composer on destination.
+        denyBridges:  'mayan,mayanMCTP',
       });
       const res = await fetch(`${COMPOSER_API}/v1/quote?${params}`, {
         headers: { 'x-lifi-api-key': LIFI_API_KEY },
