@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, ChevronRight, ExternalLink, TrendingUp, Zap, ArrowDown } from 'lucide-react';
 import aaveLogo from '@/assets/aave-logo.png';
@@ -384,14 +384,32 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md max-h-[90dvh] flex flex-col p-0">
-        <div className="px-6 pt-6 pb-4 shrink-0 pr-12">
-          <DialogHeader>
-            <DialogTitle>One-click deposit — {vault.name}</DialogTitle>
-            <DialogDescription>
-              {vault.protocol} · {vault.network} · {formatApy(vault.apy)} APY
-            </DialogDescription>
-          </DialogHeader>
+      <DialogContent className="max-w-md max-h-[90dvh] flex flex-col p-0 overflow-hidden">
+        {/* Protocol header banner */}
+        <div className="relative shrink-0 bg-emerald-500/8 border-b border-emerald-500/20 px-6 pt-5 pb-4 pr-12">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
+          <div className="relative flex items-center gap-3">
+            {PROTOCOL_LOGOS[vault.protocolKey] && (
+              <img
+                src={PROTOCOL_LOGOS[vault.protocolKey]}
+                alt={vault.protocol}
+                className="h-11 w-11 rounded-xl object-contain bg-background border border-border/50 p-1.5 shrink-0 shadow-sm"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-0.5">
+                Depositing into
+              </p>
+              <DialogTitle className="text-base leading-tight">{vault.protocol} — {vault.token}</DialogTitle>
+              <DialogDescription className="mt-0.5">
+                {vault.network} · {vault.name}
+              </DialogDescription>
+            </div>
+            <div className="ml-auto shrink-0 text-right">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">APY</p>
+              <p className="text-xl font-bold text-emerald-500 leading-tight">{formatApy(vault.apy)}</p>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col gap-4 overflow-y-auto min-h-0 px-6 pb-6">
