@@ -207,10 +207,13 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
   const [amount, setAmount] = useState('');
   const [walletPrefilled, setWalletPrefilled] = useState(false);
 
-  // Auto-select highest-balance wallet token once breakdown loads
+  // Auto-select highest-balance wallet token that LI.FI supports as a FROM token
   useEffect(() => {
     if (walletPrefilled || walletAssets.breakdown.length === 0) return;
-    const top = walletAssets.breakdown[0];
+    const top = walletAssets.breakdown.find(
+      item => FROM_TOKENS[item.chainId]?.some(t => t.symbol === item.symbol)
+    );
+    if (!top) return;
     const tok = FROM_TOKENS[top.chainId]?.find(t => t.symbol === top.symbol);
     if (!tok) return;
     setFromChainId(top.chainId);
