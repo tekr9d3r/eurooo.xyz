@@ -230,8 +230,13 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
   const isNative = fromToken.address === NATIVE;
   const approvalAddress = quote?.estimate?.approvalAddress as `0x${string}` | undefined;
 
-  // Live balance for selected token/chain
-  const selectedBalance = useSelectedTokenBalance(fromChainId, fromToken, address);
+  // Balance for selected token/chain — read from already-loaded breakdown first,
+  // fall back to a direct RPC call (useSelectedTokenBalance) for allowance checks
+  const breakdownBalance = walletAssets.breakdown.find(
+    b => b.chainId === fromChainId && b.symbol === fromToken.symbol
+  )?.balance ?? 0;
+  const rpcBalance = useSelectedTokenBalance(fromChainId, fromToken, address);
+  const selectedBalance = breakdownBalance > 0 ? breakdownBalance : rpcBalance;
 
   // EUR equivalent of current amount
   const amountNum = parseFloat(amount) || 0;
