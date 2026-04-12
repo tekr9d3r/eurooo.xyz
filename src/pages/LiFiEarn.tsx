@@ -417,77 +417,73 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
 
         <div className="flex flex-col gap-4 overflow-y-auto min-h-0 px-6 pb-6">
 
-          {/* Wallet balance dropdown */}
-          {walletAssets.breakdown.length > 0 && (
-            <div>
-              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Pay from wallet</p>
-              <Select
-                value={walletAssets.breakdown.findIndex(
-                  i => i.chainId === fromChainId && i.symbol === fromToken.symbol
-                ).toString()}
-                onValueChange={(val) => {
-                  const item = walletAssets.breakdown[Number(val)];
-                  if (item) handleWalletChip(item);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pick a token from your wallet…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {walletAssets.breakdown.map((item, i) => (
-                    <SelectItem key={i} value={i.toString()}>
-                      <span className="flex items-center justify-between gap-3 w-full">
-                        <span>
-                          <span className="font-semibold">{item.symbol}</span>
-                          <span className="text-muted-foreground ml-1.5 text-xs">{item.chainName}</span>
-                        </span>
-                        <span className="text-xs font-medium ml-4">
-                          {item.balance.toLocaleString('en-US', { maximumFractionDigits: 4 })}
-                          {item.amountUsd > 0 && (
-                            <span className="text-muted-foreground ml-1">
-                              (${item.amountUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })})
-                            </span>
-                          )}
-                        </span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
           {/* FROM section */}
           <div className="rounded-lg border border-border/60 p-3 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From</p>
-              {selectedBalance > 0 && (
-                <span className="text-[10px] text-muted-foreground">
-                  Balance: {selectedBalance.toLocaleString('en-US', { maximumFractionDigits: 6 })} {fromToken.symbol}
-                </span>
-              )}
-            </div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From</p>
             <div className="flex gap-2">
+              {/* Chain selector — shows wallet balance per chain */}
               <Select value={String(fromChainId)} onValueChange={handleChainChange}>
                 <SelectTrigger className="flex-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {FROM_CHAINS.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
-                  ))}
+                  {FROM_CHAINS.map((c) => {
+                    const chainTotal = walletAssets.breakdown
+                      .filter(b => b.chainId === c.id)
+                      .reduce((s, b) => s + b.amountUsd, 0);
+                    return (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        <span className="flex items-center justify-between gap-4 w-full">
+                          <span>{c.name}</span>
+                          {chainTotal > 0.01 && (
+                            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                              ${chainTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+              {/* Token selector — shows wallet balance per token on selected chain */}
               <Select value={fromToken.symbol} onValueChange={handleTokenChange}>
-                <SelectTrigger className="w-28">
+                <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(FROM_TOKENS[fromChainId] ?? []).map((t) => (
-                    <SelectItem key={t.symbol} value={t.symbol}>{t.symbol}</SelectItem>
-                  ))}
+                  {(FROM_TOKENS[fromChainId] ?? []).map((t) => {
+                    const item = walletAssets.breakdown.find(
+                      b => b.chainId === fromChainId && b.symbol === t.symbol
+                    );
+                    return (
+                      <SelectItem key={t.symbol} value={t.symbol}>
+                        <span className="flex items-center justify-between gap-3 w-full">
+                          <span className="font-medium">{t.symbol}</span>
+                          {item && item.balance > 0 && (
+                            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                              {item.balance.toLocaleString('en-US', { maximumFractionDigits: 4 })}
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+            </div>
+            {/* Balance pill — always visible below selectors */}
+            <div className={`flex items-center justify-between rounded-md px-3 py-2 text-xs ${
+              selectedBalance > 0
+                ? 'bg-emerald-500/10 border border-emerald-500/20'
+                : 'bg-secondary/40'
+            }`}>
+              <span className="text-muted-foreground">Your balance</span>
+              <span className={selectedBalance > 0 ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}>
+                {selectedBalance > 0
+                  ? `${selectedBalance.toLocaleString('en-US', { maximumFractionDigits: 6 })} ${fromToken.symbol}`
+                  : `No ${fromToken.symbol} on this chain`}
+              </span>
             </div>
             <div className="flex flex-col gap-1">
               <div className="relative">
