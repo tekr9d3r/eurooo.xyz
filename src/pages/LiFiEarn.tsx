@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown, ChevronRight, ExternalLink, TrendingUp, Zap, ArrowDown } from 'lucide-react';
+import { ChevronDown, ChevronRight, ExternalLink, TrendingUp, Zap } from 'lucide-react';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
@@ -516,104 +516,78 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
             </div>
           </div>
 
-          {/* Arrow */}
-          <div className="flex justify-center">
-            <div className="rounded-full bg-secondary p-1.5">
-              <ArrowDown className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </div>
-
-          {/* TO section */}
-          <div className="rounded-lg border border-border/60 p-3 flex flex-col gap-1">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">To</p>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{vault.token}</span>
-              <div className="flex items-center gap-1.5">
-                <Badge variant="outline" className="text-xs">{vault.network}</Badge>
-                <Badge variant="secondary" className="text-xs">{formatApy(vault.apy)} APY</Badge>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">{vault.protocol} · {vault.name}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              We handle everything. Your {fromToken.symbol} arrives as EUR, earning yield immediately.
-            </p>
-          </div>
-
-          {/* Get Quote */}
-          {quoteStatus !== 'success' && (
-            <Button
-              onClick={getQuote}
-              disabled={!amount || parseFloat(amount) <= 0 || quoteStatus === 'loading'}
-              variant="outline"
-              className="w-full"
-            >
-              {quoteStatus === 'loading' ? 'Calculating…' : 'Preview deposit'}
-            </Button>
-          )}
-
-          {quoteStatus === 'error' && (
-            <p className="text-xs text-destructive">{quoteError}</p>
-          )}
-
-          {/* Quote result */}
-          {quoteStatus === 'success' && quote && (
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex flex-col gap-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Route</p>
-
-              {steps.map((step, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-xs">
-                  <span className="text-muted-foreground shrink-0">{i + 1}.</span>
-                  <span className="capitalize font-medium">{step.type}</span>
-                  {step.toolDetails?.name && (
-                    <span className="text-muted-foreground">via {step.toolDetails.name}</span>
-                  )}
-                </div>
-              ))}
-
-              <div className="border-t border-border/40 pt-2 mt-1 flex flex-col gap-1.5">
-                {estOutput && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">EUR deposited into vault</span>
-                    <span className="font-semibold text-emerald-500">~{estOutput} {vault.token}</span>
-                  </div>
-                )}
-                {totalFeeUsd > 0 && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Fees</span>
-                    <span>~${totalFeeUsd.toFixed(2)}</span>
-                  </div>
-                )}
-                {estTime && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Est. time</span>
-                    <span>{estTime}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Tx error */}
-          {txStatus === 'error' && txError && (
-            <p className="text-xs text-destructive">{txError}</p>
-          )}
-
-          {/* Action buttons */}
-          {quoteStatus === 'success' && (
+          {/* Preview / Deposit CTA */}
+          {quoteStatus !== 'success' ? (
             <div className="flex flex-col gap-2">
               <Button
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={getQuote}
+                disabled={!amount || parseFloat(amount) <= 0 || quoteStatus === 'loading'}
+                className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition-all"
+              >
+                {quoteStatus === 'loading' ? 'Calculating…' : `Deposit ${amount ? `${amount} ${fromToken.symbol}` : '→ enter amount above'}`}
+              </Button>
+              {quoteStatus === 'error' && (
+                <p className="text-xs text-destructive text-center">{quoteError}</p>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Quote result */}
+              {quote && (
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex flex-col gap-1.5">
+                  {estOutput && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">EUR deposited into vault</span>
+                      <span className="font-semibold text-emerald-500">~{estOutput} {vault.token}</span>
+                    </div>
+                  )}
+                  {totalFeeUsd > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Fees</span>
+                      <span>~${totalFeeUsd.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {estTime && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Est. time</span>
+                      <span>{estTime}</span>
+                    </div>
+                  )}
+                  {steps.length > 0 && (
+                    <div className="border-t border-border/40 pt-1.5 mt-0.5 flex flex-wrap gap-1">
+                      {steps.map((step, i) => (
+                        <span key={i} className="text-[10px] text-muted-foreground bg-secondary rounded px-1.5 py-0.5 capitalize">
+                          {step.type}{step.toolDetails?.name ? ` via ${step.toolDetails.name}` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tx error */}
+              {txStatus === 'error' && txError && (
+                <p className="text-xs text-destructive">{txError}</p>
+              )}
+
+              {/* Confirm deposit button */}
+              <Button
+                className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition-all"
                 onClick={executeDeposit}
                 disabled={isBusy || txStatus === 'done'}
               >
-                {txStatus === 'done' ? '✓ Deposited' : TX_LABEL[txStatus]}
+                {txStatus === 'done'
+                  ? '✓ Deposited successfully'
+                  : isBusy
+                  ? TX_LABEL[txStatus]
+                  : `Confirm deposit — ${amount} ${fromToken.symbol}`}
               </Button>
               {txStatus !== 'done' && (
-                <Button variant="ghost" size="sm" className="text-xs w-full" onClick={resetQuote}>
-                  Change amount / token
-                </Button>
+                <button className="text-xs text-muted-foreground hover:text-foreground text-center" onClick={resetQuote}>
+                  ← Change amount or token
+                </button>
               )}
-            </div>
+            </>
           )}
         </div>
       </DialogContent>
