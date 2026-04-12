@@ -366,8 +366,11 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
   }
 
   // ── Derived quote display values ─────────────────────────────────────────
+  // Use decimals from the quote response itself — the toToken is a vault share
+  // token whose decimals may differ from the underlying asset (lifiTokenDecimals)
+  const toTokenDecimals: number = quote?.action?.toToken?.decimals ?? vault.lifiTokenDecimals ?? 6;
   const estOutput = quote?.estimate?.toAmount
-    ? (Number(quote.estimate.toAmount) / 10 ** (vault.lifiTokenDecimals ?? 6)).toFixed(4)
+    ? (Number(quote.estimate.toAmount) / 10 ** toTokenDecimals).toFixed(4)
     : null;
   const estTimeSec: number = quote?.estimate?.executionDuration ?? 0;
   const estTime = estTimeSec > 0
