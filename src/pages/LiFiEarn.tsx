@@ -371,15 +371,15 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[90dvh] flex flex-col">
+        <DialogHeader className="shrink-0">
           <DialogTitle>One-click deposit — {vault.name}</DialogTitle>
           <DialogDescription>
             {vault.protocol} · {vault.network} · {formatApy(vault.apy)} APY
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-1">
+        <div className="flex flex-col gap-4 py-1 overflow-y-auto min-h-0 pr-1">
 
           {/* Wallet balance dropdown */}
           {walletAssets.breakdown.length > 0 && (
@@ -609,61 +609,77 @@ function VaultSubRow({ vault, userDeposit, onDeposit }: VaultRowProps) {
   const { isConnected } = useAccount();
   const isLifi = vault.source === 'lifi';
   return (
-    <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-secondary/20 border-t border-border/20 items-center text-sm">
-      {/* Name + badges */}
-      <div className="col-span-4 flex items-center gap-2 pl-10">
-        <div className="flex flex-col gap-0.5 min-w-0">
+    <div className="bg-secondary/20 border-t border-border/20 px-4 md:px-6 py-3">
+      {/* Mobile layout */}
+      <div className="flex items-center justify-between gap-2 md:hidden">
+        <div className="flex flex-col gap-1 min-w-0">
+          <div className="flex items-center gap-1 flex-wrap">
+            <Badge variant="outline" className="text-[10px] px-1 py-0 h-3.5">{vault.network}</Badge>
+            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-3.5">{vault.token}</Badge>
+            <span className="text-emerald-500 font-semibold text-xs">{formatApy(vault.apy)}</span>
+          </div>
+          <span className="text-xs text-muted-foreground truncate">{vault.name}</span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {isLifi && vault.isTransactional ? (
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2" onClick={() => onDeposit(vault)}>
+              Deposit
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" className="text-xs h-7 px-2" asChild>
+              <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
+            </Button>
+          )}
+        </div>
+      </div>
+      {/* Desktop layout */}
+      <div className="hidden md:grid grid-cols-12 gap-4 items-center text-sm pl-10">
+        <div className="col-span-4 flex flex-col gap-0.5 min-w-0">
           <span className="text-xs font-medium truncate text-muted-foreground">{vault.name}</span>
           <div className="flex items-center gap-1">
             <Badge variant="outline" className="text-[10px] px-1 py-0 h-3.5">{vault.network}</Badge>
             <Badge variant="secondary" className="text-[10px] px-1 py-0 h-3.5">{vault.token}</Badge>
             {isLifi && (
               <Tooltip>
-                <TooltipTrigger>
-                  <Zap className="h-2.5 w-2.5 text-emerald-500" />
-                </TooltipTrigger>
+                <TooltipTrigger><Zap className="h-2.5 w-2.5 text-emerald-500" /></TooltipTrigger>
                 <TooltipContent>1-click deposit</TooltipContent>
               </Tooltip>
             )}
           </div>
         </div>
-      </div>
-      {/* APY */}
-      <div className="col-span-2 text-emerald-500 font-semibold">{formatApy(vault.apy)}</div>
-      {/* TVL */}
-      <div className="col-span-2 text-muted-foreground text-xs">{formatTvl(vault.tvl)}</div>
-      {/* Balance */}
-      <div className="col-span-2 text-xs">
-        {isConnected ? (
-          <span className={userDeposit > 0 ? 'text-emerald-500 font-semibold' : 'text-muted-foreground'}>
-            {userDeposit > 0 ? `€${formatBalance(userDeposit)}` : '—'}
-          </span>
-        ) : '—'}
-      </div>
-      {/* Action */}
-      <div className="col-span-2 flex justify-end gap-1">
-        {!isConnected ? (
-          <ConnectButton.Custom>
-            {({ openConnectModal }) => (
-              <Button size="sm" variant="outline" className="text-xs h-7" onClick={openConnectModal}>Connect</Button>
-            )}
-          </ConnectButton.Custom>
-        ) : isLifi && vault.isTransactional ? (
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7" onClick={() => onDeposit(vault)}>
-            One-click deposit
-          </Button>
-        ) : (
-          <Button size="sm" variant="outline" className="text-xs h-7" asChild>
-            <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
-          </Button>
-        )}
-        {vault.protocolUrl && (
-          <Button size="sm" variant="ghost" className="px-1.5 h-7" asChild>
-            <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          </Button>
-        )}
+        <div className="col-span-2 text-emerald-500 font-semibold">{formatApy(vault.apy)}</div>
+        <div className="col-span-2 text-muted-foreground text-xs">{formatTvl(vault.tvl)}</div>
+        <div className="col-span-2 text-xs">
+          {isConnected ? (
+            <span className={userDeposit > 0 ? 'text-emerald-500 font-semibold' : 'text-muted-foreground'}>
+              {userDeposit > 0 ? `€${formatBalance(userDeposit)}` : '—'}
+            </span>
+          ) : '—'}
+        </div>
+        <div className="col-span-2 flex justify-end gap-1">
+          {!isConnected ? (
+            <ConnectButton.Custom>
+              {({ openConnectModal }) => (
+                <Button size="sm" variant="outline" className="text-xs h-7" onClick={openConnectModal}>Connect</Button>
+              )}
+            </ConnectButton.Custom>
+          ) : isLifi && vault.isTransactional ? (
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7" onClick={() => onDeposit(vault)}>
+              One-click deposit
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" className="text-xs h-7" asChild>
+              <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
+            </Button>
+          )}
+          {vault.protocolUrl && (
+            <Button size="sm" variant="ghost" className="px-1.5 h-7" asChild>
+              <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -686,60 +702,98 @@ function ProtocolGroupRow({ group, depositMap, isExpanded, onToggle, onDeposit }
     <div className={hasDeposit ? 'border-l-2 border-l-emerald-500' : ''}>
       {/* Protocol header row */}
       <button
-        className="w-full grid grid-cols-12 gap-4 px-6 py-4 items-center text-sm hover:bg-secondary/30 transition-colors text-left"
+        className="w-full px-4 md:px-6 py-4 hover:bg-secondary/30 transition-colors text-left"
         onClick={multiVault ? onToggle : undefined}
         style={{ cursor: multiVault ? 'pointer' : 'default' }}
       >
-        {/* Protocol name */}
-        <div className="col-span-4 flex items-center gap-3">
+        {/* Mobile layout */}
+        <div className="flex items-center gap-3 md:hidden">
           {logo && (
             <img src={logo} alt={group.protocol} className="h-8 w-8 rounded-lg object-contain bg-secondary/40 p-1 shrink-0" />
           )}
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="font-semibold">{group.protocol}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-sm">{group.protocol}</span>
+              {multiVault && (
+                <span className="text-[10px] text-muted-foreground bg-secondary rounded px-1 py-0.5">
+                  {group.vaults.length} vaults
+                </span>
+              )}
+              {multiVault && (isExpanded
+                ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-emerald-500 font-bold text-xs">{formatApy(group.bestApy)}</span>
+              <span className="text-muted-foreground text-xs">{formatTvl(group.totalTvl)}</span>
+              {hasDeposit && <span className="text-emerald-500 text-xs font-semibold">€{formatBalance(group.userDeposit)}</span>}
+            </div>
+          </div>
+          <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+            {!multiVault && group.vaults[0] && (
+              group.vaults[0].source === 'lifi' && group.vaults[0].isTransactional ? (
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2"
+                  onClick={() => onDeposit(group.vaults[0])}>
+                  Deposit
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" className="text-xs h-7 px-2" asChild>
+                  <a href={group.vaults[0].protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
+                </Button>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Desktop layout */}
+        <div className="hidden md:grid grid-cols-12 gap-4 items-center text-sm">
+          <div className="col-span-4 flex items-center gap-3">
+            {logo && (
+              <img src={logo} alt={group.protocol} className="h-8 w-8 rounded-lg object-contain bg-secondary/40 p-1 shrink-0" />
+            )}
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="font-semibold">{group.protocol}</span>
+              {multiVault && (
+                <span className="text-[10px] text-muted-foreground bg-secondary rounded px-1 py-0.5">
+                  {group.vaults.length} vaults
+                </span>
+              )}
+            </div>
             {multiVault && (
-              <span className="text-[10px] text-muted-foreground bg-secondary rounded px-1 py-0.5">
-                {group.vaults.length} vaults
+              isExpanded
+                ? <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+                : <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+            )}
+          </div>
+          <div className="col-span-2 text-emerald-500 font-bold">{formatApy(group.bestApy)}</div>
+          <div className="col-span-2 text-muted-foreground">{formatTvl(group.totalTvl)}</div>
+          <div className="col-span-2">
+            {hasDeposit ? (
+              <span className="text-emerald-500 font-semibold">€{formatBalance(group.userDeposit)}</span>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </div>
+          <div className="col-span-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
+            {!multiVault && group.vaults[0] && (
+              group.vaults[0].source === 'lifi' && group.vaults[0].isTransactional ? (
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7"
+                  onClick={() => onDeposit(group.vaults[0])}>
+                  One-click deposit
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" className="text-xs h-7" asChild>
+                  <a href={group.vaults[0].protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
+                </Button>
+              )
+            )}
+            {multiVault && (
+              <span className="text-xs text-muted-foreground">
+                {isExpanded ? 'Collapse' : 'View vaults'}
               </span>
             )}
           </div>
-          {multiVault && (
-            isExpanded
-              ? <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-              : <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-          )}
-        </div>
-        {/* Best APY */}
-        <div className="col-span-2 text-emerald-500 font-bold">{formatApy(group.bestApy)}</div>
-        {/* TVL */}
-        <div className="col-span-2 text-muted-foreground">{formatTvl(group.totalTvl)}</div>
-        {/* Balance */}
-        <div className="col-span-2">
-          {hasDeposit ? (
-            <span className="text-emerald-500 font-semibold">€{formatBalance(group.userDeposit)}</span>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
-        </div>
-        {/* Action — only show for single-vault protocols */}
-        <div className="col-span-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
-          {!multiVault && group.vaults[0] && (
-            group.vaults[0].source === 'lifi' && group.vaults[0].isTransactional ? (
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7"
-                onClick={() => onDeposit(group.vaults[0])}>
-                One-click deposit
-              </Button>
-            ) : (
-              <Button size="sm" variant="outline" className="text-xs h-7" asChild>
-                <a href={group.vaults[0].protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
-              </Button>
-            )
-          )}
-          {multiVault && (
-            <span className="text-xs text-muted-foreground">
-              {isExpanded ? 'Collapse' : 'View vaults'}
-            </span>
-          )}
         </div>
       </button>
 
