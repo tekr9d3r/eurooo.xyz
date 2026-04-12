@@ -205,6 +205,19 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
   const [fromChainId, setFromChainId] = useState<number>(defaultChainId);
   const [fromToken, setFromToken] = useState<TokenOption>(defaultToken);
   const [amount, setAmount] = useState('');
+  const [walletPrefilled, setWalletPrefilled] = useState(false);
+
+  // Auto-select highest-balance wallet token once breakdown loads
+  useEffect(() => {
+    if (walletPrefilled || walletAssets.breakdown.length === 0) return;
+    const top = walletAssets.breakdown[0];
+    const tok = FROM_TOKENS[top.chainId]?.find(t => t.symbol === top.symbol);
+    if (!tok) return;
+    setFromChainId(top.chainId);
+    setFromToken(tok);
+    setAmount(top.balance.toFixed(6).replace(/\.?0+$/, ''));
+    setWalletPrefilled(true);
+  }, [walletAssets.breakdown, walletPrefilled]);
 
   const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>('idle');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -371,15 +384,17 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md max-h-[90dvh] flex flex-col">
-        <DialogHeader className="shrink-0">
-          <DialogTitle>One-click deposit — {vault.name}</DialogTitle>
-          <DialogDescription>
-            {vault.protocol} · {vault.network} · {formatApy(vault.apy)} APY
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-md max-h-[90dvh] flex flex-col p-0">
+        <div className="px-6 pt-6 pb-4 shrink-0 pr-12">
+          <DialogHeader>
+            <DialogTitle>One-click deposit — {vault.name}</DialogTitle>
+            <DialogDescription>
+              {vault.protocol} · {vault.network} · {formatApy(vault.apy)} APY
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <div className="flex flex-col gap-4 py-1 overflow-y-auto min-h-0 pr-1">
+        <div className="flex flex-col gap-4 overflow-y-auto min-h-0 px-6 pb-6">
 
           {/* Wallet balance dropdown */}
           {walletAssets.breakdown.length > 0 && (
