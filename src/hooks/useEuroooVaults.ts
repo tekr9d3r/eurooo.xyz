@@ -1,19 +1,12 @@
 /**
  * Unified vault data for the /earn page.
  *
- * Primary source  : LI.FI Earn API (yo-protocol EURC vaults)
- * Secondary source: Hardcoded vaults with live APY/TVL from DefiLlama snapshots.
- *                   All hardcoded entries with a lifiAddress have been tested and
- *                   confirmed to work with the LI.FI Composer (li.quest/v1/quote).
+ * Primary source  : LI.FI Earn API (aave-v3, morpho-v1, yo-protocol EUR vaults)
+ *                   All three protocols appear in the API with isTransactional=true.
+ * Secondary source: Hardcoded vaults not yet in the LI.FI Earn API.
  *
- * Confirmed lifiAddress values (toToken for LI.FI Composer):
- *   Aave Ethereum EURC  → 0xAA6e91C82942aeAE040303Bf96c15a6dBcB82CA0  (aEthEURC)
- *   Aave Base EURC      → 0x90DA57E0A6C0d166Bf15764E03b83745Dc90025B  (aBasEURC)
- *   Fluid Base EURC     → 0x1943FA26360f038230442525Cf1B9125b5DCB401  (fEURC)
- *   Morpho Moonwell     → 0xf24608E0CCb972b0b0f4A6446a0BBf58c701a026  (mwEURC / Moonwell Flagship)
- *   Morpho Steakhouse   → 0xBeEF086b8807Dc5E5A1740C5E3a7C4c366eA6ab5  (steakEURC Base)
- *   Morpho Steak Prime  → 0xbeef009F28cCf367444a9F79096862920e025DC1  (steakEURC Prime Base)
- *   Morpho Gauntlet Eth → 0x2ed10624315b74a78f11FAbedAa1A228c198aEfB  (gteurcc Ethereum)
+ * Hardcoded lifiAddress values (toToken for LI.FI Composer):
+ *   Fluid Base EURC → 0x1943FA26360f038230442525Cf1B9125b5DCB401  (fEURC)
  */
 
 import { useDefiLlamaData } from './useDefiLlamaData';
@@ -45,10 +38,11 @@ export interface UnifiedVault {
   protocolUrl?: string;
 }
 
-// LI.FI Earn API: only yo-protocol has EUR vaults
-const LIFI_ALLOWED = ['yo-protocol'];
+const LIFI_ALLOWED = ['aave-v3', 'morpho-v1', 'yo-protocol'];
 
 const PROTOCOL_DISPLAY: Record<string, string> = {
+  'aave-v3':     'Aave',
+  'morpho-v1':   'Morpho',
   'yo-protocol': 'YO',
 };
 
@@ -82,56 +76,9 @@ export function useEuroooVaults() {
       protocolUrl: v.protocol.url,
     }));
 
-  // ── Hardcoded vaults with LI.FI Composer support ──────────────────────────
-  // APY/TVL from DefiLlama snapshots (Supabase). lifiAddress tested & confirmed.
+  // ── Hardcoded vaults not yet in the LI.FI Earn API ───────────────────────
   const transactionalVaults: UnifiedVault[] = defiLlama.isLoading ? [] : [
-    // Aave — Ethereum
-    {
-      id: 'aave-ethereum-eurc',
-      name: 'Aave EURC',
-      protocol: 'Aave',
-      protocolKey: 'aave',
-      network: 'Ethereum',
-      chainId: 1,
-      token: 'EURC',
-      apy: defiLlama.aaveEthereum.apy,
-      apyBase: defiLlama.aaveEthereum.apy,
-      apyReward: null,
-      apy7d: null,
-      apy30d: null,
-      tvl: defiLlama.aaveEthereum.tvl,
-      tags: ['stablecoin', 'single'],
-      source: 'lifi' as const,
-      isTransactional: true,
-      lifiAddress: '0xAA6e91C82942aeAE040303Bf96c15a6dBcB82CA0',
-      lifiTokenAddress: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
-      lifiTokenDecimals: 6,
-      protocolUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0x1abaea1f7c830bd89acc67ec4af516284b1bc33c&marketName=proto_mainnet_v3',
-    },
-    // Aave — Base
-    {
-      id: 'aave-base-eurc',
-      name: 'Aave EURC',
-      protocol: 'Aave',
-      protocolKey: 'aave',
-      network: 'Base',
-      chainId: 8453,
-      token: 'EURC',
-      apy: defiLlama.aaveBase.apy,
-      apyBase: defiLlama.aaveBase.apy,
-      apyReward: null,
-      apy7d: null,
-      apy30d: null,
-      tvl: defiLlama.aaveBase.tvl,
-      tags: ['stablecoin', 'single'],
-      source: 'lifi' as const,
-      isTransactional: true,
-      lifiAddress: '0x90DA57E0A6C0d166Bf15764E03b83745Dc90025B',
-      lifiTokenAddress: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42',
-      lifiTokenDecimals: 6,
-      protocolUrl: 'https://app.aave.com/reserve-overview/?underlyingAsset=0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42&marketName=proto_base_v3',
-    },
-    // Fluid — Base
+    // Fluid — Base (not in LI.FI Earn API, but Composer-compatible)
     {
       id: 'fluid-base-eurc',
       name: 'Fluid EURC',
@@ -153,98 +100,6 @@ export function useEuroooVaults() {
       lifiTokenAddress: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42',
       lifiTokenDecimals: 6,
       protocolUrl: 'https://fluid.io/lending/8453/EURC',
-    },
-    // Morpho — Moonwell Flagship EURC (Base)
-    {
-      id: 'morpho-moonwell-base-eurc',
-      name: 'Moonwell Flagship EURC',
-      protocol: 'Morpho',
-      protocolKey: 'morpho',
-      network: 'Base',
-      chainId: 8453,
-      token: 'EURC',
-      apy: defiLlama.morphoMoonwell.apy,
-      apyBase: defiLlama.morphoMoonwell.apy,
-      apyReward: null,
-      apy7d: null,
-      apy30d: null,
-      tvl: defiLlama.morphoMoonwell.tvl,
-      tags: ['stablecoin', 'single'],
-      source: 'lifi' as const,
-      isTransactional: true,
-      lifiAddress: '0xf24608E0CCb972b0b0f4A6446a0BBf58c701a026',
-      lifiTokenAddress: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42',
-      lifiTokenDecimals: 6,
-      protocolUrl: 'https://app.morpho.org/base/vault/0xf24608E0CCb972b0b0f4A6446a0BBf58c701a026/moonwell-flagship-eurc',
-    },
-    // Morpho — Steakhouse EURC (Base)
-    {
-      id: 'morpho-steakhouse-base-eurc',
-      name: 'Steakhouse EURC',
-      protocol: 'Morpho',
-      protocolKey: 'morpho',
-      network: 'Base',
-      chainId: 8453,
-      token: 'EURC',
-      apy: defiLlama.morphoSteakhouse.apy,
-      apyBase: defiLlama.morphoSteakhouse.apy,
-      apyReward: null,
-      apy7d: null,
-      apy30d: null,
-      tvl: defiLlama.morphoSteakhouse.tvl,
-      tags: ['stablecoin', 'single'],
-      source: 'lifi' as const,
-      isTransactional: true,
-      lifiAddress: '0xBeEF086b8807Dc5E5A1740C5E3a7C4c366eA6ab5',
-      lifiTokenAddress: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42',
-      lifiTokenDecimals: 6,
-      protocolUrl: 'https://app.morpho.org/base/vault/0xBeEF086b8807Dc5E5A1740C5E3a7C4c366eA6ab5/steakhouse-eurc',
-    },
-    // Morpho — Steakhouse Prime EURC (Base)
-    {
-      id: 'morpho-steakhouse-prime-base-eurc',
-      name: 'Steakhouse Prime EURC',
-      protocol: 'Morpho',
-      protocolKey: 'morpho',
-      network: 'Base',
-      chainId: 8453,
-      token: 'EURC',
-      apy: defiLlama.morphoSteakhousePrime.apy,
-      apyBase: defiLlama.morphoSteakhousePrime.apy,
-      apyReward: null,
-      apy7d: null,
-      apy30d: null,
-      tvl: defiLlama.morphoSteakhousePrime.tvl,
-      tags: ['stablecoin', 'single'],
-      source: 'lifi' as const,
-      isTransactional: true,
-      lifiAddress: '0xbeef009F28cCf367444a9F79096862920e025DC1',
-      lifiTokenAddress: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42',
-      lifiTokenDecimals: 6,
-      protocolUrl: 'https://app.morpho.org/base/vault/0xbeef009F28cCf367444a9F79096862920e025DC1/steakhouse-prime-eurc',
-    },
-    // Morpho — Gauntlet EURC Core (Ethereum)
-    {
-      id: 'morpho-gauntlet-ethereum-eurc',
-      name: 'Gauntlet EURC Core',
-      protocol: 'Morpho',
-      protocolKey: 'morpho',
-      network: 'Ethereum',
-      chainId: 1,
-      token: 'EURC',
-      apy: defiLlama.morphoGauntlet.apy,
-      apyBase: defiLlama.morphoGauntlet.apy,
-      apyReward: null,
-      apy7d: null,
-      apy30d: null,
-      tvl: defiLlama.morphoGauntlet.tvl,
-      tags: ['stablecoin', 'single'],
-      source: 'lifi' as const,
-      isTransactional: true,
-      lifiAddress: '0x2ed10624315b74a78f11FAbedAa1A228c198aEfB',
-      lifiTokenAddress: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
-      lifiTokenDecimals: 6,
-      protocolUrl: 'https://app.morpho.org/ethereum/vault/0x2ed10624315b74a78f11FAbedAa1A228c198aEfB/gauntlet-eurc-core',
     },
   ];
 
