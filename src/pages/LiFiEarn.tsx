@@ -296,17 +296,13 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
     try {
       const fromAmount = String(Math.floor(parseFloat(amount) * 10 ** fromToken.decimals));
       const params = new URLSearchParams({
-        fromChain:    String(fromChainId),
-        toChain:      String(vault.chainId),
-        fromToken:    fromToken.address,
-        toToken:      vault.lifiAddress,
-        fromAddress:  address,
-        toAddress:    address,
+        fromChain:   String(fromChainId),
+        toChain:     String(vault.chainId),
+        fromToken:   fromToken.address,
+        toToken:     vault.lifiAddress,
+        fromAddress: address,
+        toAddress:   address,
         fromAmount,
-        // Mayan claims to deliver vault tokens cross-chain in one step but
-        // actually only bridges to a regular token — the Aave/vault deposit
-        // fails silently. Force routes that use the Composer on destination.
-        denyBridges:  'mayan,mayanMCTP',
       });
       const res = await fetch(`${COMPOSER_API}/v1/quote?${params}`, {
         headers: { 'x-lifi-api-key': LIFI_API_KEY },
@@ -315,7 +311,24 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
         const err = await res.json().catch(() => ({})) as { message?: string };
         throw new Error(err.message ?? `Quote failed: ${res.status}`);
       }
-      setQuote(await res.json());
+      const q = await res.json();
+
+      // Validate that the route actually deposits into the vault.
+      // Bridges like Mayan claim to deliver vault share tokens cross-chain but
+      // only bridge to a regular token — the vault deposit silently never happens.
+      // A valid route must end with a LI.FI Composer step as its final step.
+      const steps: { type: string; toolDetails: { name: string }; action: { toToken: { symbol: string } } }[]
+        = q.includedSteps ?? [];
+      const lastStep = steps[steps.length - 1];
+      const isComposerRoute = lastStep?.type === 'protocol' && lastStep?.toolDetails?.name === 'Composer';
+      if (!isComposerRoute) {
+        throw new Error(
+          `No valid route found from ${fromToken.symbol} on ${FROM_CHAINS.find(c => c.id === fromChainId)?.name ?? fromChainId} — ` +
+          `try selecting ${vault.token} on ${vault.network} directly to deposit without bridging.`
+        );
+      }
+
+      setQuote(q);
       setQuoteStatus('success');
     } catch (e: unknown) {
       setQuoteError(e instanceof Error ? e.message : 'Failed to get quote');
