@@ -3,10 +3,7 @@
  *
  * Primary source  : LI.FI Earn API (aave-v3, morpho-v1, yo-protocol EUR vaults)
  *                   All three protocols appear in the API with isTransactional=true.
- * Secondary source: Hardcoded vaults not yet in the LI.FI Earn API.
- *
- * Hardcoded lifiAddress values (toToken for LI.FI Composer):
- *   Fluid Base EURC → 0x1943FA26360f038230442525Cf1B9125b5DCB401  (fEURC)
+ * Secondary source: Hardcoded external vaults (manual deposit only, no LI.FI Composer).
  */
 
 import { useDefiLlamaData } from './useDefiLlamaData';
@@ -76,9 +73,8 @@ export function useEuroooVaults() {
       protocolUrl: v.protocol.url,
     }));
 
-  // ── Hardcoded vaults not yet in the LI.FI Earn API ───────────────────────
-  const transactionalVaults: UnifiedVault[] = defiLlama.isLoading ? [] : [
-    // Fluid — Base (not in LI.FI Earn API, but Composer-compatible)
+  // ── External-only vaults (manual deposit, no LI.FI Composer support) ────────
+  const externalVaults: UnifiedVault[] = defiLlama.isLoading ? [] : [
     {
       id: 'fluid-base-eurc',
       name: 'Fluid EURC',
@@ -94,17 +90,10 @@ export function useEuroooVaults() {
       apy30d: null,
       tvl: defiLlama.fluidBase.tvl,
       tags: ['stablecoin', 'single'],
-      source: 'lifi' as const,
-      isTransactional: true,
-      lifiAddress: '0x1943FA26360f038230442525Cf1B9125b5DCB401',
-      lifiTokenAddress: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42',
-      lifiTokenDecimals: 6,
+      source: 'defillama' as const,
+      isTransactional: false,
       protocolUrl: 'https://fluid.io/lending/8453/EURC',
     },
-  ];
-
-  // ── External-only vaults (no LI.FI Composer support) ──────────────────────
-  const externalVaults: UnifiedVault[] = defiLlama.isLoading ? [] : [
     {
       id: 'summer-base-eurc',
       name: 'Summer EURC Vault',
@@ -146,7 +135,7 @@ export function useEuroooVaults() {
   ];
 
   // Merge + sort by APY
-  const all = [...lifiUnified, ...transactionalVaults, ...externalVaults]
+  const all = [...lifiUnified, ...externalVaults]
     .sort((a, b) => b.apy - a.apy);
 
   return {
