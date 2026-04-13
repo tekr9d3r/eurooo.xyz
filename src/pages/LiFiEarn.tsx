@@ -197,31 +197,30 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
   const { data: ethPrice = 0 } = useEthPriceUsd();
   const walletAssets = useWalletAssets();
 
-  // Only same-chain deposits work — cross-chain routes require LI.FI's SDK
-  // relayer to submit a second tx on the destination chain, which we don't do.
-  const vaultChainId = vault.chainId ?? 1;
-  const defaultToken = initialFromToken?.chainId === vaultChainId
-    ? (FROM_TOKENS[vaultChainId]?.find(t => t.symbol === initialFromToken.symbol) ?? FROM_TOKENS[vaultChainId]?.[0] ?? FROM_TOKENS[1][0])
-    : (FROM_TOKENS[vaultChainId]?.[0] ?? FROM_TOKENS[1][0]);
-  const fromChainId = vaultChainId; // locked — always same chain as vault
+  const defaultChainId = initialFromToken?.chainId
+    ?? (vault.chainId && FROM_CHAINS.some(c => c.id === vault.chainId) ? vault.chainId : 1);
+  const defaultToken = initialFromToken
+    ? (FROM_TOKENS[initialFromToken.chainId]?.find(t => t.symbol === initialFromToken.symbol) ?? FROM_TOKENS[1][0])
+    : (FROM_TOKENS[defaultChainId]?.[0] ?? FROM_TOKENS[1][0]);
+  const [fromChainId, setFromChainId] = useState<number>(defaultChainId);
   const [fromToken, setFromToken] = useState<TokenOption>(defaultToken);
   const [amount, setAmount] = useState('');
   const [walletPrefilled, setWalletPrefilled] = useState(false);
 
-  // Auto-select highest-balance token on the vault's chain
+  // Auto-select highest-balance wallet token that LI.FI supports as a FROM token
   useEffect(() => {
     if (walletPrefilled || walletAssets.breakdown.length === 0) return;
     const top = walletAssets.breakdown.find(
-      item => item.chainId === vaultChainId &&
-              FROM_TOKENS[vaultChainId]?.some(t => t.symbol === item.symbol)
+      item => FROM_TOKENS[item.chainId]?.some(t => t.symbol === item.symbol)
     );
     if (!top) return;
-    const tok = FROM_TOKENS[vaultChainId]?.find(t => t.symbol === top.symbol);
+    const tok = FROM_TOKENS[top.chainId]?.find(t => t.symbol === top.symbol);
     if (!tok) return;
+    setFromChainId(top.chainId);
     setFromToken(tok);
     setAmount(top.balance.toFixed(6).replace(/\.?0+$/, ''));
     setWalletPrefilled(true);
-  }, [walletAssets.breakdown, walletPrefilled, vaultChainId]);
+  }, [walletAssets.breakdown, walletPrefilled]);
 
   const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>('idle');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -260,16 +259,24 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
     query: { enabled: false },
   });
 
+  function handleChainChange(val: string) {
+    const cid = Number(val);
+    setFromChainId(cid);
+    setFromToken(FROM_TOKENS[cid]?.[0] ?? FROM_TOKENS[1][0]);
+    resetQuote();
+    setAmount('');
+  }
+
   function handleTokenChange(symbol: string) {
     const t = FROM_TOKENS[fromChainId]?.find((x) => x.symbol === symbol);
     if (t) { setFromToken(t); resetQuote(); setAmount(''); }
   }
 
   function handleWalletChip(item: typeof walletAssets.breakdown[0]) {
-    // Only accept chips from the vault's chain
-    if (item.chainId !== vaultChainId) return;
-    const tok = FROM_TOKENS[vaultChainId]?.find(t => t.symbol === item.symbol);
+    const cid = item.chainId;
+    const tok = FROM_TOKENS[cid]?.find(t => t.symbol === item.symbol) ?? FROM_TOKENS[cid]?.[0];
     if (!tok) return;
+    setFromChainId(cid);
     setFromToken(tok);
     setAmount(item.balance.toFixed(6).replace(/\.?0+$/, ''));
     resetQuote();
@@ -350,13 +357,16 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
       }
 
       // 3. Send the deposit transaction
+      // Pass gasLimit from the quote — LI.FI encodes complex destination calldata
+      // (bridge message + swap + vault deposit) that wallets routinely underestimate.
       setTxStatus('depositing');
       const tx = quote.transactionRequest;
       await sendTransactionAsync({
-        to:      tx.to as `0x${string}`,
-        data:    tx.data,
-        value:   tx.value ? BigInt(tx.value) : undefined,
-        chainId: fromChainId as (typeof FROM_CHAINS)[number]['id'],
+        to:       tx.to as `0x${string}`,
+        data:     tx.data,
+        value:    tx.value ? BigInt(tx.value) : undefined,
+        chainId:  fromChainId as (typeof FROM_CHAINS)[number]['id'],
+        gas:      tx.gasLimit ? BigInt(tx.gasLimit) : undefined,
       });
 
       setTxStatus('done');
@@ -422,10 +432,31 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
           <div className="rounded-lg border border-border/60 p-3 flex flex-col gap-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From</p>
             <div className="flex gap-2">
-              {/* Network badge — locked to vault's chain */}
-              <div className="flex-1 flex items-center px-3 rounded-md border border-border/60 bg-secondary/30 text-sm font-medium text-muted-foreground">
-                {FROM_CHAINS.find(c => c.id === vaultChainId)?.name ?? vault.network}
-              </div>
+              {/* Chain selector */}
+              <Select value={String(fromChainId)} onValueChange={handleChainChange}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FROM_CHAINS.map((c) => {
+                    const chainTotal = walletAssets.breakdown
+                      .filter(b => b.chainId === c.id)
+                      .reduce((s, b) => s + b.amountUsd, 0);
+                    return (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        <span className="flex items-center justify-between gap-4 w-full">
+                          <span>{c.name}</span>
+                          {chainTotal > 0.01 && (
+                            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                              ${chainTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
               {/* Token selector — shows wallet balance per token on selected chain */}
               <Select value={fromToken.symbol} onValueChange={handleTokenChange}>
                 <SelectTrigger className="w-32">
