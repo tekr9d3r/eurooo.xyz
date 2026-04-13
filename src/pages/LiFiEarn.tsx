@@ -1018,13 +1018,21 @@ function LiFiEarnInner() {
           protocol: v.protocol,
           bestApy: v.apy,
           totalTvl: v.tvl,
-          userDeposit: depositMap[v.protocolKey] ?? 0,
+          userDeposit: 0, // computed below after all vaults are grouped
           vaults: [v],
         });
       }
     }
     return Array.from(map.values())
-      .map(g => ({ ...g, userDeposit: depositMap[g.protocolKey] ?? 0 }))
+      .map(g => ({
+        ...g,
+        userDeposit: g.vaults.reduce((sum, v) => {
+          const pid = v.lifiAddress
+            ? VAULT_TO_PROTOCOL_ID[v.lifiAddress.toLowerCase()]
+            : undefined;
+          return sum + (pid !== undefined ? (depositMap[pid] ?? 0) : 0);
+        }, 0),
+      }))
       .sort((a, b) => {
         // LI.FI transactional protocols first, then by APY
         const aLifi = a.vaults.some(v => v.source === 'lifi' && v.isTransactional) ? 1 : 0;
