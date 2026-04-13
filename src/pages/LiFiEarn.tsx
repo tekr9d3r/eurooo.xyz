@@ -824,7 +824,12 @@ function ProtocolGroupRow({ group, depositMap, isExpanded, onToggle, onDeposit }
         <VaultSubRow
           key={vault.id}
           vault={vault}
-          userDeposit={depositMap[vault.protocolKey] ?? 0}
+          userDeposit={(() => {
+              const pid = vault.lifiAddress
+                ? VAULT_TO_PROTOCOL_ID[vault.lifiAddress.toLowerCase()]
+                : undefined;
+              return pid !== undefined ? (depositMap[pid] ?? 0) : 0;
+            })()}
           onDeposit={onDeposit}
         />
       ))}
@@ -937,11 +942,33 @@ function YieldCalculator({ bestApy }: { bestApy: number }) {
 
 // ── Protocol deposit map ─────────────────────────────────────────────────────
 
+// Maps vault share token address (lifiAddress from Earn API) → useProtocolData sub-protocol ID
+// so each vault row shows its own balance, not the whole-protocol total.
+const VAULT_TO_PROTOCOL_ID: Record<string, string> = {
+  // Aave
+  '0xaa6e91c82942aeae040303bf96c15a6dbcb82ca0': 'aave-ethereum',
+  '0x90da57e0a6c0d166bf15764e03b83745dc90025b': 'aave-base',
+  '0x8a9fde6925a839f6b1932d16b36ac026f8d3fbdb': 'aave-avalanche',
+  // Morpho Ethereum
+  '0x2ed10624315b74a78f11fabedaa1a228c198aefb': 'morpho-gauntlet',
+  '0x34ece536d2ae03192b06c0a67030d1faf4c0ba43': 'morpho-prime',
+  '0x0c6aec603d48ebf1cecc7b247a2c3da08b398dc1': 'morpho-kpk',
+  '0x75741a12b36d181f44f389e0c6b1e0210311e3ff': 'morpho-steakhouse-eurcv',
+  '0xbeef0c075da5d01112ae5cf34d257074fb5ddb2f': 'morpho-steakhouse-prime-instant',
+  // Morpho Base
+  '0xf24608e0ccb972b0b0f4a6446a0bbf58c701a026': 'morpho-moonwell',
+  '0xbeef086b8807dc5e5a1740c5e3a7c4c366ea6ab5': 'morpho-steakhouse',
+  '0xbeef009f28ccf367444a9f79096862920e025dc1': 'morpho-steakhouse-prime',
+};
+
 function buildDepositMap(protocols: ReturnType<typeof useProtocolData>['protocols']) {
   const map: Record<string, number> = {};
   for (const p of protocols) {
-    const key = p.id.split('-')[0];
-    map[key] = (map[key] ?? 0) + p.userDeposit;
+    // For grouped protocols (Aave, Morpho), map each sub-protocol individually
+    const entries = p.subProtocols ?? [p];
+    for (const sub of entries) {
+      map[sub.id] = sub.userDeposit;
+    }
   }
   return map;
 }
