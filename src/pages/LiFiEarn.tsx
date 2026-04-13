@@ -1,1148 +1,239 @@
-import { useState, Suspense, useEffect, useMemo } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { WalletProvider } from '@/components/WalletProvider';
-import { WagmiReadyGuard } from '@/components/WagmiReadyGuard';
-import { useEuroooVaults, UnifiedVault } from '@/hooks/useEuroooVaults';
-import { useProtocolData } from '@/hooks/useProtocolData';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown, ChevronRight, ExternalLink, TrendingUp, Zap } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ExternalLink } from 'lucide-react';
+import { SEO } from '@/components/SEO';
+import { useLiFiVaults, LiFiVault } from '@/hooks/useLiFiVaults';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
-import summerLogo from '@/assets/summer-logo.png';
 import fluidLogo from '@/assets/fluid-logo.png';
 import moonwellLogo from '@/assets/moonwell-logo.png';
-import jupiterLogo from '@/assets/jupiter-logo.png';
-import { SEO } from '@/components/SEO';
-import { useAccount, useSwitchChain, useWriteContract, useReadContract, useSendTransaction, useBalance } from 'wagmi';
-import { formatUnits } from 'viem';
-import { mainnet, base, gnosis, avalanche, arbitrum, optimism, polygon } from 'wagmi/chains';
-import { ERC20_ABI } from '@/lib/contracts';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useEurUsdRate } from '@/hooks/useEurUsdRate';
-import { useWalletAssets, useEthPriceUsd } from '@/hooks/useWalletAssets';
-import { FROM_CHAINS, FROM_TOKENS, NATIVE, type TokenOption } from '@/lib/tokens';
+
+// ── Protocol logos ────────────────────────────────────────────────────────────
 
 const PROTOCOL_LOGOS: Record<string, string> = {
-  aave:     aaveLogo,
-  morpho:   morphoLogo,
-  yo:       yoLogo,
-  summer:   summerLogo,
-  fluid:    fluidLogo,
-  moonwell: moonwellLogo,
-  jupiter:  jupiterLogo,
+  'aave-v3':    aaveLogo,
+  'morpho-v1':  morphoLogo,
+  'yo-protocol': yoLogo,
+  'fluid':      fluidLogo,
+  'moonwell':   moonwellLogo,
 };
 
-const CHAIN_MAP = {
-  1: mainnet,
-  8453: base,
-  100: gnosis,
-  43114: avalanche,
-  42161: arbitrum,
-  10: optimism,
-  137: polygon,
-} as const;
+// ── Chain display names ───────────────────────────────────────────────────────
 
-const COMPOSER_API = '/lifi-composer';
-const LIFI_API_KEY = import.meta.env.VITE_LIFI_API_KEY as string;
+const CHAIN_LABELS: Record<number, string> = {
+  1:     'Ethereum',
+  8453:  'Base',
+  42161: 'Arbitrum',
+  10:    'Optimism',
+  137:   'Polygon',
+  100:   'Gnosis',
+  43114: 'Avalanche',
+};
 
-// ── Formatters ───────────────────────────────────────────────────────────────
+// ── Formatters ────────────────────────────────────────────────────────────────
 
-function formatApy(val: number | null | undefined) {
+function fmt(val: number | null | undefined) {
   if (val == null) return '—';
   return `${val.toFixed(2)}%`;
 }
 
-function formatTvl(usd: number) {
+function fmtTvl(usd: number) {
   if (usd >= 1_000_000_000) return `$${(usd / 1_000_000_000).toFixed(2)}B`;
   if (usd >= 1_000_000)     return `$${(usd / 1_000_000).toFixed(2)}M`;
   if (usd >= 1_000)         return `$${(usd / 1_000).toFixed(1)}K`;
   return `$${usd.toFixed(0)}`;
 }
 
-function formatBalance(val: number) {
-  return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+// ── Vault row ─────────────────────────────────────────────────────────────────
 
-// ── Portfolio Summary ────────────────────────────────────────────────────────
-
-function PortfolioSummary({ totalDeposits, averageApy, isLoading }: {
-  totalDeposits: number;
-  averageApy: number;
-  isLoading: boolean;
-}) {
-  const [liveBalance, setLiveBalance] = useState(totalDeposits);
-
-  useEffect(() => { setLiveBalance(totalDeposits); }, [totalDeposits]);
-
-  useEffect(() => {
-    if (totalDeposits <= 0 || averageApy <= 0) return;
-    const yieldPerSec = (totalDeposits * (averageApy / 100)) / (365 * 24 * 60 * 60);
-    const t = setInterval(() => setLiveBalance((v) => v + yieldPerSec), 1000);
-    return () => clearInterval(t);
-  }, [totalDeposits, averageApy]);
-
-  const daily   = (totalDeposits * (averageApy / 100)) / 365;
-  const weekly  = daily * 7;
-  const yearly  = totalDeposits * (averageApy / 100);
-  const hasDeposits = totalDeposits > 0;
+function VaultRow({ vault }: { vault: LiFiVault }) {
+  const logo = PROTOCOL_LOGOS[vault.protocol.name];
+  const chainLabel = CHAIN_LABELS[vault.chainId] ?? vault.network;
+  const token = vault.underlyingTokens[0];
+  const apy = vault.analytics.apy.total ?? 0;
+  const apy7d = vault.analytics.apy7d;
+  const apy30d = vault.analytics.apy30d;
+  const tvl = Number(vault.analytics.tvl.usd);
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card p-5 md:p-6 mb-8">
-      {isLoading ? (
-        <div className="flex flex-col md:flex-row gap-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-      ) : !hasDeposits ? (
-        <div className="text-center py-3">
-          <p className="text-muted-foreground text-sm">Connect your wallet to see your portfolio balance.</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Portfolio</p>
-              <div className="text-3xl font-bold text-emerald-500 tracking-tight">
-                €{formatBalance(liveBalance)}
-              </div>
+    <tr className="border-b border-border/40 hover:bg-muted/30 transition-colors">
+      {/* Protocol */}
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          {logo ? (
+            <img src={logo} alt={vault.protocol.name} className="w-6 h-6 rounded-full object-contain" />
+          ) : (
+            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+              {vault.protocol.name[0].toUpperCase()}
             </div>
-            <div className="flex items-center gap-5">
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground mb-1">Avg APY</p>
-                <Badge variant="secondary" className="text-base px-3 py-1">{formatApy(averageApy)}</Badge>
-              </div>
-              <div className="h-8 w-px bg-border" />
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground mb-1">Daily</p>
-                <p className="text-sm font-semibold text-emerald-500">+€{daily.toFixed(4)}</p>
-              </div>
-              <div className="hidden md:block h-8 w-px bg-border" />
-              <div className="hidden md:block text-center">
-                <p className="text-xs text-muted-foreground mb-1">Weekly</p>
-                <p className="text-sm font-semibold text-emerald-500">+€{weekly.toFixed(3)}</p>
-              </div>
-              <div className="hidden md:block h-8 w-px bg-border" />
-              <div className="hidden md:block text-center">
-                <p className="text-xs text-muted-foreground mb-1">Yearly</p>
-                <p className="text-sm font-semibold text-emerald-500">+€{formatBalance(yearly)}</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex md:hidden items-center gap-4 text-xs text-muted-foreground border-t border-border/40 pt-3">
-            <span>Weekly <span className="text-emerald-500 font-semibold">+€{weekly.toFixed(3)}</span></span>
-            <span>·</span>
-            <span>Yearly <span className="text-emerald-500 font-semibold">+€{formatBalance(yearly)}</span></span>
-          </div>
+          )}
+          <span className="font-medium text-sm">{vault.name}</span>
+        </div>
+      </td>
+
+      {/* Network */}
+      <td className="px-4 py-3">
+        <Badge variant="outline" className="text-xs font-normal">{chainLabel}</Badge>
+      </td>
+
+      {/* Token */}
+      <td className="px-4 py-3 text-sm text-muted-foreground">
+        {token?.symbol ?? '—'}
+      </td>
+
+      {/* APY */}
+      <td className="px-4 py-3 text-sm font-semibold text-emerald-500">
+        {fmt(apy)}
+      </td>
+
+      {/* 7d APY */}
+      <td className="px-4 py-3 text-sm text-muted-foreground">
+        {fmt(apy7d)}
+      </td>
+
+      {/* 30d APY */}
+      <td className="px-4 py-3 text-sm text-muted-foreground">
+        {fmt(apy30d)}
+      </td>
+
+      {/* TVL */}
+      <td className="px-4 py-3 text-sm text-muted-foreground">
+        {fmtTvl(tvl)}
+      </td>
+
+      {/* Link */}
+      <td className="px-4 py-3">
+        <a
+          href={vault.protocol.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Open <ExternalLink className="w-3 h-3" />
+        </a>
+      </td>
+    </tr>
+  );
+}
+
+// ── Skeleton rows ─────────────────────────────────────────────────────────────
+
+function SkeletonRows() {
+  return (
+    <>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <tr key={i} className="border-b border-border/40">
+          {Array.from({ length: 8 }).map((_, j) => (
+            <td key={j} className="px-4 py-3">
+              <Skeleton className="h-4 w-full" />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
+function EarnContent() {
+  const { data: vaults = [], isLoading, error } = useLiFiVaults();
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">EUR Yield Vaults</h1>
+        <p className="text-muted-foreground">
+          EUR stablecoin vaults from the{' '}
+          <a
+            href="https://earn.li.fi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-foreground transition-colors"
+          >
+            LI.FI Earn API
+          </a>
+          . Data refreshes every 5 minutes.
+        </p>
+      </div>
+
+      {/* Stats bar */}
+      {!isLoading && !error && vaults.length > 0 && (
+        <div className="flex gap-6 mb-6 text-sm text-muted-foreground">
+          <span><strong className="text-foreground">{vaults.length}</strong> vaults</span>
+          <span>
+            Best APY:{' '}
+            <strong className="text-emerald-500">{fmt(vaults[0]?.analytics.apy.total)}</strong>
+          </span>
+          <span>
+            Avg APY:{' '}
+            <strong className="text-foreground">
+              {fmt(vaults.reduce((s, v) => s + (v.analytics.apy.total ?? 0), 0) / vaults.length)}
+            </strong>
+          </span>
         </div>
       )}
-    </div>
-  );
-}
 
-// ── Deposit Modal ────────────────────────────────────────────────────────────
-
-type QuoteStatus = 'idle' | 'loading' | 'success' | 'error';
-type TxStatus = 'idle' | 'switching' | 'approving' | 'depositing' | 'done' | 'error';
-
-const TX_LABEL: Record<TxStatus, string> = {
-  idle:       'Deposit',
-  switching:  'Switching chain…',
-  approving:  'Approving token…',
-  depositing: 'Confirm in wallet…',
-  done:       'Done!',
-  error:      'Retry',
-};
-
-interface DepositModalProps {
-  vault: UnifiedVault;
-  onClose: () => void;
-  initialFromToken?: { chainId: number; symbol: string };
-}
-
-// Hook: reads balance of currently-selected token on currently-selected chain
-function useSelectedTokenBalance(chainId: number, token: TokenOption, userAddress?: `0x${string}`) {
-  const isNative = token.address === NATIVE;
-  const { data: nativeBal } = useBalance({
-    address: userAddress,
-    chainId: chainId as (typeof FROM_CHAINS)[number]['id'],
-    query: { enabled: !!userAddress && isNative, staleTime: 15_000 },
-  });
-  const { data: erc20Bal } = useReadContract({
-    address: !isNative ? (token.address as `0x${string}`) : undefined,
-    abi: ERC20_ABI,
-    functionName: 'balanceOf',
-    args: userAddress ? [userAddress] : undefined,
-    chainId: chainId as (typeof FROM_CHAINS)[number]['id'],
-    query: { enabled: !!userAddress && !isNative, staleTime: 15_000 },
-  });
-  if (isNative) return nativeBal ? Number(nativeBal.formatted) : 0;
-  return erc20Bal ? Number(formatUnits(erc20Bal as bigint, token.decimals)) : 0;
-}
-
-function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
-  const { address } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
-  const { writeContractAsync } = useWriteContract();
-  const { sendTransactionAsync } = useSendTransaction();
-  const { data: rateData } = useEurUsdRate();
-  const eurRate = rateData?.current ?? 0.92;
-  const { data: ethPrice = 0 } = useEthPriceUsd();
-  const walletAssets = useWalletAssets();
-
-  const defaultChainId = initialFromToken?.chainId
-    ?? (vault.chainId && FROM_CHAINS.some(c => c.id === vault.chainId) ? vault.chainId : 1);
-  const defaultToken = initialFromToken
-    ? (FROM_TOKENS[initialFromToken.chainId]?.find(t => t.symbol === initialFromToken.symbol) ?? FROM_TOKENS[1][0])
-    : (FROM_TOKENS[defaultChainId]?.[0] ?? FROM_TOKENS[1][0]);
-  const [fromChainId, setFromChainId] = useState<number>(defaultChainId);
-  const [fromToken, setFromToken] = useState<TokenOption>(defaultToken);
-  const [amount, setAmount] = useState('');
-  const [walletPrefilled, setWalletPrefilled] = useState(false);
-
-  // Auto-select highest-balance wallet token that LI.FI supports as a FROM token
-  useEffect(() => {
-    if (walletPrefilled || walletAssets.breakdown.length === 0) return;
-    const top = walletAssets.breakdown.find(
-      item => FROM_TOKENS[item.chainId]?.some(t => t.symbol === item.symbol)
-    );
-    if (!top) return;
-    const tok = FROM_TOKENS[top.chainId]?.find(t => t.symbol === top.symbol);
-    if (!tok) return;
-    setFromChainId(top.chainId);
-    setFromToken(tok);
-    setAmount(top.balance.toFixed(6).replace(/\.?0+$/, ''));
-    setWalletPrefilled(true);
-  }, [walletAssets.breakdown, walletPrefilled]);
-
-  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>('idle');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [quote, setQuote] = useState<any>(null);
-  const [quoteError, setQuoteError] = useState('');
-
-  const [txStatus, setTxStatus] = useState<TxStatus>('idle');
-  const [txError, setTxError] = useState('');
-
-  const isNative = fromToken.address === NATIVE;
-  const approvalAddress = quote?.estimate?.approvalAddress as `0x${string}` | undefined;
-
-  // Balance for selected token/chain — read from already-loaded breakdown first,
-  // fall back to a direct RPC call (useSelectedTokenBalance) for allowance checks
-  const breakdownBalance = walletAssets.breakdown.find(
-    b => b.chainId === fromChainId && b.symbol === fromToken.symbol
-  )?.balance ?? 0;
-  const rpcBalance = useSelectedTokenBalance(fromChainId, fromToken, address);
-  const selectedBalance = breakdownBalance > 0 ? breakdownBalance : rpcBalance;
-
-  // EUR equivalent of current amount
-  const amountNum = parseFloat(amount) || 0;
-  const isUsdStable = ['USDC', 'USDT', 'DAI'].includes(fromToken.symbol);
-  const isEurc = fromToken.symbol === 'EURC';
-  const isEthLike = ['ETH'].includes(fromToken.symbol);
-  const eurEquiv = isEurc ? amountNum
-    : isUsdStable ? amountNum * eurRate
-    : isEthLike ? amountNum * ethPrice * eurRate
-    : null; // POL/AVAX — no price available, skip
-
-  const { refetch: refetchAllowance } = useReadContract({
-    address: !isNative ? (fromToken.address as `0x${string}`) : undefined,
-    abi: ERC20_ABI,
-    functionName: 'allowance',
-    args: address && approvalAddress ? [address, approvalAddress] : undefined,
-    query: { enabled: false },
-  });
-
-  function handleChainChange(val: string) {
-    const cid = Number(val);
-    setFromChainId(cid);
-    setFromToken(FROM_TOKENS[cid]?.[0] ?? FROM_TOKENS[1][0]);
-    resetQuote();
-    setAmount('');
-  }
-
-  function handleTokenChange(symbol: string) {
-    const t = FROM_TOKENS[fromChainId]?.find((x) => x.symbol === symbol);
-    if (t) { setFromToken(t); resetQuote(); setAmount(''); }
-  }
-
-  function handleWalletChip(item: typeof walletAssets.breakdown[0]) {
-    const cid = item.chainId;
-    const tok = FROM_TOKENS[cid]?.find(t => t.symbol === item.symbol) ?? FROM_TOKENS[cid]?.[0];
-    if (!tok) return;
-    setFromChainId(cid);
-    setFromToken(tok);
-    setAmount(item.balance.toFixed(6).replace(/\.?0+$/, ''));
-    resetQuote();
-  }
-
-  function resetQuote() {
-    setQuote(null);
-    setQuoteStatus('idle');
-    setTxStatus('idle');
-    setTxError('');
-  }
-
-  async function getQuote() {
-    if (!address || !vault.chainId || !vault.lifiAddress || !amount || parseFloat(amount) <= 0) return;
-    setQuoteStatus('loading');
-    setQuoteError('');
-    try {
-      const fromAmount = String(Math.floor(parseFloat(amount) * 10 ** fromToken.decimals));
-      const params = new URLSearchParams({
-        fromChain:   String(fromChainId),
-        toChain:     String(vault.chainId),
-        fromToken:   fromToken.address,
-        toToken:     vault.lifiAddress,
-        fromAddress: address,
-        toAddress:   address,
-        fromAmount,
-      });
-      const res = await fetch(`${COMPOSER_API}/v1/quote?${params}`, {
-        headers: { 'x-lifi-api-key': LIFI_API_KEY },
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { message?: string };
-        throw new Error(err.message ?? `Quote failed: ${res.status}`);
-      }
-      const q = await res.json();
-      setQuote(q);
-      setQuoteStatus('success');
-    } catch (e: unknown) {
-      setQuoteError(e instanceof Error ? e.message : 'Failed to get quote');
-      setQuoteStatus('error');
-    }
-  }
-
-  async function executeDeposit() {
-    if (!quote || !address) return;
-    setTxError('');
-
-    try {
-      // 1. Switch to fromChain
-      setTxStatus('switching');
-      await switchChainAsync({ chainId: fromChainId as (typeof FROM_CHAINS)[number]['id'] });
-
-      // 2. Approve ERC20 if needed
-      if (!isNative && approvalAddress) {
-        const fromAmount = String(Math.floor(parseFloat(amount) * 10 ** fromToken.decimals));
-        const needed = BigInt(fromAmount);
-        const { data: allowance } = await refetchAllowance();
-        if (!allowance || (allowance as bigint) < needed) {
-          setTxStatus('approving');
-          await writeContractAsync({
-            address: fromToken.address as `0x${string}`,
-            abi: ERC20_ABI,
-            functionName: 'approve',
-            args: [approvalAddress, needed],
-            account: address,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            chain: (CHAIN_MAP as any)[fromChainId],
-          });
-          // Poll until approval is reflected
-          await new Promise<void>((resolve, reject) => {
-            const t = setInterval(async () => {
-              const { data: fresh } = await refetchAllowance();
-              if (fresh && (fresh as bigint) >= needed) { clearInterval(t); resolve(); }
-            }, 2000);
-            setTimeout(() => { clearInterval(t); reject(new Error('Approval timeout')); }, 120_000);
-          });
-        }
-      }
-
-      // 3. Send the deposit transaction
-      // Pass gasLimit from the quote — LI.FI encodes complex destination calldata
-      // (bridge message + swap + vault deposit) that wallets routinely underestimate.
-      setTxStatus('depositing');
-      const tx = quote.transactionRequest;
-      await sendTransactionAsync({
-        to:       tx.to as `0x${string}`,
-        data:     tx.data,
-        value:    tx.value ? BigInt(tx.value) : undefined,
-        chainId:  fromChainId as (typeof FROM_CHAINS)[number]['id'],
-        gas:      tx.gasLimit ? BigInt(tx.gasLimit) : undefined,
-      });
-
-      setTxStatus('done');
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Unknown error';
-      setTxError(msg.includes('User rejected') ? 'Transaction rejected' : msg);
-      setTxStatus('error');
-    }
-  }
-
-  // ── Derived quote display values ─────────────────────────────────────────
-  // Use decimals from the quote response itself — the toToken is a vault share
-  // token whose decimals may differ from the underlying asset (lifiTokenDecimals)
-  const toTokenDecimals: number = quote?.action?.toToken?.decimals ?? vault.lifiTokenDecimals ?? 6;
-  const estOutput = quote?.estimate?.toAmount
-    ? (Number(quote.estimate.toAmount) / 10 ** toTokenDecimals).toFixed(4)
-    : null;
-  const estTimeSec: number = quote?.estimate?.executionDuration ?? 0;
-  const estTime = estTimeSec > 0
-    ? estTimeSec < 60 ? `~${estTimeSec}s` : `~${Math.ceil(estTimeSec / 60)} min`
-    : null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const totalFeeUsd = ((quote?.estimate?.feeCosts ?? []) as any[])
-    .reduce((s: number, f) => s + Number(f.amountUSD ?? 0), 0);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const steps: any[] = quote?.includedSteps ?? [];
-
-  const isBusy = txStatus !== 'idle' && txStatus !== 'done' && txStatus !== 'error';
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md max-h-[90dvh] flex flex-col p-0 overflow-hidden">
-        {/* Protocol header banner */}
-        <div className="relative shrink-0 bg-emerald-500/8 border-b border-emerald-500/20 px-6 pt-5 pb-4 pr-12">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
-          <div className="relative flex items-center gap-3">
-            {PROTOCOL_LOGOS[vault.protocolKey] && (
-              <img
-                src={PROTOCOL_LOGOS[vault.protocolKey]}
-                alt={vault.protocol}
-                className="h-11 w-11 rounded-xl object-contain bg-background border border-border/50 p-1.5 shrink-0 shadow-sm"
-              />
-            )}
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-0.5">
-                Depositing into
-              </p>
-              <DialogTitle className="text-base leading-tight">{vault.protocol} — {vault.token}</DialogTitle>
-              <DialogDescription className="mt-0.5">
-                {vault.network} · {vault.name}
-              </DialogDescription>
-            </div>
-            <div className="ml-auto shrink-0 text-right">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">APY</p>
-              <p className="text-xl font-bold text-emerald-500 leading-tight">{formatApy(vault.apy)}</p>
-            </div>
-          </div>
+      {/* Error */}
+      {error && (
+        <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-500 mb-6">
+          Failed to load vaults: {(error as Error).message}
         </div>
+      )}
 
-        <div className="flex flex-col gap-4 overflow-y-auto min-h-0 px-6 pb-6">
-
-          {/* FROM section */}
-          <div className="rounded-lg border border-border/60 p-3 flex flex-col gap-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From</p>
-            <div className="flex gap-2">
-              {/* Chain selector */}
-              <Select value={String(fromChainId)} onValueChange={handleChainChange}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FROM_CHAINS.map((c) => {
-                    const chainTotal = walletAssets.breakdown
-                      .filter(b => b.chainId === c.id)
-                      .reduce((s, b) => s + b.amountUsd, 0);
-                    return (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        <span className="flex items-center justify-between gap-4 w-full">
-                          <span>{c.name}</span>
-                          {chainTotal > 0.01 && (
-                            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                              ${chainTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                            </span>
-                          )}
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              {/* Token selector — shows wallet balance per token on selected chain */}
-              <Select value={fromToken.symbol} onValueChange={handleTokenChange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(FROM_TOKENS[fromChainId] ?? []).map((t) => {
-                    const item = walletAssets.breakdown.find(
-                      b => b.chainId === fromChainId && b.symbol === t.symbol
-                    );
-                    return (
-                      <SelectItem key={t.symbol} value={t.symbol}>
-                        <span className="flex items-center justify-between gap-3 w-full">
-                          <span className="font-medium">{t.symbol}</span>
-                          {item && item.balance > 0 && (
-                            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                              {item.balance.toLocaleString('en-US', { maximumFractionDigits: 4 })}
-                            </span>
-                          )}
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Balance pill — always visible below selectors */}
-            <div className={`flex items-center justify-between rounded-md px-3 py-2 text-xs ${
-              selectedBalance > 0
-                ? 'bg-emerald-500/10 border border-emerald-500/20'
-                : 'bg-secondary/40'
-            }`}>
-              <span className="text-muted-foreground">Your balance</span>
-              <span className={selectedBalance > 0 ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}>
-                {selectedBalance > 0
-                  ? `${selectedBalance.toLocaleString('en-US', { maximumFractionDigits: 6 })} ${fromToken.symbol}`
-                  : `No ${fromToken.symbol} on this chain`}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <div className="relative">
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  min="0"
-                  value={amount}
-                  onChange={(e) => { setAmount(e.target.value); resetQuote(); }}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pr-24"
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  {selectedBalance > 0 && (
-                    <button
-                      onClick={() => { setAmount(selectedBalance.toFixed(8).replace(/\.?0+$/, '')); resetQuote(); }}
-                      className="text-[10px] font-semibold text-emerald-600 hover:text-emerald-500 uppercase tracking-wide"
-                    >
-                      MAX
-                    </button>
-                  )}
-                  <span className="text-xs text-muted-foreground font-medium">{fromToken.symbol}</span>
-                </div>
-              </div>
-              {eurEquiv !== null && amountNum > 0 && (
-                <p className="text-xs text-muted-foreground px-1">
-                  ≈ €{eurEquiv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Preview / Deposit CTA */}
-          {quoteStatus !== 'success' ? (
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={getQuote}
-                disabled={!amount || parseFloat(amount) <= 0 || quoteStatus === 'loading'}
-                className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition-all"
-              >
-                {quoteStatus === 'loading' ? 'Calculating…' : `Preview deposit${amount ? ` — ${amount} ${fromToken.symbol}` : ''}`}
-              </Button>
-              {quoteStatus === 'error' && (
-                <p className="text-xs text-destructive text-center">{quoteError}</p>
-              )}
-            </div>
-          ) : (
-            <>
-              {/* Quote result */}
-              {quote && (
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 flex flex-col gap-1.5">
-                  <div className="flex items-center gap-1.5 pb-1.5 border-b border-emerald-500/20">
-                    <span className="text-[10px] text-muted-foreground">Route powered by</span>
-                    <span className="text-[10px] font-semibold text-foreground">LI.FI</span>
-                  </div>
-                  {estOutput && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">EUR deposited into vault</span>
-                      <span className="font-semibold text-emerald-500">~{estOutput} {vault.token}</span>
-                    </div>
-                  )}
-                  {totalFeeUsd > 0 && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Fees</span>
-                      <span>~${totalFeeUsd.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {estTime && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Est. time</span>
-                      <span>{estTime}</span>
-                    </div>
-                  )}
-                  {steps.length > 0 && (
-                    <div className="border-t border-border/40 pt-1.5 mt-0.5 flex flex-wrap gap-1">
-                      {steps.map((step, i) => (
-                        <span key={i} className="text-[10px] text-muted-foreground bg-secondary rounded px-1.5 py-0.5 capitalize">
-                          {step.type}{step.toolDetails?.name ? ` via ${step.toolDetails.name}` : ''}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Tx error */}
-              {txStatus === 'error' && txError && (
-                <p className="text-xs text-destructive">{txError}</p>
-              )}
-
-              {/* Confirm deposit button */}
-              <Button
-                className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition-all"
-                onClick={executeDeposit}
-                disabled={isBusy || txStatus === 'done'}
-              >
-                {txStatus === 'done'
-                  ? '✓ Deposited successfully'
-                  : isBusy
-                  ? TX_LABEL[txStatus]
-                  : `Confirm deposit — ${amount} ${fromToken.symbol}`}
-              </Button>
-              {txStatus !== 'done' && (
-                <button className="text-xs text-muted-foreground hover:text-foreground text-center" onClick={resetQuote}>
-                  ← Change amount or token
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── Vault Table ──────────────────────────────────────────────────────────────
-
-interface ProtocolGroup {
-  protocolKey: string;
-  protocol: string;
-  bestApy: number;
-  totalTvl: number;
-  userDeposit: number;
-  vaults: UnifiedVault[];
-}
-
-interface VaultRowProps {
-  vault: UnifiedVault;
-  userDeposit: number;
-  onDeposit: (vault: UnifiedVault) => void;
-}
-
-function VaultSubRow({ vault, userDeposit, onDeposit }: VaultRowProps) {
-  const { isConnected } = useAccount();
-  const isLifi = vault.source === 'lifi';
-  return (
-    <div className="bg-secondary/20 border-t border-border/20 px-4 md:px-6 py-3">
-      {/* Mobile layout */}
-      <div className="flex items-center justify-between gap-2 md:hidden">
-        <div className="flex flex-col gap-1 min-w-0">
-          <div className="flex items-center gap-1 flex-wrap">
-            <Badge variant="outline" className="text-[10px] px-1 py-0 h-3.5">{vault.network}</Badge>
-            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-3.5">{vault.token}</Badge>
-            <span className="text-emerald-500 font-semibold text-xs">{formatApy(vault.apy)}</span>
-          </div>
-          <span className="text-xs text-muted-foreground truncate">{vault.name}</span>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {isLifi && vault.isTransactional ? (
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2" onClick={() => onDeposit(vault)}>
-              Deposit
-            </Button>
-          ) : (
-            <Button size="sm" variant="outline" className="text-xs h-7 px-2" asChild>
-              <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
-            </Button>
-          )}
-        </div>
-      </div>
-      {/* Desktop layout */}
-      <div className="hidden md:grid grid-cols-12 gap-4 items-center text-sm pl-10">
-        <div className="col-span-4 flex flex-col gap-0.5 min-w-0">
-          <span className="text-xs font-medium truncate text-muted-foreground">{vault.name}</span>
-          <div className="flex items-center gap-1">
-            <Badge variant="outline" className="text-[10px] px-1 py-0 h-3.5">{vault.network}</Badge>
-            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-3.5">{vault.token}</Badge>
-            {isLifi && (
-              <Tooltip>
-                <TooltipTrigger><Zap className="h-2.5 w-2.5 text-emerald-500" /></TooltipTrigger>
-                <TooltipContent>1-click deposit</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        </div>
-        <div className="col-span-2 text-emerald-500 font-semibold">{formatApy(vault.apy)}</div>
-        <div className="col-span-2 text-muted-foreground text-xs">{formatTvl(vault.tvl)}</div>
-        <div className="col-span-2 text-xs">
-          {isConnected ? (
-            <span className={userDeposit > 0 ? 'text-emerald-500 font-semibold' : 'text-muted-foreground'}>
-              {userDeposit > 0 ? `€${formatBalance(userDeposit)}` : '—'}
-            </span>
-          ) : '—'}
-        </div>
-        <div className="col-span-2 flex justify-end gap-1">
-          {!isConnected ? (
-            <ConnectButton.Custom>
-              {({ openConnectModal }) => (
-                <Button size="sm" variant="outline" className="text-xs h-7" onClick={openConnectModal}>Connect</Button>
-              )}
-            </ConnectButton.Custom>
-          ) : isLifi && vault.isTransactional ? (
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7" onClick={() => onDeposit(vault)}>
-              One-click deposit
-            </Button>
-          ) : (
-            <Button size="sm" variant="outline" className="text-xs h-7" asChild>
-              <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
-            </Button>
-          )}
-          {vault.protocolUrl && (
-            <Button size="sm" variant="ghost" className="px-1.5 h-7" asChild>
-              <a href={vault.protocolUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface ProtocolGroupRowProps {
-  group: ProtocolGroup;
-  depositMap: Record<string, number>;
-  isExpanded: boolean;
-  onToggle: () => void;
-  onDeposit: (vault: UnifiedVault) => void;
-}
-
-function ProtocolGroupRow({ group, depositMap, isExpanded, onToggle, onDeposit }: ProtocolGroupRowProps) {
-  const hasDeposit = group.userDeposit > 0;
-  const logo = PROTOCOL_LOGOS[group.protocolKey];
-  const multiVault = group.vaults.length > 1;
-
-  return (
-    <div className={hasDeposit ? 'border-l-2 border-l-emerald-500' : ''}>
-      {/* Protocol header row */}
-      <button
-        className="w-full px-4 md:px-6 py-4 hover:bg-secondary/30 transition-colors text-left"
-        onClick={multiVault ? onToggle : undefined}
-        style={{ cursor: multiVault ? 'pointer' : 'default' }}
-      >
-        {/* Mobile layout */}
-        <div className="flex items-center gap-3 md:hidden">
-          {logo && (
-            <img src={logo} alt={group.protocol} className="h-8 w-8 rounded-lg object-contain bg-secondary/40 p-1 shrink-0" />
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-sm">{group.protocol}</span>
-              {multiVault && (
-                <span className="text-[10px] text-muted-foreground bg-secondary rounded px-1 py-0.5">
-                  {group.vaults.length} vaults
-                </span>
-              )}
-              {multiVault && (isExpanded
-                ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-emerald-500 font-bold text-xs">{formatApy(group.bestApy)}</span>
-              <span className="text-muted-foreground text-xs">{formatTvl(group.totalTvl)}</span>
-              {hasDeposit && <span className="text-emerald-500 text-xs font-semibold">€{formatBalance(group.userDeposit)}</span>}
-            </div>
-          </div>
-          <div onClick={(e) => e.stopPropagation()} className="shrink-0">
-            {!multiVault && group.vaults[0] && (
-              group.vaults[0].source === 'lifi' && group.vaults[0].isTransactional ? (
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2"
-                  onClick={() => onDeposit(group.vaults[0])}>
-                  Deposit
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" className="text-xs h-7 px-2" asChild>
-                  <a href={group.vaults[0].protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
-                </Button>
-              )
-            )}
-          </div>
-        </div>
-
-        {/* Desktop layout */}
-        <div className="hidden md:grid grid-cols-12 gap-4 items-center text-sm">
-          <div className="col-span-4 flex items-center gap-3">
-            {logo && (
-              <img src={logo} alt={group.protocol} className="h-8 w-8 rounded-lg object-contain bg-secondary/40 p-1 shrink-0" />
-            )}
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="font-semibold">{group.protocol}</span>
-              {multiVault && (
-                <span className="text-[10px] text-muted-foreground bg-secondary rounded px-1 py-0.5">
-                  {group.vaults.length} vaults
-                </span>
-              )}
-            </div>
-            {multiVault && (
-              isExpanded
-                ? <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-                : <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-            )}
-          </div>
-          <div className="col-span-2 text-emerald-500 font-bold">{formatApy(group.bestApy)}</div>
-          <div className="col-span-2 text-muted-foreground">{formatTvl(group.totalTvl)}</div>
-          <div className="col-span-2">
-            {hasDeposit ? (
-              <span className="text-emerald-500 font-semibold">€{formatBalance(group.userDeposit)}</span>
+      {/* Table */}
+      <div className="rounded-xl border border-border/50 overflow-x-auto">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-border/50 bg-muted/30">
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Protocol</th>
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Network</th>
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Token</th>
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">APY</th>
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">7d APY</th>
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">30d APY</th>
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">TVL</th>
+              <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <SkeletonRows />
+            ) : vaults.length === 0 && !error ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground text-sm">
+                  No EUR vaults found.
+                </td>
+              </tr>
             ) : (
-              <span className="text-muted-foreground">—</span>
+              vaults.map((v) => <VaultRow key={v.slug} vault={v} />)
             )}
-          </div>
-          <div className="col-span-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
-            {!multiVault && group.vaults[0] && (
-              group.vaults[0].source === 'lifi' && group.vaults[0].isTransactional ? (
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7"
-                  onClick={() => onDeposit(group.vaults[0])}>
-                  One-click deposit
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" className="text-xs h-7" asChild>
-                  <a href={group.vaults[0].protocolUrl} target="_blank" rel="noopener noreferrer">Open</a>
-                </Button>
-              )
-            )}
-            {multiVault && (
-              <span className="text-xs text-muted-foreground">
-                {isExpanded ? 'Collapse' : 'View vaults'}
-              </span>
-            )}
-          </div>
-        </div>
-      </button>
+          </tbody>
+        </table>
+      </div>
 
-      {/* Expanded sub-rows */}
-      {isExpanded && multiVault && group.vaults.map((vault) => (
-        <VaultSubRow
-          key={vault.id}
-          vault={vault}
-          userDeposit={depositMap[vault.protocolKey] ?? 0}
-          onDeposit={onDeposit}
-        />
-      ))}
     </div>
   );
 }
 
-function VaultTableSkeleton() {
-  return (
-    <div className="rounded-xl border border-border/50 bg-card overflow-hidden divide-y divide-border/30">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="grid grid-cols-12 gap-4 px-6 py-4 items-center">
-          <div className="col-span-4 flex items-center gap-3">
-            <Skeleton className="h-8 w-8 rounded-lg" />
-            <Skeleton className="h-4 w-24" />
-          </div>
-          <div className="col-span-2"><Skeleton className="h-4 w-12" /></div>
-          <div className="col-span-2"><Skeleton className="h-4 w-16" /></div>
-          <div className="col-span-2"><Skeleton className="h-4 w-10" /></div>
-          <div className="col-span-2 flex justify-end"><Skeleton className="h-7 w-24" /></div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Sparkline ─────────────────────────────────────────────────────────────────
-
-function YieldSparkline({ principal, apy }: { principal: number; apy: number }) {
-  const points = Array.from({ length: 13 }, (_, i) =>
-    principal * Math.pow(1 + apy / 100 / 12, i)
-  );
-  const min = points[0]; const max = points[12]; const range = max - min || 1;
-  const W = 280; const H = 56;
-  const coords = points.map((v, i) => {
-    const x = (i / 12) * W;
-    const y = H - ((v - min) / range) * H * 0.85 - H * 0.075;
-    return `${x},${y}`;
-  });
-  const pl = coords.join(' ');
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-14" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="yg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon points={`0,${H} ${pl} ${W},${H}`} fill="url(#yg)" />
-      <polyline points={pl} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-// ── Yield Calculator ─────────────────────────────────────────────────────────
-
-function YieldCalculator({ bestApy }: { bestApy: number }) {
-  const [principal, setPrincipal] = useState(1000);
-  const apy     = bestApy > 0 ? bestApy : 4;
-  const weekly  = (principal * (apy / 100)) / 52;
-  const monthly = (principal * (apy / 100)) / 12;
-  const yearly  = principal * (apy / 100);
-
-  return (
-    <div className="rounded-xl border border-border/50 bg-card p-5 md:p-6">
-      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
-        Yield simulator
-      </p>
-      <div className="flex flex-col md:flex-row md:items-start gap-6">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">€</span>
-              <input
-                type="number" min={100} step={100} value={principal}
-                onChange={(e) => setPrincipal(Number(e.target.value) || 100)}
-                className="w-full rounded-lg border border-input bg-background pl-7 pr-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-            </div>
-            <span className="text-xs text-muted-foreground shrink-0">at</span>
-            <span className="text-sm font-bold text-emerald-500 shrink-0">{apy.toFixed(2)}% APY</span>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg bg-secondary/40 px-3 py-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Weekly</p>
-              <p className="text-base font-bold text-emerald-500">+€{weekly.toFixed(2)}</p>
-            </div>
-            <div className="rounded-lg bg-secondary/40 px-3 py-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Monthly</p>
-              <p className="text-base font-bold text-emerald-500">+€{monthly.toFixed(2)}</p>
-            </div>
-            <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Yearly</p>
-              <p className="text-base font-bold text-emerald-500">+€{yearly.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
-            </div>
-          </div>
-        </div>
-        <div className="md:w-72">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">12-month growth</p>
-          <YieldSparkline principal={principal} apy={apy} />
-          <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-            <span>Now</span>
-            <span className="text-emerald-500 font-semibold">€{(principal + yearly).toLocaleString('en-US', { maximumFractionDigits: 0 })} in 12 months</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Protocol deposit map ─────────────────────────────────────────────────────
-
-function buildDepositMap(protocols: ReturnType<typeof useProtocolData>['protocols']) {
-  const map: Record<string, number> = {};
-  for (const p of protocols) {
-    const key = p.id.split('-')[0];
-    map[key] = (map[key] ?? 0) + p.userDeposit;
-  }
-  return map;
-}
-
-// ── Main page ────────────────────────────────────────────────────────────────
-
-const PROTOCOL_OPTIONS = [
-  { value: 'all',      label: 'All Protocols' },
-  { value: 'Aave',     label: 'Aave' },
-  { value: 'Morpho',   label: 'Morpho' },
-  { value: 'YO',       label: 'YO' },
-  { value: 'Summer',   label: 'Summer' },
-  { value: 'Fluid',    label: 'Fluid' },
-  { value: 'Moonwell', label: 'Moonwell' },
-  { value: 'Jupiter',  label: 'Jupiter' },
-];
-
-function LiFiEarnInner() {
-  const { vaults, isLoading: vaultsLoading, error } = useEuroooVaults();
-  const { protocols, totalDeposits, averageApy, isLoading: portfolioLoading } = useProtocolData();
-  const [depositVault, setDepositVault] = useState<UnifiedVault | null>(null);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [showOtherProtocols, setShowOtherProtocols] = useState(false);
-
-  function toggleGroup(key: string) {
-    setExpandedGroups(prev => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  }
-
-  const depositMap = buildDepositMap(protocols);
-
-  // Group vaults by protocol, sorted by best APY
-  const groups = useMemo<ProtocolGroup[]>(() => {
-    const map = new Map<string, ProtocolGroup>();
-    for (const v of vaults) {
-      const existing = map.get(v.protocolKey);
-      if (existing) {
-        existing.vaults.push(v);
-        existing.bestApy = Math.max(existing.bestApy, v.apy);
-        existing.totalTvl += v.tvl;
-      } else {
-        map.set(v.protocolKey, {
-          protocolKey: v.protocolKey,
-          protocol: v.protocol,
-          bestApy: v.apy,
-          totalTvl: v.tvl,
-          userDeposit: depositMap[v.protocolKey] ?? 0,
-          vaults: [v],
-        });
-      }
-    }
-    return Array.from(map.values())
-      .map(g => ({ ...g, userDeposit: depositMap[g.protocolKey] ?? 0 }))
-      .sort((a, b) => {
-        // LI.FI transactional protocols first, then by APY
-        const aLifi = a.vaults.some(v => v.source === 'lifi' && v.isTransactional) ? 1 : 0;
-        const bLifi = b.vaults.some(v => v.source === 'lifi' && v.isTransactional) ? 1 : 0;
-        if (bLifi !== aLifi) return bLifi - aLifi;
-        return b.bestApy - a.bestApy;
-      });
-  }, [vaults, depositMap]);
-
-  const lifiGroups = groups.filter(g => g.vaults.some(v => v.source === 'lifi' && v.isTransactional));
-  const otherGroups = groups.filter(g => !g.vaults.some(v => v.source === 'lifi' && v.isTransactional));
-
-  const isLoading = vaultsLoading || portfolioLoading;
-
-  return (
-    <main className="flex-1 container px-4 py-10 max-w-6xl mx-auto">
-
-      {/* Hero */}
-      <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="h-5 w-5 text-emerald-500" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              EUR Stablecoin Yield
-            </span>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-1">Earn on Your Euros</h1>
-          <p className="text-muted-foreground text-sm">
-            {vaultsLoading ? 'Fetching vaults…' : `${vaults.length} positions across 7 protocols.`}
-          </p>
-        </div>
-        <Suspense fallback={null}>
-          <ConnectButton
-            showBalance={false}
-            accountStatus={{ smallScreen: 'avatar', largeScreen: 'full' }}
-            chainStatus={{ smallScreen: 'icon', largeScreen: 'full' }}
-          />
-        </Suspense>
-      </div>
-
-      {/* Portfolio Summary */}
-      <PortfolioSummary
-        totalDeposits={totalDeposits}
-        averageApy={averageApy}
-        isLoading={isLoading}
-      />
-
-      {/* Vault Table */}
-      {error ? (
-        <div className="text-center py-20 text-muted-foreground">Failed to load vaults. Please try again.</div>
-      ) : isLoading ? (
-        <VaultTableSkeleton />
-      ) : groups.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">No vaults found.</div>
-      ) : (
-        <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
-          {/* Table header */}
-          <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-secondary/30 border-b border-border/50 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            <div className="col-span-4">Protocol</div>
-            <div className="col-span-2">Best APY</div>
-            <div className="col-span-2">TVL</div>
-            <div className="col-span-2">Your Balance</div>
-            <div className="col-span-2 text-right">Action</div>
-          </div>
-          {/* LI.FI one-click rows */}
-          <div className="divide-y divide-border/30">
-            {lifiGroups.map((group) => (
-              <ProtocolGroupRow
-                key={group.protocolKey}
-                group={group}
-                depositMap={depositMap}
-                isExpanded={expandedGroups.has(group.protocolKey)}
-                onToggle={() => toggleGroup(group.protocolKey)}
-                onDeposit={(v) => setDepositVault(v)}
-              />
-            ))}
-          </div>
-          {/* Other protocols — collapsed by default */}
-          {otherGroups.length > 0 && (
-            <>
-              <button
-                onClick={() => setShowOtherProtocols(p => !p)}
-                className="w-full flex items-center justify-between gap-2 px-6 py-3 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/20 transition-colors border-t border-border/30"
-              >
-                <span className="flex items-center gap-1.5">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  {showOtherProtocols
-                    ? 'Hide other protocols'
-                    : `Show ${otherGroups.length} more protocol${otherGroups.length > 1 ? 's' : ''} (manual deposit only)`}
-                </span>
-                {showOtherProtocols
-                  ? <ChevronDown className="h-3.5 w-3.5" />
-                  : <ChevronRight className="h-3.5 w-3.5" />}
-              </button>
-              {showOtherProtocols && (
-                <div className="divide-y divide-border/30 border-t border-border/30 bg-secondary/10">
-                  {otherGroups.map((group) => (
-                    <ProtocolGroupRow
-                      key={group.protocolKey}
-                      group={group}
-                      depositMap={depositMap}
-                      isExpanded={expandedGroups.has(group.protocolKey)}
-                      onToggle={() => toggleGroup(group.protocolKey)}
-                      onDeposit={(v) => setDepositVault(v)}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Yield Calculator */}
-      <YieldCalculator bestApy={vaults[0]?.apy ?? 0} />
-
-      {/* Legend */}
-      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-        <Zap className="h-3.5 w-3.5 text-emerald-500" />
-        <span>1-click deposit powered by LI.FI · Other protocols open directly on their platform</span>
-      </div>
-
-      {/* Deposit Modal */}
-      {depositVault && (
-        <DepositModal
-          vault={depositVault}
-          onClose={() => setDepositVault(null)}
-        />
-      )}
-    </main>
-  );
-}
-
-export default function LiFiEarn() {
+export default function LiFiEarnPage() {
   return (
     <WalletProvider>
+      <SEO
+        title="EUR Yield Vaults | Eurooo"
+        description="Find the best EUR stablecoin yield across DeFi protocols."
+        path="/earn"
+      />
       <div className="min-h-screen flex flex-col bg-background">
-        <SEO
-          title="EUR Yield — Powered by LI.FI"
-          description="Discover EUR stablecoin vaults across Aave, Morpho, YO, Summer, Fluid, Moonwell and Jupiter."
-          path="/earn"
-        />
         <Header />
-        <WagmiReadyGuard>
-          <LiFiEarnInner />
-        </WagmiReadyGuard>
+        <main className="flex-1">
+          <EarnContent />
+        </main>
         <Footer />
       </div>
     </WalletProvider>
