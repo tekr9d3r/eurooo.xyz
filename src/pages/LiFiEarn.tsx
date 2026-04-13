@@ -518,6 +518,7 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
                   <span className="text-xs text-muted-foreground font-medium">{fromToken.symbol}</span>
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground px-1">Minimum deposit: ~$10 worth</p>
               {eurEquiv !== null && amountNum > 0 && (
                 <p className="text-xs text-muted-foreground px-1">
                   ≈ €{eurEquiv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
