@@ -1061,7 +1061,7 @@ function LiFiEarnInner() {
           </div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-1">Earn on Your Euros</h1>
           <p className="text-muted-foreground text-sm">
-            {vaultsLoading ? 'Fetching vaults…' : `${groups.length} protocols across ${vaults.length} positions.`}
+            1-click deposit powered by LI.FI · Other protocols open directly on their platform
           </p>
         </div>
         <Suspense fallback={null}>
