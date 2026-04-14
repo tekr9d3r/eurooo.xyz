@@ -483,19 +483,21 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
                 </SelectContent>
               </Select>
             </div>
-            {/* Balance pill — always visible below selectors */}
-            <div className={`flex items-center justify-between rounded-md px-3 py-2 text-xs ${
-              selectedBalance > 0
-                ? 'bg-emerald-500/10 border border-emerald-500/20'
-                : 'bg-secondary/40'
-            }`}>
-              <span className="text-muted-foreground">Your balance</span>
-              <span className={selectedBalance > 0 ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}>
-                {selectedBalance > 0
-                  ? `${selectedBalance.toLocaleString('en-US', { maximumFractionDigits: 6 })} ${fromToken.symbol}`
-                  : `No ${fromToken.symbol} on this chain`}
-              </span>
-            </div>
+            {/* Balance pill — hidden on Ethereum when balance is 0 (balance reading unreliable) */}
+            {(selectedBalance > 0 || fromChainId !== 1) && (
+              <div className={`flex items-center justify-between rounded-md px-3 py-2 text-xs ${
+                selectedBalance > 0
+                  ? 'bg-emerald-500/10 border border-emerald-500/20'
+                  : 'bg-secondary/40'
+              }`}>
+                <span className="text-muted-foreground">Your balance</span>
+                <span className={selectedBalance > 0 ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}>
+                  {selectedBalance > 0
+                    ? `${selectedBalance.toLocaleString('en-US', { maximumFractionDigits: 6 })} ${fromToken.symbol}`
+                    : `No ${fromToken.symbol} on this chain`}
+                </span>
+              </div>
+            )}
             <div className="flex flex-col gap-1">
               <div className="relative">
                 <input
@@ -1062,7 +1064,7 @@ function LiFiEarnInner() {
               EUR Stablecoin Yield
             </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-1">Earn on Your Euros</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-1">Earn on Your Euros <span className="text-sm font-medium text-muted-foreground align-middle">(beta)</span></h1>
           <p className="text-muted-foreground text-sm">
             1-click deposit powered by LI.FI
           </p>
