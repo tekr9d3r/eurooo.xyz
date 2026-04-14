@@ -826,9 +826,9 @@ function ProtocolGroupRow({ group, depositMap, isExpanded, onToggle, onDeposit }
           vault={vault}
           userDeposit={(() => {
               const pid = vault.lifiAddress
-                ? VAULT_TO_PROTOCOL_ID[vault.lifiAddress.toLowerCase()]
-                : undefined;
-              return pid !== undefined ? (depositMap[pid] ?? 0) : 0;
+                ? (VAULT_TO_PROTOCOL_ID[vault.lifiAddress.toLowerCase()] ?? vault.protocolKey)
+                : vault.protocolKey;
+              return depositMap[pid] ?? 0;
             })()}
           onDeposit={onDeposit}
         />
@@ -945,10 +945,13 @@ function YieldCalculator({ bestApy }: { bestApy: number }) {
 // Maps vault share token address (lifiAddress from Earn API) → useProtocolData sub-protocol ID
 // so each vault row shows its own balance, not the whole-protocol total.
 const VAULT_TO_PROTOCOL_ID: Record<string, string> = {
-  // Aave
+  // Aave (aToken addresses returned by Earn API)
   '0xaa6e91c82942aeae040303bf96c15a6dbcb82ca0': 'aave-ethereum',
   '0x90da57e0a6c0d166bf15764e03b83745dc90025b': 'aave-base',
   '0x8a9fde6925a839f6b1932d16b36ac026f8d3fbdb': 'aave-avalanche',
+  '0xedbc7449a9b594ca4e053d9737ec5dc4cbccbfb2': 'aave-gnosis',
+  // YO Protocol
+  '0x50c749ae210d3977adc824ae11f3c7fd10c871e9': 'yo',
   // Morpho Ethereum
   '0x2ed10624315b74a78f11fabedaa1a228c198aefb': 'morpho-gauntlet',
   '0x34ece536d2ae03192b06c0a67030d1faf4c0ba43': 'morpho-prime',
@@ -1028,9 +1031,9 @@ function LiFiEarnInner() {
         ...g,
         userDeposit: g.vaults.reduce((sum, v) => {
           const pid = v.lifiAddress
-            ? VAULT_TO_PROTOCOL_ID[v.lifiAddress.toLowerCase()]
-            : undefined;
-          return sum + (pid !== undefined ? (depositMap[pid] ?? 0) : 0);
+            ? (VAULT_TO_PROTOCOL_ID[v.lifiAddress.toLowerCase()] ?? v.protocolKey)
+            : v.protocolKey;
+          return sum + (depositMap[pid] ?? 0);
         }, 0),
       }))
       .sort((a, b) => {
