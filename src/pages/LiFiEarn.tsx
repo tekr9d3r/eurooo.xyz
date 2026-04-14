@@ -1061,7 +1061,7 @@ function LiFiEarnInner() {
           </div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-1">Earn on Your Euros</h1>
           <p className="text-muted-foreground text-sm">
-            1-click deposit powered by LI.FI · Other protocols open directly on their platform
+            1-click deposit powered by LI.FI
           </p>
         </div>
         <Suspense fallback={null}>
@@ -1152,7 +1152,7 @@ function LiFiEarnInner() {
       {/* Legend */}
       <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
         <Zap className="h-3.5 w-3.5 text-emerald-500" />
-        <span>1-click deposit powered by LI.FI · Other protocols open directly on their platform</span>
+        <span>1-click deposit powered by LI.FI</span>
       </div>
 
       {/* Deposit Modal */}
