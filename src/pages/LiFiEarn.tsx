@@ -442,22 +442,13 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
                     const chainTotal = walletAssets.breakdown
                       .filter(b => b.chainId === c.id)
                       .reduce((s, b) => s + b.amountUsd, 0);
-                    // Fallback: for the selected chain, estimate USD from wagmi balance
-                    const isSelected = c.id === fromChainId;
-                    const rpcUsd = isSelected && chainTotal === 0 && selectedBalance > 0
-                      ? isNative ? selectedBalance * ethPrice
-                      : isUsdStable ? selectedBalance
-                      : isEurc ? selectedBalance / eurRate
-                      : 0
-                      : 0;
-                    const displayTotal = chainTotal > 0 ? chainTotal : rpcUsd;
                     return (
                       <SelectItem key={c.id} value={String(c.id)}>
                         <span className="flex items-center justify-between gap-4 w-full">
                           <span>{c.name}</span>
-                          {displayTotal > 0.01 && (
+                          {chainTotal > 0.01 && (
                             <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                              ${displayTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                              ${chainTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                             </span>
                           )}
                         </span>
@@ -476,17 +467,13 @@ function DepositModal({ vault, onClose, initialFromToken }: DepositModalProps) {
                     const item = walletAssets.breakdown.find(
                       b => b.chainId === fromChainId && b.symbol === t.symbol
                     );
-                    // Fall back to wagmi RPC balance for the selected token
-                    // (covers cases where Ankr doesn't return a token, e.g. ETH on Ethereum)
-                    const displayBalance = item?.balance
-                      ?? (t.symbol === fromToken.symbol && selectedBalance > 0 ? selectedBalance : 0);
                     return (
                       <SelectItem key={t.symbol} value={t.symbol}>
                         <span className="flex items-center justify-between gap-3 w-full">
                           <span className="font-medium">{t.symbol}</span>
-                          {displayBalance > 0 && (
+                          {item && item.balance > 0 && (
                             <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                              {displayBalance.toLocaleString('en-US', { maximumFractionDigits: 4 })}
+                              {item.balance.toLocaleString('en-US', { maximumFractionDigits: 4 })}
                             </span>
                           )}
                         </span>
