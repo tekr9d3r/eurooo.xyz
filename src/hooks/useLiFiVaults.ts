@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 const EARN_API = '/earn-api';
+const LIFI_API_KEY = import.meta.env.VITE_LIFI_API_KEY as string;
 
 export interface LiFiVault {
   address: string;
@@ -44,7 +45,9 @@ async function fetchAllEurVaults(): Promise<LiFiVault[]> {
     const params = new URLSearchParams({ sortBy: 'apy' });
     if (cursor) params.set('cursor', cursor);
 
-    const res = await fetch(`${EARN_API}/v1/earn/vaults?${params}`);
+    const res = await fetch(`${EARN_API}/v1/vaults?${params}`, {
+      headers: { 'x-lifi-api-key': LIFI_API_KEY },
+    });
     if (!res.ok) throw new Error(`Earn API error: ${res.status}`);
 
     const json = await res.json();
