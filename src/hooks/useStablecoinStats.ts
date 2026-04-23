@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const DEFILLAMA_API = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-stablecoin-stats`;
+const DEFILLAMA_API = 'https://stablecoins.llama.fi/stablecoins?includePrices=true';
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
 export interface EURStablecoin {
