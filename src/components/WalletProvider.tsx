@@ -13,7 +13,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <WagmiProvider config={config}>
+    <WagmiProvider config={config} reconnectOnMount>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           theme={lightTheme({
