@@ -3,7 +3,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
@@ -39,7 +39,7 @@ const App = () => {
                   <Route path="/app" element={<AppPage />} />
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/terms" element={<Terms />} />
-                  <Route path="/earn" element={<LiFiEarn />} />
+                  <Route path="/earn" element={<Navigate to="/" replace />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
