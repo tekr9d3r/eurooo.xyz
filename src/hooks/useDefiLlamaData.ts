@@ -34,6 +34,7 @@ const FALLBACK_DATA: Record<string, { apy: number; tvl: number }> = {
   moonwellBase: { apy: 1.10, tvl: 5_533_000 },
   // Jupiter EURC not available via their APIs - hardcoded
   jupiterSolana: { apy: 2.09, tvl: 4_320_000 },
+  etherfiOptimism: { apy: 7.46, tvl: 1_730_000 },
 };
 
 const POOL_KEYS = Object.keys(FALLBACK_DATA);
@@ -156,6 +157,9 @@ export function useDefiLlamaData() {
     
     // Solana (hardcoded - not available via APIs)
     jupiterSolana: get('jupiterSolana'),
+
+    // Ether.fi
+    etherfiOptimism: get('etherfiOptimism'),
     
     isLoading,
     refetch,

@@ -11,6 +11,7 @@ import yoLogo from '@/assets/yo-logo.png';
 import fluidLogo from '@/assets/fluid-logo.png';
 import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
+import etherfiLogo from '@/assets/ether-fi-logo-eurooo.png';
 
 
 // Animated EU-style gold stars component with parallax
@@ -135,6 +136,9 @@ export function Hero() {
   }, {
     name: 'Jupiter',
     logo: jupiterLogo
+  }, {
+    name: 'Ether.fi',
+    logo: etherfiLogo
   }];
   return <section className="relative overflow-hidden py-24 lg:py-40">
       {/* Animated background */}

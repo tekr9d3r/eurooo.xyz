@@ -107,6 +107,12 @@ export const FLUID_VAULT_ADDRESSES = {
   8453: '0x1943FA26360f038230442525Cf1B9125b5DCB401' as const,
 } as const;
 
+// ============= ETHER.FI =============
+// weEUR (Liquid Euro) — ERC-4626 receipt token on Optimism
+export const ETHERFI_WEUR_ADDRESSES = {
+  10: '0xcc476b1a49bcdf5192561e87b6fb8ea78aa28c13' as const,
+} as const;
+
 // ============= MOONWELL =============
 // Moonwell mToken (Compound-style) for EURC on Base
 export const MOONWELL_MTOKEN_ADDRESSES = {

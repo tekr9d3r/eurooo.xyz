@@ -4,6 +4,7 @@ import { useYoData } from './useYoData';
 import { useMorphoData } from './useMorphoData';
 import { useFluidData } from './useFluidData';
 import { useMoonwellData } from './useMoonwellData';
+import { useEtherFiData } from './useEtherFiData';
 import { useDefiLlamaData } from './useDefiLlamaData';
 import { useEURCBalance } from './useEURCBalance';
 import aaveLogo from '@/assets/aave-logo.png';
@@ -11,6 +12,7 @@ import morphoLogo from '@/assets/morpho-logo.svg';
 import fluidLogo from '@/assets/fluid-logo.png';
 import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
+import etherfiLogo from '@/assets/ether-fi-logo-eurooo.png';
 
 
 export interface ProtocolData {
@@ -21,7 +23,7 @@ export interface ProtocolData {
   tvl: number;
   tvlFormatted: string;
   chains: string[];
-  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'moonwell';
+  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'moonwell' | 'etherfi';
   chainId: number;
   userDeposit: number;
   isLoading: boolean;
@@ -79,6 +81,7 @@ export function useProtocolData() {
   const morphoSteakhousePrimeData = useMorphoData('morpho-steakhouse-prime');
   const fluidData = useFluidData();
   const moonwellData = useMoonwellData();
+  const etherFiData = useEtherFiData();
 
   // Individual Aave chain entries (used as sub-protocols)
   const aaveEthereum: ProtocolData = {
@@ -511,6 +514,25 @@ export function useProtocolData() {
       tvlChange: calcChange(moonwellData.tvl, defiLlamaData.moonwellBase.previousTvl),
       apyChange: calcApyDiff(moonwellData.apy, defiLlamaData.moonwellBase.previousApy),
     },
+    {
+      id: 'etherfi',
+      name: 'Ether.fi',
+      description: 'Liquid Euro yield vault',
+      apy: etherFiData.apy,
+      tvl: etherFiData.tvl,
+      tvlFormatted: etherFiData.tvl > 0 ? formatTVL(etherFiData.tvl) : '—',
+      chains: ['Optimism'],
+      chainId: 10,
+      color: 'etherfi',
+      userDeposit: etherFiData.userDeposit,
+      isLoading: etherFiData.isLoading,
+      isSupported: true,
+      stablecoin: 'EURC',
+      logo: etherfiLogo,
+      learnMoreUrl: 'https://www.ether.fi/app/cash/earn/liquid/eur-yield',
+      tvlChange: calcChange(etherFiData.tvl, defiLlamaData.etherfiOptimism.previousTvl),
+      apyChange: calcApyDiff(etherFiData.apy, defiLlamaData.etherfiOptimism.previousApy),
+    },
     // External Solana protocols
     {
       id: 'jupiter',
@@ -557,6 +579,7 @@ export function useProtocolData() {
     morphoSteakhousePrimeData.refetch();
     fluidData.refetch();
     moonwellData.refetch();
+    etherFiData.refetch();
   };
 
   return {
