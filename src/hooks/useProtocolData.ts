@@ -530,6 +530,8 @@ export function useProtocolData() {
       stablecoin: 'EURC',
       logo: etherfiLogo,
       learnMoreUrl: 'https://www.ether.fi/app/cash/earn/liquid/eur-yield',
+      auditUrl: 'https://github.com/etherfi-protocol/smart-contracts/tree/master/audits',
+      auditProvider: 'Ether.fi GitHub',
       tvlChange: calcChange(etherFiData.tvl, defiLlamaData.etherfiOptimism.previousTvl),
       apyChange: calcApyDiff(etherFiData.apy, defiLlamaData.etherfiOptimism.previousApy),
     },
