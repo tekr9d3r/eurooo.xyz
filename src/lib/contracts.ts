@@ -110,7 +110,7 @@ export const FLUID_VAULT_ADDRESSES = {
 // ============= ETHER.FI =============
 // weEUR (Liquid Euro) — ERC-4626 receipt token on Optimism
 export const ETHERFI_WEUR_ADDRESSES = {
-  10: '0xdcb612005417dc906ff72c87df732e5a90d49e11' as const,
+  10: '0xcc476b1a49bcdf5192561e87b6fb8ea78aa28c13' as const,
 } as const;
 
 // ============= MOONWELL =============
