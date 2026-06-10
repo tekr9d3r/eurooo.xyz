@@ -145,7 +145,7 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
   return (
     <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
       {/* Desktop Table Header - Hidden on mobile */}
-      <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-secondary/30 border-b border-border/50 text-sm font-medium text-muted-foreground">
+      <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 bg-secondary/30 border-b border-border/50 text-sm font-medium text-muted-foreground">
         <div className="col-span-3">Protocol</div>
         <button 
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
@@ -185,7 +185,7 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
 
       {/* Desktop Table Footer - Summary (Hidden on mobile) */}
       {totalDeposits > 0 && (
-        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-success/5 border-t border-success/20 text-sm font-medium">
+        <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 bg-success/5 border-t border-success/20 text-sm font-medium">
           <div className="col-span-3 text-muted-foreground">Total Portfolio</div>
           <div className="col-span-1">—</div>
           <div className="col-span-2 text-success">{weightedApy.toFixed(2)}% avg</div>
@@ -223,9 +223,9 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
   return (
     <>
       {/* Mobile Card Layout */}
-      <div 
+      <div
         className={cn(
-          "md:hidden p-4 space-y-3",
+          "lg:hidden p-4 space-y-3",
           hasDeposit && !isSubRow && "bg-success/5 border-l-2 border-l-success",
           isSubRow && "pl-8 bg-secondary/10"
         )}
@@ -410,7 +410,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
 
       {/* Mobile: Sub-rows when expanded */}
       {isGrouped && isExpanded && (
-        <div className="md:hidden">
+        <div className="lg:hidden">
           {protocol.subProtocols?.map((sub) => (
             <ProtocolRow
               key={sub.id}
@@ -424,9 +424,9 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
       )}
 
       {/* Desktop Table Row - Hidden on mobile */}
-      <div 
+      <div
         className={cn(
-          "hidden md:grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-secondary/20",
+          "hidden lg:grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-secondary/20",
           hasDeposit && !isSubRow && "bg-success/5 border-l-2 border-l-success",
           isSubRow && "bg-secondary/10 pl-10"
         )}
@@ -620,7 +620,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
 
       {/* Desktop: Sub-rows when expanded */}
       {isGrouped && isExpanded && (
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           {protocol.subProtocols?.map((sub) => (
             <ProtocolRow
               key={sub.id}
