@@ -1,48 +1,22 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { PortfolioHeader } from './PortfolioHeader';
 import { ProtocolTable } from './ProtocolTable';
 import { ChainSelector } from './ChainSelector';
-import { DepositModal } from './DepositModal';
-import { WithdrawModal } from './WithdrawModal';
-import { toast } from 'sonner';
-import { useProtocolData, ProtocolData } from '@/hooks/useProtocolData';
+import { useProtocolData } from '@/hooks/useProtocolData';
 import { MessageCircle, ArrowRight } from 'lucide-react';
 
 export function Dashboard() {
   const { isConnected } = useAccount();
   const [selectedChain, setSelectedChain] = useState<string>('all');
-  const [depositModalOpen, setDepositModalOpen] = useState(false);
-  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
-  const [selectedProtocol, setSelectedProtocol] = useState<ProtocolData | null>(null);
-  
-  const { protocols, totalDeposits, averageApy, eurcBalance, isLoading, refetch } = useProtocolData();
+
+  const { protocols, totalDeposits, averageApy, isLoading } = useProtocolData();
 
   const filteredProtocols = selectedChain === 'all'
     ? protocols
-    : protocols.filter((p) => 
+    : protocols.filter((p) =>
         p.chains.some((c) => c.toLowerCase() === selectedChain.toLowerCase())
       );
-
-  const handleDeposit = (protocol: ProtocolData) => {
-    setSelectedProtocol(protocol);
-    setDepositModalOpen(true);
-  };
-
-  const handleWithdraw = (protocol: ProtocolData) => {
-    setSelectedProtocol(protocol);
-    setWithdrawModalOpen(true);
-  };
-
-  const handleDepositConfirm = useCallback(() => {
-    toast.success('Deposit successful');
-    refetch();
-  }, [refetch]);
-
-  const handleWithdrawComplete = useCallback(() => {
-    toast.success('Withdrawal successful');
-    refetch();
-  }, [refetch]);
 
   return (
     <section className="py-12">
@@ -79,11 +53,7 @@ export function Dashboard() {
             </div>
           </div>
 
-          <ProtocolTable
-            protocols={filteredProtocols}
-            onDeposit={handleDeposit}
-            onWithdraw={handleWithdraw}
-          />
+          <ProtocolTable protocols={filteredProtocols} />
 
           {/* Telegram CTA */}
           <div className="flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-secondary/30 p-4 text-center">
@@ -102,21 +72,6 @@ export function Dashboard() {
           </div>
         </div>
       </div>
-
-      <DepositModal
-        open={depositModalOpen}
-        onOpenChange={setDepositModalOpen}
-        protocol={selectedProtocol}
-        onConfirm={handleDepositConfirm}
-        maxAmount={eurcBalance}
-      />
-
-      <WithdrawModal
-        open={withdrawModalOpen}
-        onOpenChange={setWithdrawModalOpen}
-        protocol={selectedProtocol}
-        onComplete={handleWithdrawComplete}
-      />
     </section>
   );
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronUp, ChevronDown, ChevronRight, TrendingUp, TrendingDown, ArrowUpRight, ExternalLink, Info } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronRight, TrendingUp, TrendingDown, ArrowUpRight, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProtocolData } from '@/hooks/useProtocolData';
 import { SafetyScoreBadge } from '@/components/SafetyScoreBadge';
@@ -14,12 +14,9 @@ import morphoLogo from '@/assets/morpho-logo.svg';
 import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
 import driftLogo from '@/assets/drift-logo.png';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ProtocolTableProps {
   protocols: ProtocolData[];
-  onDeposit: (protocol: ProtocolData) => void;
-  onWithdraw: (protocol: ProtocolData) => void;
 }
 
 type SortKey = 'apy' | 'tvl' | 'userDeposit';
@@ -67,13 +64,12 @@ function ChangeBadge({ value, suffix = '' }: { value?: number; suffix?: string }
   );
 }
 
-export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTableProps) {
+export function ProtocolTable({ protocols }: ProtocolTableProps) {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
-  // Check if user has any deposits (including sub-protocols)
-  const hasAnyDeposits = protocols.some(p => 
+  const hasAnyDeposits = protocols.some(p =>
     p.userDeposit > 0 || (p.subProtocols?.some(sp => sp.userDeposit > 0))
   );
 
@@ -99,16 +95,12 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
   };
 
   const sortedProtocols = [...protocols].sort((a, b) => {
-    // If user has manually selected a sort, use that
     if (sortKey !== null) {
       const aValue = a[sortKey];
       const bValue = b[sortKey];
       const multiplier = sortDirection === 'desc' ? -1 : 1;
       return (aValue - bValue) * multiplier;
     }
-    
-    // Default sorting: if deposits exist, sort by deposit (highest first)
-    // Otherwise, sort by TVL (highest first)
     if (hasAnyDeposits) {
       return b.userDeposit - a.userDeposit;
     }
@@ -124,14 +116,13 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
     );
   };
 
-  // Calculate totals for footer (including sub-protocols)
   const totalDeposits = protocols.reduce((sum, p) => {
     if (p.isGrouped && p.subProtocols) {
       return sum + p.subProtocols.reduce((s, sp) => s + sp.userDeposit, 0);
     }
     return sum + p.userDeposit;
   }, 0);
-  
+
   const weightedApy = totalDeposits > 0
     ? protocols.reduce((sum, p) => {
         if (p.isGrouped && p.subProtocols) {
@@ -144,23 +135,23 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
 
   return (
     <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
-      {/* Desktop Table Header - Hidden on mobile */}
+      {/* Desktop Table Header */}
       <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 bg-secondary/30 border-b border-border/50 text-sm font-medium text-muted-foreground">
         <div className="col-span-3">Protocol</div>
-        <button 
+        <button
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
           onClick={() => handleSort('apy')}
         >
           APY <SortIcon columnKey="apy" />
         </button>
-        <button 
+        <button
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
           onClick={() => handleSort('tvl')}
         >
           TVL <SortIcon columnKey="tvl" />
         </button>
         <div className="col-span-1">Safety</div>
-        <button 
+        <button
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
           onClick={() => handleSort('userDeposit')}
         >
@@ -172,18 +163,16 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
       {/* Table Body */}
       <div className="divide-y divide-border/30">
         {sortedProtocols.map((protocol) => (
-          <ProtocolRow 
+          <ProtocolRow
             key={protocol.id}
             protocol={protocol}
-            onDeposit={onDeposit}
-            onWithdraw={onWithdraw}
             isExpanded={expandedGroups.has(protocol.id)}
             onToggleExpand={() => toggleGroup(protocol.id)}
           />
         ))}
       </div>
 
-      {/* Desktop Table Footer - Summary (Hidden on mobile) */}
+      {/* Desktop Table Footer */}
       {totalDeposits > 0 && (
         <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 bg-success/5 border-t border-success/20 text-sm font-medium">
           <div className="col-span-3 text-muted-foreground">Total Portfolio</div>
@@ -204,21 +193,20 @@ export function ProtocolTable({ protocols, onDeposit, onWithdraw }: ProtocolTabl
 
 interface ProtocolRowProps {
   protocol: ProtocolData;
-  onDeposit: (protocol: ProtocolData) => void;
-  onWithdraw: (protocol: ProtocolData) => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   isSubRow?: boolean;
 }
 
-function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpand, isSubRow }: ProtocolRowProps) {
+function ProtocolRow({ protocol, isExpanded, onToggleExpand, isSubRow }: ProtocolRowProps) {
   const hasDeposit = protocol.userDeposit > 0;
   const hasData = protocol.apy > 0 || protocol.tvl > 0;
   const dailyYield = (protocol.userDeposit * (protocol.apy / 100)) / 365;
   const isGrouped = protocol.isGrouped && protocol.subProtocols;
-  const isExternal = protocol.isExternal;
 
   const logoSrc = protocol.logo || protocolLogos[protocol.id];
+
+  const visitUrl = protocol.learnMoreUrl;
 
   return (
     <>
@@ -237,8 +225,8 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
               "flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden flex-shrink-0",
               colorClasses[protocol.color]
             )}>
-              <img 
-                src={logoSrc} 
+              <img
+                src={logoSrc}
                 alt={`${protocol.name} logo`}
                 className="h-full w-full object-cover"
               />
@@ -247,9 +235,9 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
               <div className="flex items-center gap-1">
                 {isSubRow && <span className="text-muted-foreground">└─</span>}
                 <span className="font-semibold text-sm">{protocol.name}</span>
-                {protocol.learnMoreUrl && (
+                {visitUrl && (
                   <a
-                    href={protocol.learnMoreUrl}
+                    href={visitUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-foreground transition-colors"
@@ -258,9 +246,8 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
                     <ArrowUpRight className="h-3 w-3" />
                   </a>
                 )}
-                {/* Expand toggle for grouped protocols - after name */}
                 {isGrouped && (
-                  <button 
+                  <button
                     onClick={onToggleExpand}
                     className="p-1 hover:bg-secondary/50 rounded transition-colors"
                   >
@@ -288,8 +275,8 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
                   ))
                 )}
                 {(protocol.safetyScore !== undefined || protocol.auditUrl) && !isSubRow && (
-                  <SafetyScoreBadge 
-                    score={protocol.safetyScore} 
+                  <SafetyScoreBadge
+                    score={protocol.safetyScore}
                     provider={protocol.safetyProvider}
                     reportUrl={protocol.safetyReportUrl}
                     auditUrl={protocol.auditUrl}
@@ -300,7 +287,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
               </div>
             </div>
           </div>
-          
+
           {/* APY on right side */}
           <div className="text-right">
             {protocol.isLoading ? (
@@ -319,7 +306,7 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
           </div>
         </div>
 
-        {/* Row 2: User Deposit Info (if deposited) or External notice */}
+        {/* Deposit balance (if any) */}
         {hasDeposit && !protocol.isLoading && (
           <div className="flex items-center justify-between bg-success/10 rounded-lg px-3 py-2">
             <div>
@@ -336,68 +323,20 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             </div>
           </div>
         )}
-        
-        {/* External protocol deposit notice */}
-        {isExternal && !hasDeposit && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 cursor-help">
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    Check balance on {protocol.name}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-sm">This is a Solana protocol. View your deposits directly on {protocol.name}.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
 
-        {/* Row 3: Action Buttons - Only show for non-grouped or sub-rows */}
-        {(!isGrouped || isSubRow) && (
-          <div className="flex gap-2">
-            {isExternal ? (
-              <Button 
-                size="sm"
-                className="flex-1 bg-primary hover:bg-primary/90 gap-1"
-                asChild
-              >
-                <a href={protocol.externalDepositUrl} target="_blank" rel="noopener noreferrer">
-                  Deposit
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </Button>
-            ) : (
-              <>
-                <Button 
-                  size="sm"
-                  className="flex-1 bg-primary hover:bg-primary/90"
-                  onClick={() => onDeposit(protocol)}
-                  disabled={!hasData}
-                >
-                  Deposit
-                </Button>
-                {hasDeposit && (
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => onWithdraw(protocol)}
-                  >
-                    Withdraw
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
+        {/* Action buttons */}
+        {(!isGrouped || isSubRow) && visitUrl && (
+          <Button size="sm" variant="outline" className="w-full gap-1" asChild>
+            <a href={visitUrl} target="_blank" rel="noopener noreferrer">
+              Visit Protocol
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </Button>
         )}
 
         {/* Expand button for grouped protocols */}
         {isGrouped && !isSubRow && (
-          <Button 
+          <Button
             size="sm"
             variant="outline"
             className="w-full"
@@ -415,15 +354,13 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             <ProtocolRow
               key={sub.id}
               protocol={sub}
-              onDeposit={onDeposit}
-              onWithdraw={onWithdraw}
               isSubRow
             />
           ))}
         </div>
       )}
 
-      {/* Desktop Table Row - Hidden on mobile */}
+      {/* Desktop Table Row */}
       <div
         className={cn(
           "hidden lg:grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-secondary/20",
@@ -438,8 +375,8 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             "flex h-10 w-10 items-center justify-center rounded-lg border overflow-hidden",
             colorClasses[protocol.color]
           )}>
-            <img 
-              src={logoSrc} 
+            <img
+              src={logoSrc}
               alt={`${protocol.name} logo`}
               className="h-full w-full object-cover"
             />
@@ -447,9 +384,9 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold">{protocol.name}</span>
-              {protocol.learnMoreUrl && (
+              {visitUrl && (
                 <a
-                  href={protocol.learnMoreUrl}
+                  href={visitUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-foreground transition-colors"
@@ -458,9 +395,8 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
                   <ArrowUpRight className="h-3 w-3" />
                 </a>
               )}
-              {/* Expand toggle for grouped protocols - after name */}
               {isGrouped && (
-                <button 
+                <button
                   onClick={onToggleExpand}
                   className="p-1 hover:bg-secondary/50 rounded transition-colors"
                 >
@@ -520,13 +456,11 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
           )}
         </div>
 
-
-
-        {/* Safety Score */}
+        {/* Safety */}
         <div className="col-span-1">
           {!isSubRow && (
-            <SafetyScoreBadge 
-              score={protocol.safetyScore} 
+            <SafetyScoreBadge
+              score={protocol.safetyScore}
               provider={protocol.safetyProvider}
               reportUrl={protocol.safetyReportUrl}
               auditUrl={protocol.auditUrl}
@@ -535,29 +469,10 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
           )}
         </div>
 
-        {/* User Deposit */}
+        {/* Your Deposit */}
         <div className="col-span-2">
           {protocol.isLoading ? (
             <Skeleton className="h-6 w-20" />
-          ) : isExternal ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a 
-                    href={protocol.externalDepositUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Info className="h-3 w-3" />
-                    Check on {protocol.name}
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">This is a Solana protocol. View your deposits directly on {protocol.name}.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           ) : hasDeposit ? (
             <div>
               <div className="font-bold">
@@ -574,47 +489,22 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
 
         {/* Actions */}
         <div className="col-span-2 flex justify-end gap-2">
-          {/* For grouped rows, show expand button instead of direct deposit */}
           {isGrouped ? (
-            <Button 
+            <Button
               size="sm"
               variant="outline"
               onClick={onToggleExpand}
             >
               {isExpanded ? 'Hide' : 'Expand'}
             </Button>
-          ) : isExternal ? (
-            <Button 
-              size="sm"
-              className="bg-primary hover:bg-primary/90 gap-1"
-              asChild
-            >
-              <a href={protocol.externalDepositUrl} target="_blank" rel="noopener noreferrer">
-                Deposit
+          ) : visitUrl ? (
+            <Button size="sm" variant="outline" className="gap-1" asChild>
+              <a href={visitUrl} target="_blank" rel="noopener noreferrer">
+                Visit Protocol
                 <ExternalLink className="h-3 w-3" />
               </a>
             </Button>
-          ) : (
-            <>
-              <Button 
-                size="sm"
-                className="bg-primary hover:bg-primary/90"
-                onClick={() => onDeposit(protocol)}
-                disabled={!hasData}
-              >
-                Deposit
-              </Button>
-              {hasDeposit && (
-                <Button 
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onWithdraw(protocol)}
-                >
-                  Withdraw
-                </Button>
-              )}
-            </>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -625,8 +515,6 @@ function ProtocolRow({ protocol, onDeposit, onWithdraw, isExpanded, onToggleExpa
             <ProtocolRow
               key={sub.id}
               protocol={sub}
-              onDeposit={onDeposit}
-              onWithdraw={onWithdraw}
               isSubRow
             />
           ))}
