@@ -33,8 +33,8 @@ const FALLBACK_DATA: Record<string, { apy: number; tvl: number }> = {
   fluidBase: { apy: 2.77, tvl: 2_768_000 },
   moonwellBase: { apy: 1.10, tvl: 5_533_000 },
   // Jupiter EURC not available via their APIs - hardcoded
-  jupiterSolana: { apy: 4.96, tvl: 4_100_000 },
-  etherfiOptimism: { apy: 5.62, tvl: 4_560_000 },
+  jupiterSolana: { apy: 3.06, tvl: 4_130_000 },
+  etherfiOptimism: { apy: 5.71, tvl: 4_720_000 },
 };
 
 const POOL_KEYS = Object.keys(FALLBACK_DATA);
