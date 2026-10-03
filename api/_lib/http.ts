@@ -5,7 +5,7 @@
  * runtime and can be asserted on directly in tests.
  */
 
-import { API_VERSION, SOURCE_NAME } from '../../src/lib/yields/service';
+import { API_VERSION, SOURCE_NAME } from '../../src/lib/yields/service.js';
 
 export interface ApiResult {
   status: number;

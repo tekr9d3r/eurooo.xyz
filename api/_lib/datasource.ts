@@ -7,7 +7,7 @@
  * path exists.
  */
 
-import type { SnapshotRow } from '../../src/lib/yields/service';
+import type { SnapshotRow } from '../../src/lib/yields/service.js';
 
 /** The edge function prunes snapshots older than this. */
 export const SNAPSHOT_RETENTION_DAYS = 30;

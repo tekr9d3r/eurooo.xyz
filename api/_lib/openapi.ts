@@ -10,10 +10,10 @@ import {
   DEFAULT_LIMIT,
   MAX_HISTORY_DAYS,
   MAX_LIMIT,
-} from '../../src/lib/yields/service';
-import { YIELD_OPPORTUNITIES } from '../../src/lib/yields/registry';
-import { SNAPSHOT_RETENTION_DAYS } from './datasource';
-import { DEFAULT_RATE_LIMIT } from './ratelimit';
+} from '../../src/lib/yields/service.js';
+import { YIELD_OPPORTUNITIES } from '../../src/lib/yields/registry.js';
+import { SNAPSHOT_RETENTION_DAYS } from './datasource.js';
+import { DEFAULT_RATE_LIMIT } from './ratelimit.js';
 
 const PUBLIC_BASE_URL = 'https://www.eurooo.xyz';
 

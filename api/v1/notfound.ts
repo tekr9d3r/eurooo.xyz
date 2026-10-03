@@ -3,8 +3,8 @@
  * endpoint returns JSON instead of the single-page app's HTML shell.
  */
 
-import { errorResult } from '../_lib/http';
-import { createApiRoute } from '../_lib/vercel';
+import { errorResult } from '../_lib/http.js';
+import { createApiRoute } from '../_lib/vercel.js';
 
 export default createApiRoute(async () =>
   errorResult(

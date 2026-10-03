@@ -18,13 +18,13 @@ import {
   sortRecords,
   SOURCE_NAME,
   toHistoryPoints,
-} from '../../src/lib/yields/service';
+} from '../../src/lib/yields/service.js';
 import {
   getTrackedAssets,
   OPPORTUNITIES_BY_ID,
   YIELD_OPPORTUNITIES,
-} from '../../src/lib/yields/registry';
-import { SNAPSHOT_RETENTION_DAYS, type YieldDataSource } from './datasource';
+} from '../../src/lib/yields/registry.js';
+import { SNAPSHOT_RETENTION_DAYS, type YieldDataSource } from './datasource.js';
 import {
   buildMeta,
   CACHE_POLICY,
@@ -33,8 +33,8 @@ import {
   jsonResult,
   singleResult,
   type ApiResult,
-} from './http';
-import { DEFAULT_RATE_LIMIT } from './ratelimit';
+} from './http.js';
+import { DEFAULT_RATE_LIMIT } from './ratelimit.js';
 
 export interface HandlerContext {
   dataSource: YieldDataSource;

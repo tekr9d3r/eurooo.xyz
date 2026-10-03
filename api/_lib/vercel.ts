@@ -4,10 +4,10 @@
  * rate limiting, and turning unexpected failures into clean JSON.
  */
 
-import { createSupabaseDataSource, type YieldDataSource } from './datasource';
-import type { HandlerContext } from './handlers';
-import { errorResult, preflightResult, type ApiResult } from './http';
-import { rateLimitHeaders, sharedRateLimiter } from './ratelimit';
+import { createSupabaseDataSource, type YieldDataSource } from './datasource.js';
+import type { HandlerContext } from './handlers.js';
+import { errorResult, preflightResult, type ApiResult } from './http.js';
+import { rateLimitHeaders, sharedRateLimiter } from './ratelimit.js';
 
 /**
  * Minimal structural types for the Vercel Node signature. Declared locally so

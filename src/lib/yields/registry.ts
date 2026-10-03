@@ -18,7 +18,7 @@ import {
   MORPHO_VAULT_ADDRESSES,
   SUMMER_VAULT_ADDRESSES,
   YO_VAULT_ADDRESSES,
-} from '../contracts';
+} from '../contracts.js';
 
 export type YieldAsset = 'EURC' | 'EURe' | 'EURCV';
 

@@ -7,10 +7,10 @@ import {
   handleYieldHistory,
   handleYieldsList,
   type HandlerContext,
-} from '../handlers';
-import type { YieldDataSource } from '../datasource';
-import { YIELD_OPPORTUNITIES } from '../../../src/lib/yields/registry';
-import type { SnapshotRow } from '../../../src/lib/yields/service';
+} from '../handlers.js';
+import type { YieldDataSource } from '../datasource.js';
+import { YIELD_OPPORTUNITIES } from '../../../src/lib/yields/registry.js';
+import type { SnapshotRow } from '../../../src/lib/yields/service.js';
 
 const NOW = new Date('2026-10-03T12:00:00.000Z');
 const T0 = '2026-10-03T11:00:00.000Z'; // newest

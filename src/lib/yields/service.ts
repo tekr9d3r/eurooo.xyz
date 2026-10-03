@@ -11,7 +11,7 @@ import {
   YIELD_OPPORTUNITIES,
   type YieldOpportunityMeta,
   type YieldStrategy,
-} from './registry';
+} from './registry.js';
 
 export const API_VERSION = 'v1';
 export const SOURCE_NAME = 'Eurooo';

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { createApiRoute, type VercelRequest, type VercelResponse } from '../vercel';
-import { jsonResult } from '../http';
-import { createRateLimiter, DEFAULT_RATE_LIMIT, sharedRateLimiter } from '../ratelimit';
-import { handleStatus } from '../handlers';
-import { createSupabaseDataSource, readSupabaseConfig } from '../datasource';
+import { createApiRoute, type VercelRequest, type VercelResponse } from '../vercel.js';
+import { jsonResult } from '../http.js';
+import { createRateLimiter, DEFAULT_RATE_LIMIT, sharedRateLimiter } from '../ratelimit.js';
+import { handleStatus } from '../handlers.js';
+import { createSupabaseDataSource, readSupabaseConfig } from '../datasource.js';
 
 interface CapturedResponse {
   statusCode: number;

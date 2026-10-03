@@ -6,15 +6,15 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 
-import yieldsRoute from '../../v1/yields';
-import yieldByIdRoute from '../../v1/yields/[id]';
-import yieldHistoryRoute from '../../v1/yields/[id]/history';
-import assetsRoute from '../../v1/assets';
-import statusRoute from '../../v1/status';
-import openapiRoute from '../../v1/openapi';
-import notFoundRoute from '../../v1/notfound';
-import { sharedRateLimiter } from '../ratelimit';
-import type { VercelRequest, VercelResponse } from '../vercel';
+import yieldsRoute from '../../v1/yields.js';
+import yieldByIdRoute from '../../v1/yields/[id].js';
+import yieldHistoryRoute from '../../v1/yields/[id]/history.js';
+import assetsRoute from '../../v1/assets.js';
+import statusRoute from '../../v1/status.js';
+import openapiRoute from '../../v1/openapi.js';
+import notFoundRoute from '../../v1/notfound.js';
+import { sharedRateLimiter } from '../ratelimit.js';
+import type { VercelRequest, VercelResponse } from '../vercel.js';
 
 const SNAPSHOT_ROWS = [
   { pool_key: 'aaveBase', apy: '4.82', tvl: '12500000', fetched_at: '2026-10-03T11:00:00+00:00' },

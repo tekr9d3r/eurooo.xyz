@@ -6,8 +6,8 @@ import {
   FALLBACK_POOL_DATA,
   getTrackedAssets,
   YIELD_OPPORTUNITIES,
-} from '../../../src/lib/yields/registry';
-import { buildOpenApiDocument } from '../openapi';
+} from '../../../src/lib/yields/registry.js';
+import { buildOpenApiDocument } from '../openapi.js';
 
 /** Reads a project file by its repo-relative path; vitest runs from the root. */
 const readSource = (relativePath: string) =>
