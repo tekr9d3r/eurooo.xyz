@@ -13,7 +13,6 @@ const Home = lazy(() => import("./pages/Home"));
 const AppPage = lazy(() => import("./pages/App"));
 const Stats = lazy(() => import("./pages/Stats"));
 const Terms = lazy(() => import("./pages/Terms"));
-const Developers = lazy(() => import("./pages/Developers"));
 const LiFiEarn = lazy(() => import("./pages/LiFiEarn"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -40,7 +39,6 @@ const App = () => {
                   <Route path="/app" element={<AppPage />} />
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/terms" element={<Terms />} />
-                  <Route path="/developers" element={<Developers />} />
                   <Route path="/earn" element={<Navigate to="/" replace />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

@@ -28,20 +28,12 @@
   ],
   "rewrites": [
     {
-      "source": "/api/v1/openapi.json",
-      "destination": "/api/v1/openapi"
-    },
-    {
       "source": "/lifi-composer/:path*",
       "destination": "https://li.quest/:path*"
     },
     {
       "source": "/earn-api/:path*",
       "destination": "https://earn.li.fi/:path*"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/v1/notfound"
     },
     {
       "source": "/(.*)",

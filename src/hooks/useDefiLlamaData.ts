@@ -6,7 +6,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { FALLBACK_POOL_DATA } from '@/lib/yields/registry';
 
 export interface PoolData {
   apy: number;
@@ -15,11 +14,28 @@ export interface PoolData {
   previousTvl?: number;
 }
 
-// Fallback values (used when no database data exists yet). Maintained in the
-// shared yield registry so the app and the public API never disagree.
-// Jupiter and Ether.fi are not available via DeFi Llama, so their registry
-// entries are the only source for those two.
-const FALLBACK_DATA = FALLBACK_POOL_DATA;
+// Fallback hardcoded values (used when no database data exists yet)
+const FALLBACK_DATA: Record<string, { apy: number; tvl: number }> = {
+  aaveEthereum: { apy: 2.42, tvl: 75_480_000 },
+  aaveBase: { apy: 0.44, tvl: 20_960_000 },
+  aaveGnosis: { apy: 3.14, tvl: 16_350_000 },
+  aaveAvalanche: { apy: 1.93, tvl: 1_250_000 },
+  yoBase: { apy: 2.26, tvl: 1_710_000 },
+  summerBase: { apy: 2.50, tvl: 582_000 },
+  morphoGauntlet: { apy: 3.44, tvl: 5_440_000 },
+  morphoPrime: { apy: 0.78, tvl: 5_780_000 },
+  morphoKpk: { apy: 3.57, tvl: 3_000_000 },
+  morphoMoonwell: { apy: 1.17, tvl: 5_530_000 },
+  morphoSteakhouse: { apy: 0.57, tvl: 5_190_000 },
+  morphoSteakhousePrime: { apy: 2.78, tvl: 4_190_000 },
+  morphoSteakhouseEurcv: { apy: 0.22, tvl: 32_920_000 },
+  morphoSteakhousePrimeInstant: { apy: 4.04, tvl: 23_500_000 },
+  fluidBase: { apy: 2.77, tvl: 2_768_000 },
+  moonwellBase: { apy: 1.10, tvl: 5_533_000 },
+  // Jupiter EURC not available via their APIs - hardcoded
+  jupiterSolana: { apy: 3.82, tvl: 4_700_000 },
+  etherfiOptimism: { apy: 5.61, tvl: 6_530_000 },
+};
 
 const POOL_KEYS = Object.keys(FALLBACK_DATA);
 

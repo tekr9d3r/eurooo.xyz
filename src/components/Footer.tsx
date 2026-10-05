@@ -49,7 +49,6 @@ export function Footer() {
             <a href="https://www.swap.eurooo.xyz/" className="hover:text-foreground transition-colors">Swap</a>
             <Link to="/stats" className="hover:text-foreground transition-colors">Stats</Link>
             <a href="https://hub.eurooo.xyz/" className="hover:text-foreground transition-colors">Learn</a>
-            <Link to="/developers" className="hover:text-foreground transition-colors">API</Link>
           </div>
 
           {/* Right: Social links */}
