@@ -225,6 +225,8 @@ const ERROR_SCHEMA = {
             'NOT_FOUND',
             'METHOD_NOT_ALLOWED',
             'RATE_LIMIT_EXCEEDED',
+            'CONFIGURATION_ERROR',
+            'UPSTREAM_ERROR',
             'INTERNAL_ERROR',
           ],
         },
@@ -238,6 +240,10 @@ const ERROR_SCHEMA = {
           type: 'integer',
           description: 'On RATE_LIMIT_EXCEEDED only.',
         },
+        upstream_status: {
+          type: 'integer',
+          description: 'The status the yield database returned, on UPSTREAM_ERROR only.',
+        },
       },
     },
   },
@@ -250,7 +256,8 @@ const ERROR_RESPONSE = (description: string) => ({
 
 const COMMON_ERRORS = {
   '429': ERROR_RESPONSE(`Rate limit exceeded (${DEFAULT_RATE_LIMIT} requests per minute per IP).`),
-  '500': ERROR_RESPONSE('Internal error.'),
+  '500': ERROR_RESPONSE('Internal error, or CONFIGURATION_ERROR if the API is misconfigured.'),
+  '502': ERROR_RESPONSE('The yield database rejected the request or was unreachable.'),
 };
 
 export function buildOpenApiDocument(): Record<string, unknown> {

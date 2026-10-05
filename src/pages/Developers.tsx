@@ -294,6 +294,11 @@ const Developers = () => {
                   ['405 METHOD_NOT_ALLOWED', 'The API is read-only; use GET.'],
                   ['429 RATE_LIMIT_EXCEEDED', 'Slow down and retry after Retry-After seconds.'],
                   ['500 INTERNAL_ERROR', 'Something failed on our side. Retry shortly.'],
+                  ['500 CONFIGURATION_ERROR', 'The API is misconfigured. Not caused by your request.'],
+                  [
+                    '502 UPSTREAM_ERROR',
+                    'Our yield database was unreachable. Includes upstream_status.',
+                  ],
                 ]}
               />
             </div>

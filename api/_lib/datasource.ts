@@ -24,6 +24,28 @@ const MAX_ROWS = 20_000;
 /** Reuse window for the snapshot read within a single warm instance. */
 const MEMO_TTL_MS = 30_000;
 
+/** The function is missing its database configuration. */
+export class ConfigurationError extends Error {
+  readonly missing: string[];
+
+  constructor(missing: string[]) {
+    super(`Supabase configuration missing: ${missing.join(', ')}`);
+    this.name = 'ConfigurationError';
+    this.missing = missing;
+  }
+}
+
+/** The database rejected the read or was unreachable. */
+export class UpstreamError extends Error {
+  readonly status: number;
+
+  constructor(status: number, detail: string) {
+    super(`Snapshot query failed with status ${status}: ${detail}`);
+    this.name = 'UpstreamError';
+    this.status = status;
+  }
+}
+
 export interface YieldDataSource {
   /** Snapshots from the trailing 30 days, newest first. */
   getRecentSnapshots(): Promise<SnapshotRow[]>;
@@ -41,10 +63,12 @@ export function readSupabaseConfig(env: NodeJS.ProcessEnv = process.env): Supaba
   const key =
     env.SUPABASE_PUBLISHABLE_KEY ?? env.VITE_SUPABASE_PUBLISHABLE_KEY ?? env.SUPABASE_ANON_KEY;
 
-  if (!url || !key) {
-    throw new Error(
-      'Supabase configuration missing: set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY.'
-    );
+  const missing: string[] = [];
+  if (!url) missing.push('SUPABASE_URL');
+  if (!key) missing.push('SUPABASE_PUBLISHABLE_KEY');
+
+  if (missing.length > 0) {
+    throw new ConfigurationError(missing);
   }
 
   return { url: url.replace(/\/$/, ''), key };
@@ -62,7 +86,10 @@ async function querySnapshots(config: SupabaseConfig, search: string): Promise<S
   });
 
   if (!response.ok) {
-    throw new Error(`Snapshot query failed with status ${response.status}`);
+    // Logged, never returned to the client: PostgREST explains exactly what it
+    // rejected, which is what makes a misconfigured key or policy diagnosable.
+    const detail = await response.text().catch(() => '<unreadable body>');
+    throw new UpstreamError(response.status, detail.slice(0, 500));
   }
 
   const rows = (await response.json()) as Array<{

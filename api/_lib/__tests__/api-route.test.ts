@@ -188,6 +188,61 @@ describe('failure handling', () => {
     consoleError.mockRestore();
   });
 
+  it('reports a missing configuration distinctly from other failures', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const route = createApiRoute(async (_q, ctx) => {
+      ctx.dataSource.getRecentSnapshots();
+      return jsonResult({});
+    });
+
+    vi.stubEnv('SUPABASE_URL', '');
+    vi.stubEnv('VITE_SUPABASE_URL', '');
+    vi.stubEnv('SUPABASE_PUBLISHABLE_KEY', '');
+    vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', '');
+    vi.stubEnv('SUPABASE_ANON_KEY', '');
+
+    const res = makeRes();
+    await route(makeReq(), res);
+
+    expect(res.statusCode).toBe(500);
+    const body = JSON.parse(res.body!);
+    expect(body.error.code).toBe('CONFIGURATION_ERROR');
+    // The operator still needs the specifics, so they go to the log.
+    expect(String(consoleError.mock.calls[0])).toMatch(/SUPABASE_URL/);
+
+    vi.unstubAllEnvs();
+    consoleError.mockRestore();
+  });
+
+  it('surfaces the upstream status when the database rejects the read', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const source = createSupabaseDataSource({ url: 'https://a.supabase.co', key: 'k' });
+    const route = createApiRoute(async () => {
+      await source.getRecentSnapshots();
+      return jsonResult({});
+    });
+
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response(JSON.stringify({ message: 'permission denied' }), { status: 401 })
+      );
+
+    const res = makeRes();
+    await route(makeReq(), res);
+
+    expect(res.statusCode).toBe(502);
+    const body = JSON.parse(res.body!);
+    expect(body.error.code).toBe('UPSTREAM_ERROR');
+    expect(body.error.upstream_status).toBe(401);
+    // The upstream's own wording stays in the log, not the public response.
+    expect(res.body).not.toContain('permission denied');
+    expect(String(consoleError.mock.calls[0])).toMatch(/permission denied/);
+
+    fetchSpy.mockRestore();
+    consoleError.mockRestore();
+  });
+
   it('serves a 500 rather than crashing when the database is unreachable', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const route = createApiRoute((_query, ctx) => handleStatus(ctx));

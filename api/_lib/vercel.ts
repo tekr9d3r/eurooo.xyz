@@ -4,7 +4,12 @@
  * rate limiting, and turning unexpected failures into clean JSON.
  */
 
-import { createSupabaseDataSource, type YieldDataSource } from './datasource.js';
+import {
+  ConfigurationError,
+  createSupabaseDataSource,
+  UpstreamError,
+  type YieldDataSource,
+} from './datasource.js';
 import type { HandlerContext } from './handlers.js';
 import { errorResult, preflightResult, type ApiResult } from './http.js';
 import { rateLimitHeaders, sharedRateLimiter } from './ratelimit.js';
@@ -63,6 +68,36 @@ function clientKey(req: VercelRequest): string {
   if (forwarded) return forwarded.split(',')[0].trim();
 
   return header('x-real-ip') ?? req.socket?.remoteAddress ?? 'unknown';
+}
+
+function failureResult(error: unknown, limitHeaders: Record<string, string>): ApiResult {
+  if (error instanceof ConfigurationError) {
+    return errorResult(
+      500,
+      'CONFIGURATION_ERROR',
+      'The API is not configured correctly. This is a deployment problem, not a problem with your request.',
+      {},
+      limitHeaders
+    );
+  }
+
+  if (error instanceof UpstreamError) {
+    return errorResult(
+      502,
+      'UPSTREAM_ERROR',
+      'The yield database rejected the request or was unreachable.',
+      { upstream_status: error.status },
+      limitHeaders
+    );
+  }
+
+  return errorResult(
+    500,
+    'INTERNAL_ERROR',
+    'Unable to serve yield data right now. Please retry shortly.',
+    {},
+    limitHeaders
+  );
 }
 
 function send(res: VercelResponse, result: ApiResult): void {
@@ -126,18 +161,11 @@ export function createApiRoute(handler: RouteHandler) {
       const result = await handler(normalizeQuery(req.query), ctx);
       send(res, { ...result, headers: { ...result.headers, ...limitHeaders } });
     } catch (error) {
-      // Logged for operators; the response stays generic so internals never leak.
+      // Full detail goes to the logs; the response names the failure class so a
+      // deployment problem is distinguishable from a database one without
+      // echoing internals back to callers.
       console.error('[api] request failed', req.url, error);
-      send(
-        res,
-        errorResult(
-          500,
-          'INTERNAL_ERROR',
-          'Unable to serve yield data right now. Please retry shortly.',
-          {},
-          limitHeaders
-        )
-      );
+      send(res, failureResult(error, limitHeaders));
     }
   };
 }

@@ -18,6 +18,8 @@ export type ErrorCode =
   | 'NOT_FOUND'
   | 'METHOD_NOT_ALLOWED'
   | 'RATE_LIMIT_EXCEEDED'
+  | 'CONFIGURATION_ERROR'
+  | 'UPSTREAM_ERROR'
   | 'INTERNAL_ERROR';
 
 /** Read-only, publicly consumable: any origin may GET. Writes are never routed. */
