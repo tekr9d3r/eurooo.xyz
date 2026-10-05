@@ -76,7 +76,9 @@ function failureResult(error: unknown, limitHeaders: Record<string, string>): Ap
       500,
       'CONFIGURATION_ERROR',
       'The API is not configured correctly. This is a deployment problem, not a problem with your request.',
-      {},
+      // Variable names only, never their values: naming them makes the problem
+      // fixable without digging through logs, and they are already public.
+      { variables: error.variables },
       limitHeaders
     );
   }

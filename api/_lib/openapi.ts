@@ -242,7 +242,14 @@ const ERROR_SCHEMA = {
         },
         upstream_status: {
           type: 'integer',
-          description: 'The status the yield database returned, on UPSTREAM_ERROR only.',
+          description:
+            'The status the yield database returned, on UPSTREAM_ERROR only. 0 means the request could not be sent at all.',
+        },
+        variables: {
+          type: 'array',
+          items: { type: 'string' },
+          description:
+            'Names (never values) of the misconfigured environment variables, on CONFIGURATION_ERROR only.',
         },
       },
     },

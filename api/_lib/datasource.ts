@@ -24,14 +24,14 @@ const MAX_ROWS = 20_000;
 /** Reuse window for the snapshot read within a single warm instance. */
 const MEMO_TTL_MS = 30_000;
 
-/** The function is missing its database configuration. */
+/** The function's database configuration is absent or unusable. */
 export class ConfigurationError extends Error {
-  readonly missing: string[];
+  readonly variables: string[];
 
-  constructor(missing: string[]) {
-    super(`Supabase configuration missing: ${missing.join(', ')}`);
+  constructor(reason: string, variables: string[]) {
+    super(`Supabase configuration problem: ${reason}`);
     this.name = 'ConfigurationError';
-    this.missing = missing;
+    this.variables = variables;
   }
 }
 
@@ -59,31 +59,65 @@ interface SupabaseConfig {
 }
 
 export function readSupabaseConfig(env: NodeJS.ProcessEnv = process.env): SupabaseConfig {
-  const url = env.SUPABASE_URL ?? env.VITE_SUPABASE_URL;
-  const key =
-    env.SUPABASE_PUBLISHABLE_KEY ?? env.VITE_SUPABASE_PUBLISHABLE_KEY ?? env.SUPABASE_ANON_KEY;
+  // Values pasted into a dashboard routinely pick up stray whitespace.
+  const url = (env.SUPABASE_URL ?? env.VITE_SUPABASE_URL ?? '').trim();
+  const key = (
+    env.SUPABASE_PUBLISHABLE_KEY ??
+    env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+    env.SUPABASE_ANON_KEY ??
+    ''
+  ).trim();
 
   const missing: string[] = [];
   if (!url) missing.push('SUPABASE_URL');
   if (!key) missing.push('SUPABASE_PUBLISHABLE_KEY');
 
   if (missing.length > 0) {
-    throw new ConfigurationError(missing);
+    throw new ConfigurationError(`not set: ${missing.join(', ')}`, missing);
   }
 
-  return { url: url.replace(/\/$/, ''), key };
+  // An unparseable URL or a key holding a newline makes fetch throw while
+  // building the request, which is indistinguishable from a bug unless caught
+  // here. Validating turns both into an actionable configuration error.
+  let origin: string;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') throw new Error('not https');
+    origin = parsed.origin;
+  } catch {
+    throw new ConfigurationError(
+      'SUPABASE_URL must be a full https URL, for example https://<project-ref>.supabase.co',
+      ['SUPABASE_URL']
+    );
+  }
+
+  if (/[^\x21-\x7e]/.test(key)) {
+    throw new ConfigurationError(
+      'SUPABASE_PUBLISHABLE_KEY contains whitespace or non-printable characters and cannot be sent as a header',
+      ['SUPABASE_PUBLISHABLE_KEY']
+    );
+  }
+
+  return { url: origin, key };
 }
 
 const SELECT_COLUMNS = 'pool_key,apy,tvl,fetched_at';
 
 async function querySnapshots(config: SupabaseConfig, search: string): Promise<SnapshotRow[]> {
-  const response = await fetch(`${config.url}/rest/v1/protocol_snapshots?${search}`, {
-    headers: {
-      apikey: config.key,
-      Authorization: `Bearer ${config.key}`,
-      Accept: 'application/json',
-    },
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${config.url}/rest/v1/protocol_snapshots?${search}`, {
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        Accept: 'application/json',
+      },
+    });
+  } catch (cause) {
+    // Never reached the database at all: DNS, TLS or a malformed request.
+    throw new UpstreamError(0, `request could not be sent: ${(cause as Error).message}`);
+  }
 
   if (!response.ok) {
     // Logged, never returned to the client: PostgREST explains exactly what it

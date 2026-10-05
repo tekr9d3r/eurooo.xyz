@@ -4,7 +4,11 @@ import { createApiRoute, type VercelRequest, type VercelResponse } from '../verc
 import { jsonResult } from '../http.js';
 import { createRateLimiter, DEFAULT_RATE_LIMIT, sharedRateLimiter } from '../ratelimit.js';
 import { handleStatus } from '../handlers.js';
-import { createSupabaseDataSource, readSupabaseConfig } from '../datasource.js';
+import {
+  ConfigurationError,
+  createSupabaseDataSource,
+  readSupabaseConfig,
+} from '../datasource.js';
 
 interface CapturedResponse {
   statusCode: number;
@@ -243,7 +247,7 @@ describe('failure handling', () => {
     consoleError.mockRestore();
   });
 
-  it('serves a 500 rather than crashing when the database is unreachable', async () => {
+  it('reports an unreachable database as a 502 rather than crashing', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const route = createApiRoute((_query, ctx) => handleStatus(ctx));
 
@@ -256,8 +260,11 @@ describe('failure handling', () => {
     const res = makeRes();
     await route(makeReq(), res);
 
-    expect(res.statusCode).toBe(500);
-    expect(JSON.parse(res.body!).error.code).toBe('INTERNAL_ERROR');
+    expect(res.statusCode).toBe(502);
+    const body = JSON.parse(res.body!);
+    expect(body.error.code).toBe('UPSTREAM_ERROR');
+    // Status 0 distinguishes "never sent" from a rejection carrying a status.
+    expect(body.error.upstream_status).toBe(0);
 
     fetchSpy.mockRestore();
     vi.unstubAllEnvs();
@@ -272,7 +279,7 @@ describe('data source', () => {
   });
 
   it('requires configuration rather than falling back to a default', () => {
-    expect(() => readSupabaseConfig({} as NodeJS.ProcessEnv)).toThrow(/configuration missing/i);
+    expect(() => readSupabaseConfig({} as NodeJS.ProcessEnv)).toThrow(/not set/i);
   });
 
   it('accepts either the server or the build-time variable names', () => {
@@ -282,6 +289,65 @@ describe('data source', () => {
         VITE_SUPABASE_PUBLISHABLE_KEY: 'k',
       } as NodeJS.ProcessEnv)
     ).toEqual({ url: 'https://a.supabase.co', key: 'k' });
+  });
+
+  it('tolerates whitespace picked up when pasting into a dashboard', () => {
+    expect(
+      readSupabaseConfig({
+        SUPABASE_URL: '  https://a.supabase.co\n',
+        SUPABASE_PUBLISHABLE_KEY: ' key-value \n',
+      } as NodeJS.ProcessEnv)
+    ).toEqual({ url: 'https://a.supabase.co', key: 'key-value' });
+  });
+
+  it.each([
+    ['a host with no scheme', 'a.supabase.co'],
+    ['a non-https scheme', 'http://a.supabase.co'],
+    ['an unparseable value', 'not a url'],
+  ])('rejects %s as a configuration problem, naming the variable', (_label, url) => {
+    try {
+      readSupabaseConfig({
+        SUPABASE_URL: url,
+        SUPABASE_PUBLISHABLE_KEY: 'k',
+      } as NodeJS.ProcessEnv);
+      throw new Error('should have thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConfigurationError);
+      expect((error as ConfigurationError).variables).toEqual(['SUPABASE_URL']);
+    }
+  });
+
+  it('rejects a key that could not be sent as a header', () => {
+    try {
+      readSupabaseConfig({
+        SUPABASE_URL: 'https://a.supabase.co',
+        SUPABASE_PUBLISHABLE_KEY: 'abc\ndef',
+      } as NodeJS.ProcessEnv);
+      throw new Error('should have thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConfigurationError);
+      expect((error as ConfigurationError).variables).toEqual(['SUPABASE_PUBLISHABLE_KEY']);
+    }
+  });
+
+  it('strips a path accidentally included in the URL', () => {
+    expect(
+      readSupabaseConfig({
+        SUPABASE_URL: 'https://a.supabase.co/rest/v1',
+        SUPABASE_PUBLISHABLE_KEY: 'k',
+      } as NodeJS.ProcessEnv)
+    ).toEqual({ url: 'https://a.supabase.co', key: 'k' });
+  });
+
+  it('reports an unsendable request as upstream status 0', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('fetch failed'));
+
+    const source = createSupabaseDataSource({ url: 'https://a.supabase.co', key: 'k' });
+
+    await expect(source.getRecentSnapshots()).rejects.toMatchObject({
+      name: 'UpstreamError',
+      status: 0,
+    });
   });
 
   it('queries the snapshot table read-only and coerces numeric strings', async () => {
