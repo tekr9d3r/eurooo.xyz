@@ -1,0 +1,41 @@
+name: Update pool data
+
+on:
+  schedule:
+    # 08:00 UTC daily, shortly after DeFi Llama publishes its daily refresh.
+    # GitHub may run scheduled jobs late under load, which is fine for data
+    # that only changes once a day.
+    - cron: '0 8 * * *'
+  # Adds a "Run workflow" button for an on-demand refresh.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Fails the run if every source is unreachable, so a silent outage
+      # surfaces as a failed job rather than as quietly stale data.
+      - name: Fetch latest pool data
+        run: node scripts/update-pool-data.mjs
+
+      - name: Commit if anything changed
+        run: |
+          if git diff --quiet -- src/data/pool-data.json; then
+            echo "No values changed; nothing to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/pool-data.json
+          git commit -m "Update pool data"
+          git push

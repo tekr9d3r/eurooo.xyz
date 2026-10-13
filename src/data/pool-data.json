@@ -1,0 +1,77 @@
+{
+  "updatedAt": null,
+  "pools": {
+    "aaveEthereum": {
+      "apy": 2.42,
+      "tvl": 75480000
+    },
+    "aaveBase": {
+      "apy": 0.44,
+      "tvl": 20960000
+    },
+    "aaveGnosis": {
+      "apy": 3.14,
+      "tvl": 16350000
+    },
+    "aaveAvalanche": {
+      "apy": 1.93,
+      "tvl": 1250000
+    },
+    "yoBase": {
+      "apy": 2.26,
+      "tvl": 1710000
+    },
+    "summerBase": {
+      "apy": 2.5,
+      "tvl": 582000
+    },
+    "morphoGauntlet": {
+      "apy": 3.44,
+      "tvl": 5440000
+    },
+    "morphoPrime": {
+      "apy": 0.78,
+      "tvl": 5780000
+    },
+    "morphoKpk": {
+      "apy": 3.57,
+      "tvl": 3000000
+    },
+    "morphoMoonwell": {
+      "apy": 1.17,
+      "tvl": 5530000
+    },
+    "morphoSteakhouse": {
+      "apy": 0.57,
+      "tvl": 5190000
+    },
+    "morphoSteakhousePrime": {
+      "apy": 2.78,
+      "tvl": 4190000
+    },
+    "morphoSteakhouseEurcv": {
+      "apy": 0.22,
+      "tvl": 32920000
+    },
+    "morphoSteakhousePrimeInstant": {
+      "apy": 4.04,
+      "tvl": 23500000
+    },
+    "fluidBase": {
+      "apy": 2.77,
+      "tvl": 2768000
+    },
+    "moonwellBase": {
+      "apy": 1.1,
+      "tvl": 5533000
+    },
+    "jupiterSolana": {
+      "apy": 2.47,
+      "tvl": 4520000
+    },
+    "etherfiOptimism": {
+      "apy": 5.29,
+      "tvl": 6770000
+    }
+  }
+}
