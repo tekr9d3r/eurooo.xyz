@@ -48,39 +48,70 @@ describe('matchPool', () => {
 });
 
 describe('extractDefiLlamaPools', () => {
-  it('pulls the tracked pools and reports the ones it could not find', () => {
-    const { found, missing } = extractDefiLlamaPools([
-      llamaPool({ project: 'aave-v3', chain: 'Base', symbol: 'EURC', apy: 4.826, tvlUsd: 12_500_000.6 }),
-      llamaPool({ pool: 'd4ea65f3-b54b-49c4-81ba-56e16eec4fb7', apy: 2.30248, tvlUsd: 1_170_832 }),
-    ]);
+  // A rate of exactly 2 makes the conversion obvious in the expectations.
+  const RATE = 2;
 
-    expect(found.aaveBase).toEqual({ apy: 4.83, tvl: 12_500_001 });
-    expect(found.morphoGauntlet).toEqual({ apy: 2.3, tvl: 1_170_832 });
+  it('pulls the tracked pools and reports the ones it could not find', () => {
+    const { found, missing } = extractDefiLlamaPools(
+      [
+        llamaPool({ project: 'aave-v3', chain: 'Base', symbol: 'EURC', apy: 4.826, tvlUsd: 12_500_000 }),
+        llamaPool({ pool: 'd4ea65f3-b54b-49c4-81ba-56e16eec4fb7', apy: 2.30248, tvlUsd: 1_170_832 }),
+      ],
+      RATE
+    );
+
+    expect(found.aaveBase).toEqual({ apy: 4.83, tvl: 6_250_000 });
+    expect(found.morphoGauntlet).toEqual({ apy: 2.3, tvl: 585_416 });
     // Everything else is absent from this fixture and must be reported, not invented.
     expect(missing).toContain('aaveEthereum');
     expect(found.aaveEthereum).toBeUndefined();
   });
 
+  it('converts USD figures to EUR at the given rate', () => {
+    const pools = [llamaPool({ project: 'aave-v3', chain: 'Ethereum', symbol: 'EURC', tvlUsd: 16_598_020 })];
+
+    const { found } = extractDefiLlamaPools(pools, 1.118528274856635);
+    expect(found.aaveEthereum.tvl).toBe(14_839_160);
+  });
+
+  it('refuses to convert with a missing or nonsensical rate', () => {
+    const pools = [llamaPool({ project: 'aave-v3', chain: 'Base', symbol: 'EURC' })];
+
+    for (const bad of [undefined, 0, -1, NaN]) {
+      expect(() => extractDefiLlamaPools(pools, bad)).toThrow(/bad EUR rate/i);
+    }
+  });
+
   it('prefers the base APY for pools configured that way', () => {
-    const { found } = extractDefiLlamaPools([
-      llamaPool({ project: 'yo-protocol', chain: 'Base', symbol: 'EURC', apy: 9.9, apyBase: 2.26 }),
-    ]);
+    const { found } = extractDefiLlamaPools(
+      [llamaPool({ project: 'yo-protocol', chain: 'Base', symbol: 'EURC', apy: 9.9, apyBase: 2.26 })],
+      RATE
+    );
 
     expect(found.yoBase.apy).toBe(2.26);
   });
 
   it('falls back to the other APY field when the preferred one is null', () => {
-    const { found } = extractDefiLlamaPools([
-      llamaPool({ project: 'yo-protocol', chain: 'Base', symbol: 'EURC', apy: 3.3, apyBase: null }),
-    ]);
+    const { found } = extractDefiLlamaPools(
+      [llamaPool({ project: 'yo-protocol', chain: 'Base', symbol: 'EURC', apy: 3.3, apyBase: null })],
+      RATE
+    );
 
     expect(found.yoBase.apy).toBe(3.3);
   });
 
   it('returns nothing rather than throwing on an empty pool list', () => {
-    const { found, missing } = extractDefiLlamaPools([]);
+    const { found, missing } = extractDefiLlamaPools([], RATE);
     expect(found).toEqual({});
     expect(missing.length).toBeGreaterThan(0);
+  });
+
+  it('does not try to fetch the pools it can no longer find', () => {
+    // Summer.fi and Moonwell were dropped from DeFi Llama, so they must not be
+    // reported as missing on every run — they are manual now.
+    const { missing } = extractDefiLlamaPools([], RATE);
+    expect(missing).not.toContain('summerBase');
+    expect(missing).not.toContain('moonwellBase');
   });
 });
 
@@ -110,6 +141,8 @@ describe('mergePools', () => {
   const existing = {
     aaveBase: { apy: 0.44, tvl: 20_960_000 },
     etherfiOptimism: { apy: 5.29, tvl: 6_770_000 },
+    summerBase: { apy: 2.5, tvl: 520_332 },
+    moonwellBase: { apy: 1.1, tvl: 4_946_668 },
   };
 
   it('records the prior figures so changes can be shown', () => {

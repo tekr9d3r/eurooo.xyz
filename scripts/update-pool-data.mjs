@@ -23,6 +23,7 @@ const DATA_FILE = resolve(
 
 const DEFILLAMA_POOLS_API = 'https://yields.llama.fi/pools';
 const JUPITER_LEND_API = 'https://lite-api.jup.ag/lend/v1/earn/tokens';
+const EURC_PRICE_API = 'https://coins.llama.fi/prices/current/coingecko:euro-coin';
 
 /**
  * How each pool key is located in DeFi Llama's pool list. A poolId is an exact
@@ -34,7 +35,6 @@ const POOL_MATCHERS = {
   aaveGnosis: { project: 'aave-v3', chain: 'Gnosis', symbol: ['EURE', 'EURe'] },
   aaveAvalanche: { project: 'aave-v3', chain: 'Avalanche', symbol: 'EURC' },
   yoBase: { project: 'yo-protocol', chain: 'Base', symbol: 'EURC', useBaseApy: true },
-  summerBase: { project: 'lazy-summer-protocol', chain: 'Base', symbol: 'EURC' },
   morphoGauntlet: { poolId: 'd4ea65f3-b54b-49c4-81ba-56e16eec4fb7' },
   morphoPrime: { poolId: '4c02c11c-2d48-4d5c-b5ed-27f3f354b73c' },
   morphoMoonwell: { poolId: 'c1aee434-6c8e-4958-a851-eda8ab8bb32d' },
@@ -43,11 +43,16 @@ const POOL_MATCHERS = {
   morphoSteakhouseEurcv: { poolId: 'cf3e15c7-bc2c-4e7f-acf2-1fbf544acbb3' },
   morphoSteakhousePrimeInstant: { poolId: 'd3b28212-a46b-4db8-8bb7-2c946b3cbe76' },
   fluidBase: { project: 'fluid-lending', chain: 'Base', symbol: 'EURC' },
-  moonwellBase: { project: 'moonwell-lending', chain: 'Base', symbol: 'EURC' },
 };
 
-/** Pools with no upstream source. Left exactly as they are in the file. */
-export const MANUAL_POOLS = ['etherfiOptimism'];
+/**
+ * Pools with no upstream source, left exactly as they are in the file.
+ *
+ * Ether.fi's Liquid EUR vault has never been listed. Summer.fi and Moonwell
+ * were dropped from DeFi Llama's yields dataset — neither has any EUR pool
+ * there any more — so their figures are now maintained by hand too.
+ */
+export const MANUAL_POOLS = ['etherfiOptimism', 'summerBase', 'moonwellBase'];
 
 export function matchPool(pool, matcher) {
   if (matcher.poolId) return pool.pool === matcher.poolId;
@@ -60,8 +65,19 @@ export function matchPool(pool, matcher) {
 
 const round2 = (value) => Math.round(value * 100) / 100;
 
-/** Extracts the tracked pools from DeFi Llama's full pool list. */
-export function extractDefiLlamaPools(pools) {
+/**
+ * Extracts the tracked pools from DeFi Llama's full pool list.
+ *
+ * DeFi Llama reports lending pools as supplied minus borrowed, so these
+ * figures are available liquidity rather than total deposits — which is why
+ * the app labels the column "Liquidity". Values are converted from USD to EUR
+ * with `eurUsdRate` (USD per EURC) so the whole file is euro-denominated.
+ */
+export function extractDefiLlamaPools(pools, eurUsdRate) {
+  if (!(eurUsdRate > 0)) {
+    throw new Error(`Refusing to convert with a bad EUR rate: ${eurUsdRate}`);
+  }
+
   const found = {};
   const missing = [];
 
@@ -76,7 +92,7 @@ export function extractDefiLlamaPools(pools) {
       ? (pool.apyBase ?? pool.apy ?? 0)
       : (pool.apy ?? pool.apyBase ?? 0);
 
-    found[key] = { apy: round2(apy), tvl: Math.round(pool.tvlUsd) };
+    found[key] = { apy: round2(apy), tvl: Math.round(pool.tvlUsd / eurUsdRate) };
   }
 
   return { found, missing };
@@ -135,22 +151,52 @@ async function fetchJson(url, label) {
   return response.json();
 }
 
+/**
+ * USD per EURC, from the same provider as the pool data so the two stay
+ * consistent. A failure here is fatal: converting with a wrong rate, or
+ * skipping the conversion, would silently mix dollars and euros in one file.
+ */
+async function fetchEurUsdRate() {
+  const body = await fetchJson(EURC_PRICE_API, 'DeFi Llama prices');
+  const quote = body.coins?.['coingecko:euro-coin'];
+
+  if (!(quote?.price > 0)) {
+    throw new Error('EURC price missing from the response');
+  }
+  // A low confidence score means a thin or stale market.
+  if (quote.confidence !== undefined && quote.confidence < 0.9) {
+    throw new Error(`EURC price confidence too low: ${quote.confidence}`);
+  }
+
+  return quote.price;
+}
+
+/** Surfaces a message on the GitHub Actions run summary, not just the log. */
+function warn(message) {
+  console.warn(process.env.GITHUB_ACTIONS ? `::warning::${message}` : `WARNING: ${message}`);
+}
+
 async function main() {
   const dryRun = process.argv.includes('--dry-run');
   const file = JSON.parse(readFileSync(DATA_FILE, 'utf8'));
 
+  const eurUsdRate = await fetchEurUsdRate();
+  console.log(`EURC price: $${eurUsdRate} (USD figures are divided by this)`);
+
   const llama = await fetchJson(DEFILLAMA_POOLS_API, 'DeFi Llama');
-  const { found, missing } = extractDefiLlamaPools(llama.data ?? []);
+  const { found, missing } = extractDefiLlamaPools(llama.data ?? [], eurUsdRate);
   console.log(`DeFi Llama: matched ${Object.keys(found).length}/${Object.keys(POOL_MATCHERS).length} pools`);
-  if (missing.length > 0) console.warn(`DeFi Llama: no match for ${missing.join(', ')}`);
+  if (missing.length > 0) {
+    warn(`DeFi Llama no longer lists ${missing.join(', ')} — those pools keep their existing values and are going stale.`);
+  }
 
   // Jupiter is a separate source; losing it must not discard the DeFi Llama run.
   try {
     const jupiter = extractJupiterEurc(await fetchJson(JUPITER_LEND_API, 'Jupiter Lend'));
     if (jupiter) found.jupiterSolana = jupiter;
-    else console.warn('Jupiter: no EURC market in the response');
+    else warn('Jupiter returned no EURC market; that pool keeps its existing value.');
   } catch (error) {
-    console.warn(`Jupiter: skipped (${error.message})`);
+    warn(`Jupiter could not be reached (${error.message}); that pool keeps its existing value.`);
   }
 
   if (Object.keys(found).length === 0) {
@@ -172,7 +218,12 @@ async function main() {
     return;
   }
 
-  const output = { updatedAt: new Date().toISOString(), pools: merged };
+  const output = {
+    updatedAt: new Date().toISOString(),
+    // Recorded for traceability: every converted figure depends on it.
+    eurUsdRate,
+    pools: merged,
+  };
   writeFileSync(DATA_FILE, `${JSON.stringify(output, null, 2)}\n`);
   console.log(`Wrote ${DATA_FILE}`);
 }
