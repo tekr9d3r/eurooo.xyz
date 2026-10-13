@@ -150,14 +150,14 @@ export function Hero() {
           <div className="relative mb-6">
             <AnimatedStars />
             <h1 className="relative z-10 text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl opacity-0 animate-fade-in-up animation-delay-100">
-              Don't Let Inflation{' '}
-              <span className="text-primary">Eat Your Euros</span>
+              DeFi Speaks Dollar.{' '}
+              <span className="text-primary">We Speak Euro.</span>
             </h1>
           </div>
 
           {/* Subheadline */}
           <p className="mb-10 text-lg text-muted-foreground sm:text-xl lg:text-2xl opacity-0 animate-fade-in-up animation-delay-200">
-            DeFi is built for the $, but your life is in €. Compare and deposit your EUR stablecoins across trusted protocols.                                                                    
+            Compare and deposit your EUR stablecoins across trusted protocols.                                                                    
           </p>
 
           {/* CTA */}
