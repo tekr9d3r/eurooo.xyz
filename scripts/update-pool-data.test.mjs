@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import {
+  extractAaveReserve,
   extractDefiLlamaPools,
   extractJupiterEurc,
   matchPool,
@@ -54,24 +55,32 @@ describe('extractDefiLlamaPools', () => {
   it('pulls the tracked pools and reports the ones it could not find', () => {
     const { found, missing } = extractDefiLlamaPools(
       [
-        llamaPool({ project: 'aave-v3', chain: 'Base', symbol: 'EURC', apy: 4.826, tvlUsd: 12_500_000 }),
+        llamaPool({ project: 'fluid-lending', chain: 'Base', symbol: 'EURC', apy: 4.826, tvlUsd: 12_500_000 }),
         llamaPool({ pool: 'd4ea65f3-b54b-49c4-81ba-56e16eec4fb7', apy: 2.30248, tvlUsd: 1_170_832 }),
       ],
       RATE
     );
 
-    expect(found.aaveBase).toEqual({ apy: 4.83, tvl: 6_250_000 });
+    expect(found.fluidBase).toEqual({ apy: 4.83, tvl: 6_250_000 });
     expect(found.morphoGauntlet).toEqual({ apy: 2.3, tvl: 585_416 });
     // Everything else is absent from this fixture and must be reported, not invented.
-    expect(missing).toContain('aaveEthereum');
-    expect(found.aaveEthereum).toBeUndefined();
+    expect(missing).toContain('yoBase');
+    expect(found.yoBase).toBeUndefined();
   });
 
   it('converts USD figures to EUR at the given rate', () => {
-    const pools = [llamaPool({ project: 'aave-v3', chain: 'Ethereum', symbol: 'EURC', tvlUsd: 16_598_020 })];
+    const pools = [llamaPool({ project: 'fluid-lending', chain: 'Base', symbol: 'EURC', tvlUsd: 16_598_020 })];
 
     const { found } = extractDefiLlamaPools(pools, 1.118528274856635);
-    expect(found.aaveEthereum.tvl).toBe(14_839_160);
+    expect(found.fluidBase.tvl).toBe(14_839_160);
+  });
+
+  it('no longer sources the Aave markets, which come from Aave directly', () => {
+    const { missing } = extractDefiLlamaPools([], RATE);
+
+    for (const key of ['aaveEthereum', 'aaveBase', 'aaveGnosis', 'aaveAvalanche']) {
+      expect(missing).not.toContain(key);
+    }
   });
 
   it('refuses to convert with a missing or nonsensical rate', () => {
@@ -104,6 +113,53 @@ describe('extractDefiLlamaPools', () => {
     const { found, missing } = extractDefiLlamaPools([], RATE);
     expect(found).toEqual({});
     expect(missing.length).toBeGreaterThan(0);
+  });
+});
+
+describe('extractAaveReserve', () => {
+  // Shape and values taken from a live api.v3.aave.com response.
+  const market = {
+    reserves: [
+      {
+        underlyingToken: { symbol: 'USDC' },
+        supplyInfo: { total: { value: '1000.0' }, apy: { formatted: '5.00' } },
+      },
+      {
+        underlyingToken: { symbol: 'EURC' },
+        supplyInfo: { total: { value: '40509441.954407' }, apy: { formatted: '2.23' } },
+      },
+    ],
+  };
+
+  it('reads total supplied in token units, not the net figure', () => {
+    expect(extractAaveReserve(market, 'EURC')).toEqual({ apy: 2.23, tvl: 40_509_442 });
+  });
+
+  it('matches the symbol regardless of case, for EURe on Gnosis', () => {
+    const gnosis = {
+      reserves: [
+        {
+          underlyingToken: { symbol: 'EURe' },
+          supplyInfo: { total: { value: '5000.5' }, apy: { formatted: '2.2' } },
+        },
+      ],
+    };
+
+    expect(extractAaveReserve(gnosis, 'EURE')).toEqual({ apy: 2.2, tvl: 5001 });
+  });
+
+  it('returns null rather than a wrong number when the reserve is absent', () => {
+    expect(extractAaveReserve(market, 'EURe')).toBeNull();
+    expect(extractAaveReserve({ reserves: [] }, 'EURC')).toBeNull();
+    expect(extractAaveReserve(undefined, 'EURC')).toBeNull();
+  });
+
+  it('returns null when the figures are missing or unparseable', () => {
+    const broken = {
+      reserves: [{ underlyingToken: { symbol: 'EURC' }, supplyInfo: { total: {}, apy: {} } }],
+    };
+
+    expect(extractAaveReserve(broken, 'EURC')).toBeNull();
   });
 });
 

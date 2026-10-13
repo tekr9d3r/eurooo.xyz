@@ -140,7 +140,7 @@ export function ProtocolTable({ protocols }: ProtocolTableProps) {
           className="col-span-2 flex items-center gap-1 hover:text-foreground transition-colors text-left"
           onClick={() => handleSort('tvl')}
         >
-          Liquidity <SortIcon columnKey="tvl" />
+          TVL <SortIcon columnKey="tvl" />
         </button>
         <div className="col-span-1">Safety</div>
         <button

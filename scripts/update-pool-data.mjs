@@ -24,16 +24,37 @@ const DATA_FILE = resolve(
 const DEFILLAMA_POOLS_API = 'https://yields.llama.fi/pools';
 const JUPITER_LEND_API = 'https://lite-api.jup.ag/lend/v1/earn/tokens';
 const EURC_PRICE_API = 'https://coins.llama.fi/prices/current/coingecko:euro-coin';
+const AAVE_API = 'https://api.v3.aave.com/graphql';
+
+/**
+ * Aave's own API reports total supplied, which DeFi Llama's free tier does not
+ * — it only exposes supplied minus borrowed. Figures come back as token
+ * amounts, so these are already euro-denominated and skip the USD conversion.
+ *
+ * The address is the V3 Pool for each chain, mirroring AAVE_V3_POOL_ADDRESSES
+ * in src/lib/contracts.ts.
+ */
+const AAVE_MARKETS = {
+  aaveEthereum: { address: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2', chainId: 1, symbol: 'EURC' },
+  aaveBase: { address: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5', chainId: 8453, symbol: 'EURC' },
+  aaveGnosis: { address: '0xb50201558B00496A145fE76f7424749556E326D8', chainId: 100, symbol: 'EURe' },
+  aaveAvalanche: { address: '0x794a61358D6845594F94dc1DB02A252b5b4814aD', chainId: 43114, symbol: 'EURC' },
+};
+
+const AAVE_MARKET_QUERY = `query($r: MarketRequest!) {
+  market(request: $r) {
+    reserves {
+      underlyingToken { symbol }
+      supplyInfo { total { value } apy { formatted } }
+    }
+  }
+}`;
 
 /**
  * How each pool key is located in DeFi Llama's pool list. A poolId is an exact
  * match; otherwise a pool must match project, chain and symbol.
  */
 const POOL_MATCHERS = {
-  aaveEthereum: { project: 'aave-v3', chain: 'Ethereum', symbol: 'EURC' },
-  aaveBase: { project: 'aave-v3', chain: 'Base', symbol: 'EURC' },
-  aaveGnosis: { project: 'aave-v3', chain: 'Gnosis', symbol: ['EURE', 'EURe'] },
-  aaveAvalanche: { project: 'aave-v3', chain: 'Avalanche', symbol: 'EURC' },
   yoBase: { project: 'yo-protocol', chain: 'Base', symbol: 'EURC', useBaseApy: true },
   morphoGauntlet: { poolId: 'd4ea65f3-b54b-49c4-81ba-56e16eec4fb7' },
   morphoPrime: { poolId: '4c02c11c-2d48-4d5c-b5ed-27f3f354b73c' },
@@ -93,6 +114,26 @@ export function extractDefiLlamaPools(pools, eurUsdRate) {
   }
 
   return { found, missing };
+}
+
+/**
+ * Pulls one reserve out of an Aave market response.
+ *
+ * `supplyInfo.total.value` is the total supplied in token units — the figure
+ * Aave's own interface headlines — rather than the supplied-minus-borrowed
+ * number DeFi Llama reports.
+ */
+export function extractAaveReserve(market, symbol) {
+  const reserve = market?.reserves?.find(
+    (r) => r.underlyingToken?.symbol?.toUpperCase() === symbol.toUpperCase()
+  );
+  if (!reserve) return null;
+
+  const apy = Number(reserve.supplyInfo?.apy?.formatted);
+  const tvl = Number(reserve.supplyInfo?.total?.value);
+  if (!Number.isFinite(apy) || !Number.isFinite(tvl)) return null;
+
+  return { apy: round2(apy), tvl: Math.round(tvl) };
 }
 
 /** Jupiter's EURC market, which DeFi Llama does not list. */
@@ -168,6 +209,27 @@ async function fetchEurUsdRate() {
   return quote.price;
 }
 
+async function fetchAaveMarket(market) {
+  const response = await fetch(AAVE_API, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      query: AAVE_MARKET_QUERY,
+      variables: { r: { address: market.address, chainId: market.chainId } },
+    }),
+  });
+
+  if (!response.ok) throw new Error(`Aave API returned HTTP ${response.status}`);
+
+  const body = await response.json();
+  // GraphQL reports failures in the body with a 200, so this must be checked.
+  if (body.errors?.length) {
+    throw new Error(body.errors.map((e) => e.message).join('; '));
+  }
+
+  return body.data?.market;
+}
+
 /** Surfaces a message on the GitHub Actions run summary, not just the log. */
 function warn(message) {
   console.warn(process.env.GITHUB_ACTIONS ? `::warning::${message}` : `WARNING: ${message}`);
@@ -186,6 +248,23 @@ async function main() {
   if (missing.length > 0) {
     warn(`DeFi Llama no longer lists ${missing.join(', ')} — those pools keep their existing values and are going stale.`);
   }
+
+  // Aave markets come from Aave's own API so the figures match its interface.
+  // Each is independent: one chain failing must not cost us the other three.
+  for (const [key, market] of Object.entries(AAVE_MARKETS)) {
+    try {
+      const reserve = extractAaveReserve(await fetchAaveMarket(market), market.symbol);
+      if (reserve) {
+        // Already in EURC, so no conversion.
+        found[key] = reserve;
+      } else {
+        warn(`Aave returned no ${market.symbol} reserve for ${key}; it keeps its existing value.`);
+      }
+    } catch (error) {
+      warn(`Aave market ${key} could not be read (${error.message}); it keeps its existing value.`);
+    }
+  }
+  console.log(`Aave: matched ${Object.keys(AAVE_MARKETS).filter((k) => found[k]).length}/${Object.keys(AAVE_MARKETS).length} markets`);
 
   // Jupiter is a separate source; losing it must not discard the DeFi Llama run.
   try {
