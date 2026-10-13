@@ -27,10 +27,22 @@ const POOL_MATCHERS: Record<
   morphoSteakhousePrimeInstant: { project: "morpho-v1", chain: "Ethereum", symbol: "STEAKEURCV", poolId: "d3b28212-a46b-4db8-8bb7-2c946b3cbe76" },
   fluidBase: { project: "fluid-lending", chain: "Base", symbol: "EURC" },
   moonwellBase: { project: "moonwell-lending", chain: "Base", symbol: "EURC" },
-  // Jupiter EURC pool is not available via their APIs or DeFi Llama.
-  // Jupiter Lend only supports SOL/USDC/JupUSD vaults.
-  // Remains hardcoded in the frontend fallback data.
+  // Jupiter's EURC market is not listed on DeFi Llama, so it is fetched
+  // separately from Jupiter's own lending API below.
+  // Ether.fi's Liquid EUR vault has no public API and is not on DeFi Llama
+  // either, so etherfiOptimism stays on the frontend's hardcoded value.
 };
+
+const JUPITER_LEND_API = "https://lite-api.jup.ag/lend/v1/earn/tokens";
+
+interface JupiterLendToken {
+  symbol: string;
+  totalAssets: number | string;
+  supplyRate: number;
+  rewardsRate: number;
+  totalRate: number;
+  asset: { symbol: string; decimals: number };
+}
 
 interface DefiLlamaPool {
   pool: string;
@@ -61,6 +73,28 @@ function matchPool(
     (s) => pool.symbol.toUpperCase().includes(s.toUpperCase())
   );
   return symbolMatch;
+}
+
+async function fetchJupiterEurc(): Promise<{ apy: number; tvl: number } | null> {
+  const response = await fetch(JUPITER_LEND_API);
+  if (!response.ok) {
+    throw new Error(`Jupiter Lend API error: ${response.status}`);
+  }
+
+  const tokens: JupiterLendToken[] = await response.json();
+  const eurc = tokens.find((t) => t.asset?.symbol === "EURC");
+  if (!eurc) return null;
+
+  // Rates are basis points. totalRate includes reward incentives, which is the
+  // figure Jupiter shows in its UI.
+  const apy = eurc.totalRate / 100;
+
+  // Left in EURC rather than converted to USD. The other pools carry DeFi
+  // Llama's tvlUsd, but this row has always been maintained in euros and the
+  // app labels TVL with a euro sign.
+  const tvl = Number(eurc.totalAssets) / 10 ** eurc.asset.decimals;
+
+  return { apy: Math.round(apy * 100) / 100, tvl: Math.round(tvl) };
 }
 
 Deno.serve(async (req) => {
@@ -106,6 +140,22 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Jupiter comes from its own API. A failure there must not discard the
+    // DeFi Llama results, so the snapshot proceeds without it and the frontend
+    // falls back to its hardcoded value for that one pool.
+    try {
+      const jupiter = await fetchJupiterEurc();
+      if (jupiter) {
+        results.push({ pool_key: "jupiterSolana", ...jupiter });
+        matched.add("jupiterSolana");
+        console.log(`Matched jupiterSolana: apy=${jupiter.apy}, tvl=${jupiter.tvl}`);
+      } else {
+        console.warn("No EURC market found in the Jupiter Lend API");
+      }
+    } catch (error) {
+      console.error("Jupiter fetch failed:", error.message);
+    }
+
     // Insert snapshots
     if (results.length > 0) {
       const now = new Date().toISOString();
@@ -133,12 +183,13 @@ Deno.serve(async (req) => {
       .delete()
       .lt("fetched_at", thirtyDaysAgo.toISOString());
 
-    const unmatched = Object.keys(POOL_MATCHERS).filter((k) => !matched.has(k));
+    const expectedPools = [...Object.keys(POOL_MATCHERS), "jupiterSolana"];
+    const unmatched = expectedPools.filter((k) => !matched.has(k));
 
     return new Response(
       JSON.stringify({
         matched: results.length,
-        total: Object.keys(POOL_MATCHERS).length,
+        total: expectedPools.length,
         unmatched,
         results,
       }),
