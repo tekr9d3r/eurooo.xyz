@@ -47,7 +47,6 @@ const Terms = () => {
             <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-4 mb-4">
               <li>Aave</li>
               <li>Morpho</li>
-              <li>Summer.fi</li>
               <li>YO</li>
               <li>Fluid</li>
             </ul>

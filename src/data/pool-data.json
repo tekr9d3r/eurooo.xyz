@@ -22,10 +22,6 @@
       "apy": 3.29,
       "tvl": 521223
     },
-    "summerBase": {
-      "apy": 2.5,
-      "tvl": 520327
-    },
     "morphoGauntlet": {
       "apy": 2.3,
       "tvl": 1046761
@@ -57,10 +53,6 @@
     "fluidBase": {
       "apy": 2.81,
       "tvl": 1132713
-    },
-    "moonwellBase": {
-      "apy": 1.1,
-      "tvl": 4946679
     },
     "jupiterSolana": {
       "apy": 2.54,

@@ -105,14 +105,6 @@ describe('extractDefiLlamaPools', () => {
     expect(found).toEqual({});
     expect(missing.length).toBeGreaterThan(0);
   });
-
-  it('does not try to fetch the pools it can no longer find', () => {
-    // Summer.fi and Moonwell were dropped from DeFi Llama, so they must not be
-    // reported as missing on every run — they are manual now.
-    const { missing } = extractDefiLlamaPools([], RATE);
-    expect(missing).not.toContain('summerBase');
-    expect(missing).not.toContain('moonwellBase');
-  });
 });
 
 describe('extractJupiterEurc', () => {
@@ -141,8 +133,6 @@ describe('mergePools', () => {
   const existing = {
     aaveBase: { apy: 0.44, tvl: 20_960_000 },
     etherfiOptimism: { apy: 5.29, tvl: 6_770_000 },
-    summerBase: { apy: 2.5, tvl: 520_332 },
-    moonwellBase: { apy: 1.1, tvl: 4_946_668 },
   };
 
   it('records the prior figures so changes can be shown', () => {

@@ -56,13 +56,11 @@ export default {
         },
         // Protocol brand colors
         aave: "hsl(var(--aave))",
-        summer: "hsl(var(--summer))",
         yo: "hsl(var(--yo))",
         morpho: "hsl(var(--morpho))",
         fluid: "hsl(var(--fluid))",
         jupiter: "hsl(var(--jupiter))",
         drift: "hsl(var(--drift))",
-        moonwell: "hsl(var(--moonwell))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

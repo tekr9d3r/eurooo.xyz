@@ -47,12 +47,9 @@ const POOL_MATCHERS = {
 
 /**
  * Pools with no upstream source, left exactly as they are in the file.
- *
- * Ether.fi's Liquid EUR vault has never been listed. Summer.fi and Moonwell
- * were dropped from DeFi Llama's yields dataset — neither has any EUR pool
- * there any more — so their figures are now maintained by hand too.
+ * Ether.fi's Liquid EUR vault has never been listed by DeFi Llama.
  */
-export const MANUAL_POOLS = ['etherfiOptimism', 'summerBase', 'moonwellBase'];
+export const MANUAL_POOLS = ['etherfiOptimism'];
 
 export function matchPool(pool, matcher) {
   if (matcher.poolId) return pool.pool === matcher.poolId;

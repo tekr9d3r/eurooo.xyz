@@ -13,7 +13,6 @@ const Home = lazy(() => import("./pages/Home"));
 const AppPage = lazy(() => import("./pages/App"));
 const Stats = lazy(() => import("./pages/Stats"));
 const Terms = lazy(() => import("./pages/Terms"));
-const LiFiEarn = lazy(() => import("./pages/LiFiEarn"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Minimal loading fallback

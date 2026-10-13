@@ -33,7 +33,6 @@ export function useDefiLlamaData() {
 
     // Other protocols
     yoBase: get('yoBase'),
-    summerBase: get('summerBase'),
 
     // Morpho - Ethereum
     morphoGauntlet: get('morphoGauntlet'),
@@ -50,9 +49,6 @@ export function useDefiLlamaData() {
 
     // Fluid
     fluidBase: get('fluidBase'),
-
-    // Moonwell
-    moonwellBase: get('moonwellBase'),
 
     // Solana
     jupiterSolana: get('jupiterSolana'),

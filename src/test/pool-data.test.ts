@@ -15,7 +15,6 @@ const POOL_KEYS = [
   'aaveGnosis',
   'aaveAvalanche',
   'yoBase',
-  'summerBase',
   'morphoGauntlet',
   'morphoPrime',
   'morphoSteakhouseEurcv',
@@ -24,7 +23,6 @@ const POOL_KEYS = [
   'morphoSteakhouse',
   'morphoSteakhousePrime',
   'fluidBase',
-  'moonwellBase',
   'jupiterSolana',
   'etherfiOptimism',
 ] as const;

@@ -49,13 +49,6 @@ export const AAVE_AEURC_ADDRESSES = {
   43114: '0x8a9FdE6925a839F6B1932d16B36aC026F8d3FbdB' as const,
 } as const;
 
-// ============= SUMMER.FI (Lazy Summer Protocol) =============
-// ERC-4626 vault for EURC on Base
-export const SUMMER_VAULT_ADDRESSES = {
-  // Only available on Base
-  8453: '0x64db8f51f1bf7064bb5a361a7265f602d348e0f0' as const,
-} as const;
-
 // ============= YO PROTOCOL =============
 // yoEUR vault for EURC (ERC-4626 compatible)
 export const YO_VAULT_ADDRESSES = {
@@ -109,51 +102,6 @@ export const FLUID_VAULT_ADDRESSES = {
 export const ETHERFI_WEUR_ADDRESSES = {
   10: '0xcc476b1a49bcdf5192561e87b6fb8ea78aa28c13' as const,
 } as const;
-
-// ============= MOONWELL =============
-// Moonwell mToken (Compound-style) for EURC on Base
-export const MOONWELL_MTOKEN_ADDRESSES = {
-  8453: '0xb682c840B5F4FC58B20769E691A6fa1305A501a2' as const,
-} as const;
-
-// Moonwell mToken ABI (Compound v2-style)
-export const MOONWELL_MTOKEN_ABI = [
-  {
-    inputs: [{ name: 'mintAmount', type: 'uint256' }],
-    name: 'mint',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [{ name: 'redeemAmount', type: 'uint256' }],
-    name: 'redeemUnderlying',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [{ name: 'account', type: 'address' }],
-    name: 'balanceOf',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [{ name: 'account', type: 'address' }],
-    name: 'balanceOfUnderlying',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'exchangeRateCurrent',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
 
 // ERC20 ABI (includes approve for deposits)
 export const ERC20_ABI = [
@@ -251,7 +199,7 @@ export const AAVE_POOL_DATA_PROVIDER_ABI = [
   },
 ] as const;
 
-// ERC-4626 Vault ABI (used by Summer.fi and YO Protocol)
+// ERC-4626 Vault ABI (used by YO Protocol and the Morpho vaults)
 export const ERC4626_VAULT_ABI = [
   // Read functions
   {

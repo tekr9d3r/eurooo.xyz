@@ -1,16 +1,13 @@
 import { useAaveData } from './useAaveData';
-import { useSummerData } from './useSummerData';
 import { useYoData } from './useYoData';
 import { useMorphoData } from './useMorphoData';
 import { useFluidData } from './useFluidData';
-import { useMoonwellData } from './useMoonwellData';
 import { useEtherFiData } from './useEtherFiData';
 import { useDefiLlamaData } from './useDefiLlamaData';
 import { useEURCBalance } from './useEURCBalance';
 import aaveLogo from '@/assets/aave-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import fluidLogo from '@/assets/fluid-logo.png';
-import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
 import etherfiLogo from '@/assets/ether-fi-logo-eurooo.png';
 
@@ -23,7 +20,7 @@ export interface ProtocolData {
   tvl: number;
   tvlFormatted: string;
   chains: string[];
-  color: 'aave' | 'summer' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'moonwell' | 'etherfi';
+  color: 'aave' | 'yo' | 'morpho' | 'fluid' | 'jupiter' | 'etherfi';
   chainId: number;
   userDeposit: number;
   isLoading: boolean;
@@ -69,7 +66,6 @@ export function useProtocolData() {
   const { balance: eurcBalance, isLoading: isLoadingEurc, refetch: refetchEurc } = useEURCBalance();
   const defiLlamaData = useDefiLlamaData();
   const aaveData = useAaveData();
-  const summerData = useSummerData();
   const yoData = useYoData();
   const morphoGauntletData = useMorphoData('morpho-gauntlet');
   const morphoPrimeData = useMorphoData('morpho-prime');
@@ -79,7 +75,6 @@ export function useProtocolData() {
   const morphoSteakhouseData = useMorphoData('morpho-steakhouse');
   const morphoSteakhousePrimeData = useMorphoData('morpho-steakhouse-prime');
   const fluidData = useFluidData();
-  const moonwellData = useMoonwellData();
   const etherFiData = useEtherFiData();
 
   // Individual Aave chain entries (used as sub-protocols)
@@ -372,26 +367,6 @@ export function useProtocolData() {
   const protocols: ProtocolData[] = [
     aaveGrouped,
     {
-      id: 'summer',
-      name: 'Summer.fi',
-      description: 'Lazy yield vault',
-      apy: summerData.apy,
-      tvl: summerData.tvl,
-      tvlFormatted: summerData.tvl > 0 ? formatTVL(summerData.tvl) : '—',
-      chains: ['Base'],
-      chainId: 8453,
-      color: 'summer',
-      userDeposit: summerData.userDeposit,
-      isLoading: summerData.isLoading,
-      isSupported: true,
-      stablecoin: 'EURC',
-      learnMoreUrl: 'https://summer.fi/earn/base/position/0x64db8f51f1bf7064bb5a361a7265f602d348e0f0',
-      auditUrl: 'https://docs.summer.fi/summer.fi/audits',
-      auditProvider: 'Summer.fi Docs',
-      tvlChange: calcChange(summerData.tvl, defiLlamaData.summerBase.previousTvl),
-      apyChange: calcApyDiff(summerData.apy, defiLlamaData.summerBase.previousApy),
-    },
-    {
       id: 'yo',
       name: 'YO Protocol',
       description: 'Multi-chain yield optimizer',
@@ -432,27 +407,6 @@ export function useProtocolData() {
       auditProvider: 'Instadapp Docs',
       tvlChange: calcChange(fluidData.tvl, defiLlamaData.fluidBase.previousTvl),
       apyChange: calcApyDiff(fluidData.apy, defiLlamaData.fluidBase.previousApy),
-    },
-    {
-      id: 'moonwell',
-      name: 'Moonwell',
-      description: 'Lending protocol on Base',
-      apy: moonwellData.apy,
-      tvl: moonwellData.tvl,
-      tvlFormatted: moonwellData.tvl > 0 ? formatTVL(moonwellData.tvl) : '—',
-      chains: ['Base'],
-      chainId: 8453,
-      color: 'moonwell',
-      userDeposit: moonwellData.userDeposit,
-      isLoading: moonwellData.isLoading,
-      isSupported: true,
-      stablecoin: 'EURC',
-      logo: moonwellLogo,
-      learnMoreUrl: 'https://moonwell.fi/vaults/deposit/base/mweurc',
-      auditUrl: 'https://docs.moonwell.fi/moonwell/protocol-information/audits',
-      auditProvider: 'Moonwell Docs',
-      tvlChange: calcChange(moonwellData.tvl, defiLlamaData.moonwellBase.previousTvl),
-      apyChange: calcApyDiff(moonwellData.apy, defiLlamaData.moonwellBase.previousApy),
     },
     {
       id: 'etherfi',
@@ -511,7 +465,6 @@ export function useProtocolData() {
   const refetch = () => {
     refetchEurc();
     aaveData.refetch();
-    summerData.refetch();
     yoData.refetch();
     morphoGauntletData.refetch();
     morphoPrimeData.refetch();
@@ -521,7 +474,6 @@ export function useProtocolData() {
     morphoSteakhouseData.refetch();
     morphoSteakhousePrimeData.refetch();
     fluidData.refetch();
-    moonwellData.refetch();
     etherFiData.refetch();
   };
 

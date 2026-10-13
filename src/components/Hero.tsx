@@ -5,11 +5,9 @@ import { ArrowRight, Shield, TrendingUp, Zap } from 'lucide-react';
 import { useDefiLlamaData } from '@/hooks/useDefiLlamaData';
 import { KnowledgeHubPreview } from '@/components/KnowledgeHubPreview';
 import aaveLogo from '@/assets/aave-logo.png';
-import summerLogo from '@/assets/summer-logo.png';
 import morphoLogo from '@/assets/morpho-logo.svg';
 import yoLogo from '@/assets/yo-logo.png';
 import fluidLogo from '@/assets/fluid-logo.png';
-import moonwellLogo from '@/assets/moonwell-logo.png';
 import jupiterLogo from '@/assets/jupiter-logo.png';
 import etherfiLogo from '@/assets/ether-fi-logo-eurooo.png';
 
@@ -98,14 +96,12 @@ export function Hero() {
       defiLlamaData.aaveBase.apy,
       defiLlamaData.aaveGnosis.apy,
       defiLlamaData.yoBase.apy,
-      defiLlamaData.summerBase.apy,
       defiLlamaData.morphoGauntlet.apy,
       defiLlamaData.morphoPrime.apy,
       defiLlamaData.morphoMoonwell.apy,
       defiLlamaData.morphoSteakhouse.apy,
       defiLlamaData.morphoSteakhousePrime.apy,
       defiLlamaData.fluidBase.apy,
-      defiLlamaData.moonwellBase.apy,
       defiLlamaData.jupiterSolana.apy,
     ];
     return Math.max(...allApys);
@@ -118,9 +114,6 @@ export function Hero() {
     name: 'Aave',
     logo: aaveLogo
   }, {
-    name: 'Summer.fi',
-    logo: summerLogo
-  }, {
     name: 'Morpho',
     logo: morphoLogo
   }, {
@@ -129,9 +122,6 @@ export function Hero() {
   }, {
     name: 'Fluid',
     logo: fluidLogo
-  }, {
-    name: 'Moonwell',
-    logo: moonwellLogo
   }, {
     name: 'Jupiter',
     logo: jupiterLogo
