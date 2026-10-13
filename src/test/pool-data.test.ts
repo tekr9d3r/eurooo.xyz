@@ -1,9 +1,12 @@
+/* eslint-disable react-hooks/rules-of-hooks --
+ * useDefiLlamaData reads bundled JSON and calls no hooks itself, so it is a
+ * plain function and safe to invoke outside a component.
+ */
 import { describe, it, expect } from 'vitest';
 
 import poolData from '@/data/pool-data.json';
 import { useDefiLlamaData } from '@/hooks/useDefiLlamaData';
 
-// The hook holds no React state, so it can be called directly.
 const data = useDefiLlamaData();
 
 const POOL_KEYS = [
@@ -15,7 +18,6 @@ const POOL_KEYS = [
   'summerBase',
   'morphoGauntlet',
   'morphoPrime',
-  'morphoKpk',
   'morphoSteakhouseEurcv',
   'morphoSteakhousePrimeInstant',
   'morphoMoonwell',

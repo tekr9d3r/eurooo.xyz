@@ -30,7 +30,6 @@ const protocolLogos: Record<string, string> = {
   'morpho': morphoLogo,
   'morpho-gauntlet': morphoLogo,
   'morpho-prime': morphoLogo,
-  'morpho-kpk': morphoLogo,
   summer: summerLogo,
   yo: yoLogo,
   fluid: summerLogo,

@@ -37,7 +37,6 @@ const POOL_MATCHERS = {
   summerBase: { project: 'lazy-summer-protocol', chain: 'Base', symbol: 'EURC' },
   morphoGauntlet: { poolId: 'd4ea65f3-b54b-49c4-81ba-56e16eec4fb7' },
   morphoPrime: { poolId: '4c02c11c-2d48-4d5c-b5ed-27f3f354b73c' },
-  morphoKpk: { poolId: '994a6438-8611-4c5f-84c0-939330dfbdb0' },
   morphoMoonwell: { poolId: 'c1aee434-6c8e-4958-a851-eda8ab8bb32d' },
   morphoSteakhouse: { poolId: 'cd35c563-0b37-47f6-a522-c7e5240b3f65' },
   morphoSteakhousePrime: { poolId: 'e76a40b2-30d5-4b9c-9cf3-41249eeeeb3a' },

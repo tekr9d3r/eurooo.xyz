@@ -957,7 +957,6 @@ const VAULT_TO_PROTOCOL_ID: Record<string, string> = {
   // Morpho Ethereum
   '0x2ed10624315b74a78f11fabedaa1a228c198aefb': 'morpho-gauntlet',
   '0x34ece536d2ae03192b06c0a67030d1faf4c0ba43': 'morpho-prime',
-  '0x0c6aec603d48ebf1cecc7b247a2c3da08b398dc1': 'morpho-kpk',
   '0x75741a12b36d181f44f389e0c6b1e0210311e3ff': 'morpho-steakhouse-eurcv',
   '0xbeef0c075da5d01112ae5cf34d257074fb5ddb2f': 'morpho-steakhouse-prime-instant',
   // Morpho Base

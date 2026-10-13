@@ -72,7 +72,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
   const yoWithdraw = useYoWithdraw();
   const morphoGauntletWithdraw = useMorphoWithdraw('morpho-gauntlet');
   const morphoPrimeWithdraw = useMorphoWithdraw('morpho-prime');
-  const morphoKpkWithdraw = useMorphoWithdraw('morpho-kpk');
   const morphoMoonwellWithdraw = useMorphoWithdraw('morpho-moonwell');
   const morphoSteakhouseWithdraw = useMorphoWithdraw('morpho-steakhouse');
   const morphoSteakhousePrimeWithdraw = useMorphoWithdraw('morpho-steakhouse-prime');
@@ -120,11 +119,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         return { 
           ...morphoPrimeWithdraw, 
           step: morphoPrimeWithdraw.step as UnifiedStep 
-        };
-      case 'morpho-kpk': 
-        return { 
-          ...morphoKpkWithdraw, 
-          step: morphoKpkWithdraw.step as UnifiedStep 
         };
       case 'morpho-moonwell': 
         return { 
@@ -218,9 +212,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
         case 'morpho-prime':
           await morphoPrimeWithdraw.withdraw(amountInUnits);
           break;
-        case 'morpho-kpk':
-          await morphoKpkWithdraw.withdraw(amountInUnits);
-          break;
         case 'fluid':
           await fluidWithdraw.withdraw(amountInUnits);
           break;
@@ -243,7 +234,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
       yoWithdraw.reset();
       morphoGauntletWithdraw.reset();
       morphoPrimeWithdraw.reset();
-      morphoKpkWithdraw.reset();
       fluidWithdraw.reset();
       moonwellWithdraw.reset();
     }
@@ -256,7 +246,6 @@ export function WithdrawModal({ open, onOpenChange, protocol, onComplete }: With
     yoWithdraw.reset();
     morphoGauntletWithdraw.reset();
     morphoPrimeWithdraw.reset();
-    morphoKpkWithdraw.reset();
     fluidWithdraw.reset();
     moonwellWithdraw.reset();
     setUiStep('confirm');

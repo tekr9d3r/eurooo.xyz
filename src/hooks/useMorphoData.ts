@@ -10,7 +10,6 @@ import {
 export type MorphoVaultId = 
   | 'morpho-gauntlet' 
   | 'morpho-prime' 
-  | 'morpho-kpk'
   | 'morpho-moonwell'
   | 'morpho-steakhouse'
   | 'morpho-steakhouse-prime'
@@ -21,7 +20,6 @@ export type MorphoVaultId =
 const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453> = {
   'morpho-gauntlet': 1,
   'morpho-prime': 1,
-  'morpho-kpk': 1,
   'morpho-steakhouse-eurcv': 1,
   'morpho-steakhouse-prime-instant': 1,
   'morpho-moonwell': 8453,
@@ -40,7 +38,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
   
   // Get APY and TVL from DefiLlama
   const { 
-    morphoGauntlet, morphoPrime, morphoKpk,
+    morphoGauntlet, morphoPrime,
     morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime,
     morphoSteakhouseEurcv, morphoSteakhousePrimeInstant,
     isLoading: isLoadingDefiLlama, refetch: refetchDefiLlama 
@@ -50,7 +48,6 @@ export function useMorphoData(vaultId: MorphoVaultId) {
   const defiLlamaData: Record<MorphoVaultId, { apy: number; tvl: number }> = {
     'morpho-gauntlet': morphoGauntlet,
     'morpho-prime': morphoPrime,
-    'morpho-kpk': morphoKpk,
     'morpho-steakhouse-eurcv': morphoSteakhouseEurcv,
     'morpho-steakhouse-prime-instant': morphoSteakhousePrimeInstant,
     'morpho-moonwell': morphoMoonwell,

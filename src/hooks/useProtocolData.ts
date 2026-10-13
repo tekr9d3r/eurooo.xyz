@@ -73,7 +73,6 @@ export function useProtocolData() {
   const yoData = useYoData();
   const morphoGauntletData = useMorphoData('morpho-gauntlet');
   const morphoPrimeData = useMorphoData('morpho-prime');
-  const morphoKpkData = useMorphoData('morpho-kpk');
   const morphoSteakhouseEurcvData = useMorphoData('morpho-steakhouse-eurcv');
   const morphoSteakhousePrimeInstantData = useMorphoData('morpho-steakhouse-prime-instant');
   const morphoMoonwellData = useMorphoData('morpho-moonwell');
@@ -236,26 +235,6 @@ export function useProtocolData() {
     apyChange: calcApyDiff(morphoPrimeData.apy, defiLlamaData.morphoPrime.previousApy),
   };
 
-  const morphoKpk: ProtocolData = {
-    id: 'morpho-kpk',
-    name: 'kpkEURC Yield',
-    description: 'Morpho vault by kpk',
-    apy: morphoKpkData.apy,
-    tvl: morphoKpkData.tvl,
-    tvlFormatted: morphoKpkData.tvl > 0 ? formatTVL(morphoKpkData.tvl) : '—',
-    chains: ['Ethereum'],
-    chainId: 1,
-    color: 'morpho',
-    userDeposit: morphoKpkData.userDeposit,
-    isLoading: morphoKpkData.isLoading,
-    isSupported: true,
-    stablecoin: 'EURC',
-    logo: morphoLogo,
-    learnMoreUrl: 'https://app.morpho.org/ethereum/vault/0x0c6aec603d48eBf1cECc7b247a2c3DA08b398DC1/kpk-eurc-yield',
-    tvlChange: calcChange(morphoKpkData.tvl, defiLlamaData.morphoKpk.previousTvl),
-    apyChange: calcApyDiff(morphoKpkData.apy, defiLlamaData.morphoKpk.previousApy),
-  };
-
   // Base Morpho vault entries
   const morphoMoonwell: ProtocolData = {
     id: 'morpho-moonwell',
@@ -359,7 +338,7 @@ export function useProtocolData() {
   };
 
   // Calculate aggregated Morpho metrics
-  const morphoSubProtocols = [morphoGauntlet, morphoPrime, morphoKpk, morphoSteakhouseEurcv, morphoSteakhousePrimeInstant, morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime];
+  const morphoSubProtocols = [morphoGauntlet, morphoPrime, morphoSteakhouseEurcv, morphoSteakhousePrimeInstant, morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime];
   const morphoTotalTvl = morphoSubProtocols.reduce((sum, p) => sum + p.tvl, 0);
   const morphoTotalDeposit = morphoSubProtocols.reduce((sum, p) => sum + p.userDeposit, 0);
   
@@ -536,7 +515,6 @@ export function useProtocolData() {
     yoData.refetch();
     morphoGauntletData.refetch();
     morphoPrimeData.refetch();
-    morphoKpkData.refetch();
     morphoSteakhouseEurcvData.refetch();
     morphoSteakhousePrimeInstantData.refetch();
     morphoMoonwellData.refetch();

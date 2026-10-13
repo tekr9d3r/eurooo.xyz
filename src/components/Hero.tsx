@@ -101,7 +101,6 @@ export function Hero() {
       defiLlamaData.summerBase.apy,
       defiLlamaData.morphoGauntlet.apy,
       defiLlamaData.morphoPrime.apy,
-      defiLlamaData.morphoKpk.apy,
       defiLlamaData.morphoMoonwell.apy,
       defiLlamaData.morphoSteakhouse.apy,
       defiLlamaData.morphoSteakhousePrime.apy,

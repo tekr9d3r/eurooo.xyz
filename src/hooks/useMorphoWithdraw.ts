@@ -12,7 +12,6 @@ export type MorphoWithdrawStep = 'idle' | 'withdrawing' | 'waitingWithdraw' | 's
 const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453> = {
   'morpho-gauntlet': 1,
   'morpho-prime': 1,
-  'morpho-kpk': 1,
   'morpho-steakhouse-eurcv': 1,
   'morpho-steakhouse-prime-instant': 1,
   'morpho-moonwell': 8453,
@@ -24,7 +23,6 @@ const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453> = {
 const VAULT_ADDRESSES: Record<MorphoVaultId, `0x${string}`> = {
   'morpho-gauntlet': '0x2ed10624315b74a78f11FAbedAa1A228c198aEfB',
   'morpho-prime': '0x34eCe536d2ae03192B06c0A67030D1Faf4c0Ba43',
-  'morpho-kpk': '0x0c6aec603d48eBf1cECc7b247a2c3DA08b398DC1',
   'morpho-steakhouse-eurcv': '0x75741A12B36D181f44F389E0c6B1E0210311e3Ff',
   'morpho-steakhouse-prime-instant': '0xbeef0C075Da5D01112AE5cF34d257074fB5DDB2f',
   'morpho-moonwell': '0xf24608E0CCb972b0b0f4A6446a0BBf58c701a026',

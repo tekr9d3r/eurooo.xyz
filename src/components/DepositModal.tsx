@@ -120,7 +120,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
   const yoDeposit = useYoDeposit();
   const morphoGauntletDeposit = useMorphoDeposit('morpho-gauntlet');
   const morphoPrimeDeposit = useMorphoDeposit('morpho-prime');
-  const morphoKpkDeposit = useMorphoDeposit('morpho-kpk');
   const morphoMoonwellDeposit = useMorphoDeposit('morpho-moonwell');
   const morphoSteakhouseDeposit = useMorphoDeposit('morpho-steakhouse');
   const morphoSteakhousePrimeDeposit = useMorphoDeposit('morpho-steakhouse-prime');
@@ -149,7 +148,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       case 'yo': return { ...yoDeposit, step: mapYoStep(yoDeposit.step) };
       case 'morpho-gauntlet': return { ...morphoGauntletDeposit, step: mapMorphoStep(morphoGauntletDeposit.step) };
       case 'morpho-prime': return { ...morphoPrimeDeposit, step: mapMorphoStep(morphoPrimeDeposit.step) };
-      case 'morpho-kpk': return { ...morphoKpkDeposit, step: mapMorphoStep(morphoKpkDeposit.step) };
       case 'morpho-moonwell': return { ...morphoMoonwellDeposit, step: mapMorphoStep(morphoMoonwellDeposit.step) };
       case 'morpho-steakhouse': return { ...morphoSteakhouseDeposit, step: mapMorphoStep(morphoSteakhouseDeposit.step) };
       case 'morpho-steakhouse-prime': return { ...morphoSteakhousePrimeDeposit, step: mapMorphoStep(morphoSteakhousePrimeDeposit.step) };
@@ -218,9 +216,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
         case 'morpho-prime':
           await morphoPrimeDeposit.deposit(numericAmount);
           break;
-        case 'morpho-kpk':
-          await morphoKpkDeposit.deposit(numericAmount);
-          break;
         case 'morpho-moonwell':
           await morphoMoonwellDeposit.deposit(numericAmount);
           break;
@@ -252,7 +247,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
       yoDeposit.reset();
       morphoGauntletDeposit.reset();
       morphoPrimeDeposit.reset();
-      morphoKpkDeposit.reset();
       morphoMoonwellDeposit.reset();
       morphoSteakhouseDeposit.reset();
       morphoSteakhousePrimeDeposit.reset();
@@ -268,7 +262,6 @@ export function DepositModal({ open, onOpenChange, protocol, onConfirm, maxAmoun
     yoDeposit.reset();
     morphoGauntletDeposit.reset();
     morphoPrimeDeposit.reset();
-    morphoKpkDeposit.reset();
     morphoMoonwellDeposit.reset();
     morphoSteakhouseDeposit.reset();
     morphoSteakhousePrimeDeposit.reset();

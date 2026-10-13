@@ -79,9 +79,6 @@ export const MORPHO_VAULT_ADDRESSES = {
   'morpho-prime': {
     1: '0x34eCe536d2ae03192B06c0A67030D1Faf4c0Ba43' as const,
   },
-  'morpho-kpk': {
-    1: '0x0c6aec603d48eBf1cECc7b247a2c3DA08b398DC1' as const,
-  },
   'morpho-steakhouse-eurcv': {
     1: '0x75741A12B36D181f44F389E0c6B1E0210311e3Ff' as const,
   },
