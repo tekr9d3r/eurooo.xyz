@@ -7,17 +7,18 @@ import {
   ERC20_ABI,
 } from '@/lib/contracts';
 
-export type MorphoVaultId = 
-  | 'morpho-gauntlet' 
-  | 'morpho-prime' 
+export type MorphoVaultId =
+  | 'morpho-gauntlet'
+  | 'morpho-prime'
   | 'morpho-moonwell'
   | 'morpho-steakhouse'
   | 'morpho-steakhouse-prime'
   | 'morpho-steakhouse-eurcv'
-  | 'morpho-steakhouse-prime-instant';
+  | 'morpho-steakhouse-prime-instant'
+  | 'morpho-kpk-eure';
 
 // Map vault IDs to their chain
-const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453> = {
+const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453 | 42161> = {
   'morpho-gauntlet': 1,
   'morpho-prime': 1,
   'morpho-steakhouse-eurcv': 1,
@@ -25,6 +26,22 @@ const VAULT_CHAIN_IDS: Record<MorphoVaultId, 1 | 8453> = {
   'morpho-moonwell': 8453,
   'morpho-steakhouse': 8453,
   'morpho-steakhouse-prime': 8453,
+  'morpho-kpk-eure': 42161,
+};
+
+/**
+ * Decimals of each vault's underlying asset. EURC and EURCV use 6; EURe uses
+ * 18, so this cannot be assumed.
+ */
+const VAULT_ASSET_DECIMALS: Record<MorphoVaultId, number> = {
+  'morpho-gauntlet': 6,
+  'morpho-prime': 6,
+  'morpho-steakhouse-eurcv': 6,
+  'morpho-steakhouse-prime-instant': 6,
+  'morpho-moonwell': 6,
+  'morpho-steakhouse': 6,
+  'morpho-steakhouse-prime': 6,
+  'morpho-kpk-eure': 18,
 };
 
 export function useMorphoData(vaultId: MorphoVaultId) {
@@ -40,7 +57,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
   const { 
     morphoGauntlet, morphoPrime,
     morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime,
-    morphoSteakhouseEurcv, morphoSteakhousePrimeInstant,
+    morphoSteakhouseEurcv, morphoSteakhousePrimeInstant, morphoKpkEure,
     isLoading: isLoadingDefiLlama, refetch: refetchDefiLlama 
   } = useDefiLlamaData();
   
@@ -53,6 +70,7 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     'morpho-moonwell': morphoMoonwell,
     'morpho-steakhouse': morphoSteakhouse,
     'morpho-steakhouse-prime': morphoSteakhousePrime,
+    'morpho-kpk-eure': morphoKpkEure,
   };
 
   const vaultConfig = MORPHO_VAULT_ADDRESSES[vaultId];
@@ -88,8 +106,9 @@ export function useMorphoData(vaultId: MorphoVaultId) {
     },
   });
 
-  // Format user deposit (EURC has 6 decimals)
-  const userDeposit = userAssets ? Number(formatUnits(userAssets, 6)) : 0;
+  const userDeposit = userAssets
+    ? Number(formatUnits(userAssets, VAULT_ASSET_DECIMALS[vaultId]))
+    : 0;
 
   const refetch = () => {
     refetchDefiLlama();

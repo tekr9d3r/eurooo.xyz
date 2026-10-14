@@ -22,6 +22,7 @@ const POOL_KEYS = [
   'morphoMoonwell',
   'morphoSteakhouse',
   'morphoSteakhousePrime',
+  'morphoKpkEure',
   'fluidBase',
   'jupiterSolana',
   'etherfiOptimism',

@@ -74,6 +74,7 @@ export function useProtocolData() {
   const morphoMoonwellData = useMorphoData('morpho-moonwell');
   const morphoSteakhouseData = useMorphoData('morpho-steakhouse');
   const morphoSteakhousePrimeData = useMorphoData('morpho-steakhouse-prime');
+  const morphoKpkEureData = useMorphoData('morpho-kpk-eure');
   const fluidData = useFluidData();
   const etherFiData = useEtherFiData();
 
@@ -291,6 +292,29 @@ export function useProtocolData() {
     apyChange: calcApyDiff(morphoSteakhousePrimeData.apy, defiLlamaData.morphoSteakhousePrime.previousApy),
   };
 
+  // Arbitrum Morpho EURe vault
+  const morphoKpkEure: ProtocolData = {
+    id: 'morpho-kpk-eure',
+    name: 'kpkEURe Yield',
+    description: 'Morpho vault by kpk',
+    apy: morphoKpkEureData.apy,
+    tvl: morphoKpkEureData.tvl,
+    tvlFormatted: morphoKpkEureData.tvl > 0 ? formatTVL(morphoKpkEureData.tvl) : '—',
+    chains: ['Arbitrum'],
+    chainId: 42161,
+    color: 'morpho',
+    userDeposit: morphoKpkEureData.userDeposit,
+    isLoading: morphoKpkEureData.isLoading,
+    isSupported: true,
+    stablecoin: 'EURe',
+    logo: morphoLogo,
+    learnMoreUrl: 'https://app.morpho.org/arbitrum/vault/0x7bfdE3A7bd346Da92521D384563F89BB45dE1f60/kpk-eure-yield',
+    auditUrl: 'https://docs.morpho.org/get-started/resources/audits/',
+    auditProvider: 'Morpho Docs',
+    tvlChange: calcChange(morphoKpkEureData.tvl, defiLlamaData.morphoKpkEure.previousTvl),
+    apyChange: calcApyDiff(morphoKpkEureData.apy, defiLlamaData.morphoKpkEure.previousApy),
+  };
+
   // Ethereum Morpho EURCV vault entries
   const morphoSteakhouseEurcv: ProtocolData = {
     id: 'morpho-steakhouse-eurcv',
@@ -333,7 +357,7 @@ export function useProtocolData() {
   };
 
   // Calculate aggregated Morpho metrics
-  const morphoSubProtocols = [morphoGauntlet, morphoPrime, morphoSteakhouseEurcv, morphoSteakhousePrimeInstant, morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime];
+  const morphoSubProtocols = [morphoGauntlet, morphoPrime, morphoSteakhouseEurcv, morphoSteakhousePrimeInstant, morphoMoonwell, morphoSteakhouse, morphoSteakhousePrime, morphoKpkEure];
   const morphoTotalTvl = morphoSubProtocols.reduce((sum, p) => sum + p.tvl, 0);
   const morphoTotalDeposit = morphoSubProtocols.reduce((sum, p) => sum + p.userDeposit, 0);
   
@@ -348,7 +372,7 @@ export function useProtocolData() {
     apy: morphoHighestApy,
     tvl: morphoTotalTvl,
     tvlFormatted: formatTVL(morphoTotalTvl),
-    chains: ['Ethereum', 'Base'],
+    chains: ['Ethereum', 'Base', 'Arbitrum'],
     chainId: 1,
     color: 'morpho',
     userDeposit: morphoTotalDeposit,
@@ -473,6 +497,7 @@ export function useProtocolData() {
     morphoMoonwellData.refetch();
     morphoSteakhouseData.refetch();
     morphoSteakhousePrimeData.refetch();
+    morphoKpkEureData.refetch();
     fluidData.refetch();
     etherFiData.refetch();
   };

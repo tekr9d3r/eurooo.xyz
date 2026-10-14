@@ -88,6 +88,10 @@ export const MORPHO_VAULT_ADDRESSES = {
   'morpho-steakhouse-prime': {
     8453: '0xbeef009F28cCf367444a9F79096862920e025DC1' as const,
   },
+  // Arbitrum vaults
+  'morpho-kpk-eure': {
+    42161: '0x7bfdE3A7bd346Da92521D384563F89BB45dE1f60' as const,
+  },
 } as const;
 
 // ============= FLUID =============

@@ -47,6 +47,9 @@ export function useDefiLlamaData() {
     morphoSteakhouse: get('morphoSteakhouse'),
     morphoSteakhousePrime: get('morphoSteakhousePrime'),
 
+    // Morpho - Arbitrum
+    morphoKpkEure: get('morphoKpkEure'),
+
     // Fluid
     fluidBase: get('fluidBase'),
 
