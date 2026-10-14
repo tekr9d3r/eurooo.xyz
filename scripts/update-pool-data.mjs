@@ -63,6 +63,9 @@ const POOL_MATCHERS = {
   morphoSteakhousePrime: { poolId: 'e76a40b2-30d5-4b9c-9cf3-41249eeeeb3a' },
   morphoSteakhouseEurcv: { poolId: 'cf3e15c7-bc2c-4e7f-acf2-1fbf544acbb3' },
   morphoSteakhousePrimeInstant: { poolId: 'd3b28212-a46b-4db8-8bb7-2c946b3cbe76' },
+  // Listed under morpho-blue rather than morpho-v1, but matched by id so the
+  // project name does not matter.
+  morphoKpkEure: { poolId: '87ef22ba-c8fa-5648-95eb-b104c3f031b3' },
   fluidBase: { project: 'fluid-lending', chain: 'Base', symbol: 'EURC' },
 };
 
