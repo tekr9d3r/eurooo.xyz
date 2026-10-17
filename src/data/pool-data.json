@@ -87,8 +87,10 @@
       "previousTvl": 4197229
     },
     "etherfiOptimism": {
-      "apy": 5.29,
-      "tvl": 6770000
+      "apy": 4.76,
+      "tvl": 7240000,
+      "previousApy": 5.29,
+      "previousTvl": 6770000
     },
     "morphoKpkEure": {
       "apy": 3,
