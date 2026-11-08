@@ -1,66 +1,66 @@
 {
-  "updatedAt": "2026-11-07T14:26:18.533Z",
-  "eurUsdRate": 1.1138883210000001,
+  "updatedAt": "2026-11-08T14:36:10.451Z",
+  "eurUsdRate": 1.11402259,
   "pools": {
     "aaveEthereum": {
-      "apy": 2.35,
-      "tvl": 39508711,
+      "apy": 2.38,
+      "tvl": 39986175,
       "previousApy": 2.35,
-      "previousTvl": 39427555
+      "previousTvl": 39508711
     },
     "aaveBase": {
-      "apy": 1.55,
-      "tvl": 9719730,
-      "previousApy": 2.39,
-      "previousTvl": 7895740
+      "apy": 1.71,
+      "tvl": 9399006,
+      "previousApy": 1.55,
+      "previousTvl": 9719730
     },
     "aaveGnosis": {
-      "apy": 3.22,
-      "tvl": 12950235,
-      "previousApy": 3.16,
-      "previousTvl": 13080010
+      "apy": 3.25,
+      "tvl": 12891377,
+      "previousApy": 3.22,
+      "previousTvl": 12950235
     },
     "aaveAvalanche": {
       "apy": 2.97,
-      "tvl": 1004523,
-      "previousApy": 2.93,
-      "previousTvl": 1009707
+      "tvl": 1004643,
+      "previousApy": 2.97,
+      "previousTvl": 1004523
     },
     "yoBase": {
-      "apy": 3.38,
-      "tvl": 496705,
-      "previousApy": 4.78,
-      "previousTvl": 496233
+      "apy": 2.67,
+      "tvl": 496427,
+      "previousApy": 3.38,
+      "previousTvl": 496705
     },
     "morphoGauntlet": {
-      "apy": 2.87,
-      "tvl": 1008898,
-      "previousApy": 2.21,
-      "previousTvl": 1045220
+      "apy": 3.17,
+      "tvl": 1008986,
+      "previousApy": 2.87,
+      "previousTvl": 1008898
     },
     "morphoPrime": {
-      "apy": 8.7,
-      "tvl": 43340,
-      "previousApy": 5.29,
-      "previousTvl": 43369
+      "apy": 8.08,
+      "tvl": 43330,
+      "previousApy": 8.7,
+      "previousTvl": 43340
     },
     "morphoMoonwell": {
-      "apy": 2.07,
-      "tvl": 721755,
-      "previousApy": 2.16,
-      "previousTvl": 722432
+      "apy": 2.05,
+      "tvl": 722009,
+      "previousApy": 2.07,
+      "previousTvl": 721755
     },
     "morphoSteakhouse": {
-      "apy": 2.05,
-      "tvl": 1167833,
-      "previousApy": 2.25,
-      "previousTvl": 1188127
+      "apy": 1.99,
+      "tvl": 1183001,
+      "previousApy": 2.05,
+      "previousTvl": 1167833
     },
     "morphoSteakhousePrime": {
-      "apy": 2.05,
-      "tvl": 2482460,
-      "previousApy": 2.27,
-      "previousTvl": 2581774
+      "apy": 1.99,
+      "tvl": 2482216,
+      "previousApy": 2.05,
+      "previousTvl": 2482460
     },
     "morphoSteakhouseEurcv": {
       "apy": 1.31,
@@ -70,21 +70,21 @@
     },
     "morphoSteakhousePrimeInstant": {
       "apy": 3,
-      "tvl": 143281062,
+      "tvl": 142147269,
       "previousApy": 3,
-      "previousTvl": 144033586
+      "previousTvl": 143281062
     },
     "fluidBase": {
-      "apy": 2.49,
-      "tvl": 1214492,
-      "previousApy": 2.74,
-      "previousTvl": 1154481
+      "apy": 2.51,
+      "tvl": 1211113,
+      "previousApy": 2.49,
+      "previousTvl": 1214492
     },
     "jupiterSolana": {
-      "apy": 2.86,
-      "tvl": 4137647,
-      "previousApy": 2.84,
-      "previousTvl": 4134234
+      "apy": 3.51,
+      "tvl": 4076656,
+      "previousApy": 2.86,
+      "previousTvl": 4137647
     },
     "etherfiOptimism": {
       "apy": 5.61,
@@ -94,9 +94,9 @@
     },
     "morphoKpkEure": {
       "apy": 3,
-      "tvl": 1526957,
+      "tvl": 1529438,
       "previousApy": 3,
-      "previousTvl": 1521784
+      "previousTvl": 1526957
     }
   }
 }
